@@ -226,7 +226,19 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
 
     // Auto-play progression when new question is loaded (with better error handling)
     useEffect(() => {
-        if (!roundState.question || isInitializing) return;
+        // Don't auto-play if still initializing, no question, or already played
+        if (isInitializing || !roundState.question || roundState.question.targetDegrees.length === 0) {
+            return;
+        }
+        
+        // Ensure we have valid chord specs before auto-playing
+        const hasValidChords = roundState.question.chordSpecs && 
+                              roundState.question.chordSpecs.length > 0 &&
+                              roundState.question.chordSpecs.every(spec => spec.midiNotes && spec.midiNotes.length > 0);
+        
+        if (!hasValidChords) {
+            return; // Don't auto-play if chords aren't ready
+        }
         
         const questionKey = roundState.question.targetDegrees.join('-');
         const shouldAutoPlay = roundStatus === 'idle' && 
@@ -236,28 +248,62 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
         
         if (shouldAutoPlay) {
             hasAutoPlayedRef.current = questionKey;
+            let isCancelled = false;
+            
             // Longer delay to ensure audio is ready and UI is stable
             const timer = setTimeout(async () => {
+                if (isCancelled) return;
+                
                 try {
-                    console.log('Auto-playing progression for new question:', roundState.question?.targetDegrees);
+                    // Double-check question is still valid
+                    const currentState = roundStateRef.current;
+                    if (!currentState.question || currentState.question.chordSpecs.length === 0) {
+                        hasAutoPlayedRef.current = null;
+                        return;
+                    }
+                    
+                    // Check if we're still in idle state and not playing
+                    if (roundStatusRef.current !== 'idle' || isPlayingRef.current) {
+                        hasAutoPlayedRef.current = null;
+                        return;
+                    }
+                    
+                    console.log('Auto-playing progression for new question:', currentState.question.targetDegrees);
                     // Ensure audio is initialized before playing
                     await audioEngine.init();
+                    // Only load instrument if not already loaded (check happens inside)
                     await loadInstrument('piano');
                     // Small additional delay to ensure sample is loaded
                     setTimeout(() => {
-                        if (playProgressionRef.current) {
+                        if (isCancelled) return;
+                        
+                        const state = roundStateRef.current;
+                        const status = roundStatusRef.current;
+                        const playing = isPlayingRef.current;
+                        
+                        // Final validation before playing
+                        if (playProgressionRef.current && 
+                            state.question && 
+                            state.question.chordSpecs.length > 0 &&
+                            status === 'idle' &&
+                            !playing) {
                             playProgressionRef.current();
+                        } else {
+                            hasAutoPlayedRef.current = null; // Reset if question invalid
                         }
-                    }, 200);
+                    }, 300);
                 } catch (error) {
                     console.error('Error in auto-play:', error);
                     // Don't auto-play if there's an error, let user click the button
                     hasAutoPlayedRef.current = null; // Reset so they can try again
                 }
-            }, 800);
-            return () => clearTimeout(timer);
+            }, 1000); // Increased delay to ensure everything is ready
+            return () => {
+                isCancelled = true;
+                clearTimeout(timer);
+            };
         }
-    }, [roundState.question, roundStatus, isPlaying, roundState.userDegrees.length, isInitializing]);
+    }, [roundState.question?.targetDegrees?.join('-'), roundStatus, isPlaying, roundState.userDegrees.length, isInitializing]);
 
     const handleDegreeSelect = (degree: number) => {
         const currentState = roundStateRef.current;

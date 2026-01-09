@@ -75,8 +75,21 @@ export const Home: React.FC = () => {
                         />
                     </div>
 
-                    {/* Stats Link */}
-                    <div className="flex justify-center">
+                    {/* Stats and Resources Links */}
+                    <div className="flex justify-center gap-4 flex-wrap">
+                        <button
+                            onClick={() => navigate('/resources')}
+                            className="group flex items-center gap-3 text-neutral-500 hover:text-neutral-700 font-medium text-sm transition-all duration-300 hover:gap-4"
+                        >
+                            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm border border-neutral-200/50 shadow-sm group-hover:shadow-md transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M9 18V5l12-2v13"></path>
+                                    <circle cx="6" cy="18" r="3"></circle>
+                                    <circle cx="18" cy="16" r="3"></circle>
+                                </svg>
+                            </div>
+                            <span>Resources</span>
+                        </button>
                         <button
                             onClick={() => navigate('/stats')}
                             className="group flex items-center gap-3 text-neutral-500 hover:text-neutral-700 font-medium text-sm transition-all duration-300 hover:gap-4"

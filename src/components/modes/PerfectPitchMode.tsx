@@ -46,9 +46,8 @@ export const PerfectPitchMode: React.FC<PerfectPitchModeProps> = ({
     const hasAutoPlayedRef = useRef(false);
 
     useEffect(() => {
-        loadInstrument('piano').catch(() => {
-            // Silent fail - will load on first play
-        });
+        // Only load instrument once, not on every difficulty change
+        // It will be loaded when needed in play functions
         const newQuestion = generatePerfectPitchQuestion(difficulty);
         setQuestion(newQuestion);
         hasAutoPlayedRef.current = false; // Reset for new question
@@ -59,12 +58,25 @@ export const PerfectPitchMode: React.FC<PerfectPitchModeProps> = ({
         setIsPlaying(true);
 
         try {
+            // Ensure we have a valid question before initializing audio
+            if (!question.targetNote) {
+                setIsPlaying(false);
+                return;
+            }
+            
             await audioEngine.init();
             await loadInstrument('piano');
             await new Promise(resolve => setTimeout(resolve, 100));
             
+            // Double-check question is still valid
+            if (!question || !question.targetNote) {
+                setIsPlaying(false);
+                return;
+            }
+            
+            // Play ONLY the single note - no chords
             const midiNote = noteNameToMidi(question.targetNote, 4);
-            audioEngine.playNote('piano_C4', midiNote, 60, 0);
+            audioEngine.playNote('piano_C4', midiNote, 60, 0, 1.0);
             
             setTimeout(() => {
                 setIsPlaying(false);
@@ -77,12 +89,41 @@ export const PerfectPitchMode: React.FC<PerfectPitchModeProps> = ({
 
     // Auto-play once when question loads
     useEffect(() => {
-        if (question && !hasAutoPlayedRef.current && !selectedNote) {
+        // Only auto-play if question is fully ready and we haven't played yet
+        if (!question || !question.targetNote) {
+            return;
+        }
+        
+        if (!hasAutoPlayedRef.current && !selectedNote && !isPlaying && !checking) {
             hasAutoPlayedRef.current = true;
-            const timer = setTimeout(() => playNote(), 500);
+            const timer = setTimeout(async () => {
+                // Double-check question is still valid before playing
+                if (!question || !question.targetNote) {
+                    hasAutoPlayedRef.current = false;
+                    return;
+                }
+                
+                // Ensure audio is ready before playing
+                try {
+                    await audioEngine.init();
+                    await loadInstrument('piano');
+                    // Additional delay to ensure everything is stable
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    
+                    // Final validation before playing
+                    if (question && question.targetNote && !isPlaying) {
+                        playNote();
+                    } else {
+                        hasAutoPlayedRef.current = false; // Reset if question invalid
+                    }
+                } catch (error) {
+                    console.error('Error in auto-play:', error);
+                    hasAutoPlayedRef.current = false; // Reset on error
+                }
+            }, 1000); // Increased delay to ensure everything is ready
             return () => clearTimeout(timer);
         }
-    }, [question, selectedNote, playNote]);
+    }, [question, selectedNote, isPlaying, checking, playNote]);
 
     const handleAnswer = (note: string) => {
         if (checking || !question || isPlaying) return;

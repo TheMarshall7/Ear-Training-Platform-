@@ -43,12 +43,12 @@ export const MelodyMode: React.FC<MelodyModeProps> = ({
     const [wrongAtStep, setWrongAtStep] = useState<number | null>(null);
     const [showParticles, setShowParticles] = useState(false);
     const [dailyChallenges, setDailyChallenges] = useState(getDailyChallenges());
+    const [melodyPercentage, setMelodyPercentage] = useState<number | null>(null);
     const hasAutoPlayedRef = useRef(false);
 
     useEffect(() => {
-        loadInstrument('piano').catch(() => {
-            // Silent fail - will load on first play
-        });
+        // Only load instrument once, not on every difficulty change
+        // It will be loaded when needed in play functions
         const newQuestion = generateMelodyQuestion(difficulty);
         setQuestion(newQuestion);
         setUserDegrees([]);
@@ -56,14 +56,75 @@ export const MelodyMode: React.FC<MelodyModeProps> = ({
         hasAutoPlayedRef.current = false; // Reset for new question
     }, [difficulty]);
 
+    const playRootChord = useCallback(async () => {
+        if (!question || isPlaying) return;
+        
+        // Validate question is fully ready before playing
+        if (!question.notes || question.notes.length === 0) {
+            return;
+        }
+        
+        try {
+            await audioEngine.init();
+            await loadInstrument('piano');
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Final validation check before playing
+            if (!question || !question.notes || question.notes.length === 0) {
+                return;
+            }
+            
+            // Ensure sample is loaded before playing
+            const sampleId = 'piano_C4';
+            // Check if sample exists by trying to access it (will be checked in playNote)
+            
+            // Play root chord (degree 1 = C Major) to tonicize the key
+            // Play all notes simultaneously with slight arpeggiation
+            const rootChord = [60, 64, 67]; // C Major: C4, E4, G4
+            const gainPerNote = 1.0 / rootChord.length;
+            rootChord.forEach((midiNote, index) => {
+                audioEngine.playNote(sampleId, midiNote, 60, index * 0.05, gainPerNote);
+            });
+            
+            // Wait for chord to finish (about 2 seconds)
+            return new Promise(resolve => setTimeout(resolve, 2000));
+        } catch (error) {
+            console.error('Error playing root chord:', error);
+        }
+    }, [question, isPlaying]);
+
     const playMelody = useCallback(async () => {
         if (!question || isPlaying) return;
+        
+        // Validate question has valid notes before playing
+        if (!question.notes || question.notes.length === 0) {
+            return;
+        }
+        
         setIsPlaying(true);
 
         try {
             await audioEngine.init();
             await loadInstrument('piano');
             await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Double-check question is still valid
+            if (!question || !question.notes || question.notes.length === 0) {
+                setIsPlaying(false);
+                return;
+            }
+            
+            // Play root chord first, then melody
+            await playRootChord();
+            
+            // Small pause between chord and melody
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Final check before playing melody
+            if (!question || !question.notes || question.notes.length === 0) {
+                setIsPlaying(false);
+                return;
+            }
             
             audioEngine.playMelody(question.notes, question.tempoMs);
             
@@ -76,16 +137,45 @@ export const MelodyMode: React.FC<MelodyModeProps> = ({
             console.error('Error playing melody:', error);
             setIsPlaying(false);
         }
-    }, [question, isPlaying]);
+    }, [question, isPlaying, playRootChord]);
 
     // Auto-play once when question loads
     useEffect(() => {
-        if (question && !hasAutoPlayedRef.current && userDegrees.length === 0) {
+        // Only auto-play if question is fully ready and we haven't played yet
+        if (!question || !question.notes || question.notes.length === 0) {
+            return;
+        }
+        
+        if (!hasAutoPlayedRef.current && userDegrees.length === 0 && !isPlaying && !checking) {
             hasAutoPlayedRef.current = true;
-            const timer = setTimeout(() => playMelody(), 500);
+            const timer = setTimeout(async () => {
+                // Double-check question is still valid before playing
+                if (!question || !question.notes || question.notes.length === 0) {
+                    hasAutoPlayedRef.current = false;
+                    return;
+                }
+                
+                // Ensure audio is ready before playing
+                try {
+                    await audioEngine.init();
+                    await loadInstrument('piano');
+                    // Additional delay to ensure everything is stable
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    
+                    // Final validation before playing
+                    if (question && question.notes && question.notes.length > 0 && !isPlaying) {
+                        playMelody();
+                    } else {
+                        hasAutoPlayedRef.current = false; // Reset if question invalid
+                    }
+                } catch (error) {
+                    console.error('Error in auto-play:', error);
+                    hasAutoPlayedRef.current = false; // Reset on error
+                }
+            }, 1000); // Increased delay to ensure everything is ready
             return () => clearTimeout(timer);
         }
-    }, [question, userDegrees.length, playMelody]);
+    }, [question, userDegrees.length, isPlaying, checking, playMelody]);
 
     const handleDegreeSelect = (degree: number) => {
         if (checking || !question || isPlaying) return;
@@ -105,16 +195,22 @@ export const MelodyMode: React.FC<MelodyModeProps> = ({
 
         setChecking(true);
 
-        // Check step by step
+        // Check step by step and calculate percentage
+        let correctCount = 0;
         let wrongIndex = -1;
         for (let i = 0; i < degrees.length; i++) {
-            if (degrees[i] !== question.degrees[i]) {
-                wrongIndex = i;
-                break;
+            if (degrees[i] === question.degrees[i]) {
+                correctCount++;
+            } else if (wrongIndex === -1) {
+                wrongIndex = i; // Track first wrong position
             }
         }
 
-        if (wrongIndex === -1) {
+        const totalNotes = question.degrees.length;
+        const percentage = Math.round((correctCount / totalNotes) * 100);
+        const isFullyCorrect = wrongIndex === -1;
+
+        if (isFullyCorrect) {
             // All correct
             setWrongAtStep(null);
             setShowParticles(true);
@@ -142,7 +238,7 @@ export const MelodyMode: React.FC<MelodyModeProps> = ({
             
             onCorrect(finalPoints);
         } else {
-            // Wrong at step
+            // Wrong at step - show percentage
             setWrongAtStep(wrongIndex);
             
             // Update stats
@@ -152,6 +248,9 @@ export const MelodyMode: React.FC<MelodyModeProps> = ({
             
             onWrong();
         }
+        
+        // Store percentage for display
+        setMelodyPercentage(percentage);
     };
 
     const handleClear = () => {
@@ -164,6 +263,7 @@ export const MelodyMode: React.FC<MelodyModeProps> = ({
         setUserDegrees([]);
         setChecking(false);
         setWrongAtStep(null);
+        setMelodyPercentage(null);
         hasAutoPlayedRef.current = false; // Reset for new question
         const newQuestion = generateMelodyQuestion(difficulty);
         setQuestion(newQuestion);
@@ -262,24 +362,34 @@ export const MelodyMode: React.FC<MelodyModeProps> = ({
                 </div>
 
                 {checking && (
-                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 p-6 flex flex-col items-center animate-slide-up pb-8">
-                        <Feedback 
-                            correct={wrongAtStep === null} 
-                            points={30}
-                            multiplier={streak >= 20 ? 4 : streak >= 10 ? 3 : streak >= 5 ? 2 : 1}
-                            onShowParticles={() => setShowParticles(true)}
-                        />
-                        {wrongAtStep !== null && (
-                            <div className="mt-2 text-sm text-neutral-500">
-                                Wrong at note {wrongAtStep + 1}. Correct sequence: {question.degrees.join(' → ')}
-                            </div>
-                        )}
-                        <button
-                            onClick={handleNext}
-                            className="mt-4 btn-primary w-full max-w-md text-lg"
-                        >
-                            Next Question
-                        </button>
+                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 p-6 flex flex-col items-center animate-slide-up pb-8 max-h-[80vh] overflow-y-auto">
+                        <div className="w-full max-w-md space-y-4">
+                            <Feedback 
+                                correct={wrongAtStep === null} 
+                                points={30}
+                                multiplier={streak >= 20 ? 4 : streak >= 10 ? 3 : streak >= 5 ? 2 : 1}
+                                onShowParticles={() => setShowParticles(true)}
+                            />
+                            {wrongAtStep !== null && melodyPercentage !== null && (
+                                <div className="text-center space-y-2">
+                                    <div className="text-lg font-semibold text-neutral-700">
+                                        Melody {melodyPercentage}% correct
+                                    </div>
+                                    <div className="text-sm text-neutral-500">
+                                        Wrong at note {wrongAtStep + 1}
+                                    </div>
+                                    <div className="text-sm text-neutral-500">
+                                        Correct sequence: {question.degrees.join(' → ')}
+                                    </div>
+                                </div>
+                            )}
+                            <button
+                                onClick={handleNext}
+                                className="w-full btn-primary text-lg mt-6"
+                            >
+                                Next Question
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>

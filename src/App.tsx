@@ -6,6 +6,7 @@ import { Train } from './pages/Train';
 import { Locked } from './pages/Locked';
 import { Success } from './pages/Success';
 import { Stats } from './pages/Stats';
+import { Resources } from './pages/Resources';
 
 function App() {
   return (
@@ -17,6 +18,8 @@ function App() {
           <Route path="/locked" element={<Locked />} />
           <Route path="/success" element={<Success />} />
           <Route path="/stats" element={<Stats />} />
+          <Route path="/resources" element={<Resources />} />
+          <Route path="/resources/:category" element={<Resources />} />
         </Routes>
       </GameProvider>
     </Router>

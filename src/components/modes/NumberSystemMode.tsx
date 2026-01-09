@@ -45,11 +45,11 @@ export const NumberSystemMode: React.FC<NumberSystemModeProps> = ({
     const [showParticles, setShowParticles] = useState(false);
     const [dailyChallenges, setDailyChallenges] = useState(getDailyChallenges());
     const hasAutoPlayedRef = useRef(false);
+    const playNoteRef = useRef<(() => Promise<void>) | null>(null);
 
     useEffect(() => {
-        loadInstrument('piano').catch(() => {
-            // Silent fail - will load on first play
-        });
+        // Only load instrument once, not on every difficulty change
+        // It will be loaded when needed in play functions
         const newQuestion = generateNumberSystemQuestion(difficulty);
         setQuestion(newQuestion);
         setProgressionPlayed(false);
@@ -57,16 +57,33 @@ export const NumberSystemMode: React.FC<NumberSystemModeProps> = ({
         hasAutoPlayedRef.current = false; // Reset for new question
     }, [difficulty]);
 
-    const playProgression = useCallback(async () => {
+    const playProgression = useCallback(async (autoPlayNoteAfter: boolean = false) => {
         if (!question || isPlaying) return;
+        
+        // Validate question has valid progression chords
+        if (!question.progressionChords || question.progressionChords.length === 0) {
+            return;
+        }
+        
         setIsPlaying(true);
-        setProgressionPlayed(false);
-        setNotePlayed(false);
+        
+        // Only reset states if this is the initial play (auto-play), not a replay
+        if (autoPlayNoteAfter) {
+            setProgressionPlayed(false);
+            setNotePlayed(false);
+        }
+        // For replay, preserve notePlayed state so user can still interact after
 
         try {
             await audioEngine.init();
             await loadInstrument('piano');
             await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Double-check question is still valid
+            if (!question || !question.progressionChords || question.progressionChords.length === 0) {
+                setIsPlaying(false);
+                return;
+            }
             
             const tempoMs = numberSystemConfig.tempoMs.progression;
             audioEngine.playChordSequence(question.progressionChords, tempoMs);
@@ -76,6 +93,13 @@ export const NumberSystemMode: React.FC<NumberSystemModeProps> = ({
             setTimeout(() => {
                 setProgressionPlayed(true);
                 setIsPlaying(false);
+                
+                // Auto-play note after progression if requested
+                if (autoPlayNoteAfter && question && question.targetMidi && playNoteRef.current) {
+                    setTimeout(() => {
+                        playNoteRef.current?.();
+                    }, 500); // Brief pause after progression
+                }
             }, progressionDuration);
         } catch (error) {
             console.error('Error playing progression:', error);
@@ -85,6 +109,12 @@ export const NumberSystemMode: React.FC<NumberSystemModeProps> = ({
 
     const playNote = useCallback(async () => {
         if (!question || isPlaying) return;
+        
+        // Validate question has valid target MIDI
+        if (!question.targetMidi) {
+            return;
+        }
+        
         setIsPlaying(true);
 
         try {
@@ -92,7 +122,14 @@ export const NumberSystemMode: React.FC<NumberSystemModeProps> = ({
             await loadInstrument('piano');
             await new Promise(resolve => setTimeout(resolve, 100));
             
-            audioEngine.playNote('piano_C4', question.targetMidi, 60, 0);
+            // Double-check question is still valid
+            if (!question || !question.targetMidi) {
+                setIsPlaying(false);
+                return;
+            }
+            
+            // Play ONLY the single note - no chords
+            audioEngine.playNote('piano_C4', question.targetMidi, 60, 0, 1.0);
             
             setTimeout(() => {
                 setIsPlaying(false);
@@ -103,15 +140,50 @@ export const NumberSystemMode: React.FC<NumberSystemModeProps> = ({
             setIsPlaying(false);
         }
     }, [question, isPlaying]);
-
-    // Auto-play progression once when question loads
+    
+    // Store playNote in ref for use in playProgression
     useEffect(() => {
-        if (question && !hasAutoPlayedRef.current && !progressionPlayed && !notePlayed) {
+        playNoteRef.current = playNote;
+    }, [playNote]);
+
+    // Auto-play progression once when question loads, then auto-play note after progression
+    useEffect(() => {
+        // Only auto-play if question is fully ready and we haven't played yet
+        if (!question || !question.progressionChords || question.progressionChords.length === 0) {
+            return;
+        }
+        
+        if (!hasAutoPlayedRef.current && !progressionPlayed && !notePlayed && !isPlaying && !checking) {
             hasAutoPlayedRef.current = true;
-            const timer = setTimeout(() => playProgression(), 500);
+            const timer = setTimeout(async () => {
+                // Double-check question is still valid before playing
+                if (!question || !question.progressionChords || question.progressionChords.length === 0) {
+                    hasAutoPlayedRef.current = false;
+                    return;
+                }
+                
+                // Ensure audio is ready before playing
+                try {
+                    await audioEngine.init();
+                    await loadInstrument('piano');
+                    // Additional delay to ensure everything is stable
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    
+                    // Final validation before playing
+                    if (question && question.progressionChords && question.progressionChords.length > 0 && !isPlaying) {
+                        // Play progression with auto-play note after
+                        playProgression(true);
+                    } else {
+                        hasAutoPlayedRef.current = false; // Reset if question invalid
+                    }
+                } catch (error) {
+                    console.error('Error in auto-play:', error);
+                    hasAutoPlayedRef.current = false; // Reset on error
+                }
+            }, 1000); // Increased delay to ensure everything is ready
             return () => clearTimeout(timer);
         }
-    }, [question, progressionPlayed, notePlayed, playProgression]);
+    }, [question, progressionPlayed, notePlayed, isPlaying, checking, playProgression]);
 
     const handleAnswer = (degree: number) => {
         if (checking || !question || isPlaying || !notePlayed) return;
@@ -173,13 +245,13 @@ export const NumberSystemMode: React.FC<NumberSystemModeProps> = ({
         } else if (progressionPlayed) {
             playNote();
         } else {
-            playProgression();
+            playProgression(false);
         }
     };
 
     const handlePlay = () => {
         if (!progressionPlayed) {
-            playProgression();
+            playProgression(false);
         } else if (!notePlayed) {
             playNote();
         } else {
@@ -253,6 +325,16 @@ export const NumberSystemMode: React.FC<NumberSystemModeProps> = ({
                         correctDegrees={checking && question ? [question.targetDegree] : null}
                         wrongAtStep={null}
                     />
+                    
+                    {notePlayed && !checking && (
+                        <button
+                            onClick={() => playProgression(false)}
+                            disabled={isPlaying}
+                            className="mt-4 px-6 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-800 hover:bg-neutral-100 rounded-lg border border-neutral-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Replay Progression
+                        </button>
+                    )}
                 </div>
 
                 {checking && (

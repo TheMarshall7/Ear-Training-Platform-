@@ -1,14 +1,52 @@
 import { audioEngine } from './audioEngine';
+import { getInstrument, getDefaultInstrument, type InstrumentConfig } from '../config/instruments';
 
-// Map of note names to likely file paths or creating a chromatic map
-// For MVP we might just use one sample (Middle C) and pitch shift it
-// as permitted by the audio engine logic.
+/**
+ * Load an instrument by ID
+ * Supports both local files and CDN URLs
+ */
+export const loadInstrument = async (instrumentId: string = 'piano') => {
+    // Get instrument config, fallback to default if not found
+    const instrument = getInstrument(instrumentId) || getDefaultInstrument();
+    
+    // Use the configured sample URL (can be local or CDN)
+    const sampleId = `${instrument.id}_C4`;
+    
+    // Check if already loaded
+    if (audioEngine.hasSample(sampleId)) {
+        console.log(`Instrument ${instrument.id} already loaded`);
+        return;
+    }
 
-export const loadInstrument = async (instrument: string = 'piano') => {
-    // We will assume a single sample "C4.wav" exists for the instrument
-    // and we will pitch shift it for other notes.
-    // This reduces the number of files needed for the MVP.
+    try {
+        await audioEngine.loadSample(instrument.sampleUrl, sampleId);
+        console.log(`Successfully loaded instrument: ${instrument.name}`);
+    } catch (error) {
+        console.error(`Failed to load instrument ${instrument.id}:`, error);
+        // If custom instrument fails, try to fallback to default piano
+        if (instrumentId !== 'piano') {
+            console.log('Falling back to default piano');
+            const defaultInst = getDefaultInstrument();
+            if (!audioEngine.hasSample(`${defaultInst.id}_C4`)) {
+                await audioEngine.loadSample(defaultInst.sampleUrl, `${defaultInst.id}_C4`);
+            }
+        } else {
+            throw error;
+        }
+    }
+};
 
-    const sampleUrl = `/samples/${instrument}/C4.wav`;
-    await audioEngine.loadSample(sampleUrl, `${instrument}_C4`);
+/**
+ * Get the sample ID for an instrument (used by audio engine)
+ */
+export const getInstrumentSampleId = (instrumentId: string = 'piano'): string => {
+    const instrument = getInstrument(instrumentId) || getDefaultInstrument();
+    return `${instrument.id}_C4`;
+};
+
+/**
+ * Get available instruments
+ */
+export const getAvailableInstruments = () => {
+    return instruments;
 };

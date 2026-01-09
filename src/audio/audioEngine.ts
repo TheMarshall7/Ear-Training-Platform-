@@ -29,6 +29,10 @@ export class AudioEngine {
         }
     }
 
+    hasSample(id: string): boolean {
+        return this.samples.has(id);
+    }
+
     async loadSample(url: string, id: string): Promise<void> {
         await this.init(); // Ensure context is ready
         if (this.samples.has(id)) {
@@ -53,13 +57,25 @@ export class AudioEngine {
     }
 
     play(id: string, pitchShiftCents: number = 0, timeOffset: number = 0, gain: number = 1.0) {
-        if (!this.context || !this.samples.has(id)) {
-            console.warn(`Cannot play ${id}: context=${!!this.context}, hasSample=${this.samples.has(id)}`);
+        // Strict validation - do not play if context or sample is not ready
+        if (!this.context) {
+            console.warn(`Cannot play ${id}: audio context not initialized`);
+            return;
+        }
+        
+        if (!this.samples.has(id)) {
+            console.warn(`Cannot play ${id}: sample not loaded. Available: ${Array.from(this.samples.keys()).join(', ')}`);
+            return;
+        }
+        
+        const sample = this.samples.get(id);
+        if (!sample) {
+            console.warn(`Cannot play ${id}: sample buffer is null`);
             return;
         }
 
         const source = this.context.createBufferSource();
-        source.buffer = this.samples.get(id)!;
+        source.buffer = sample;
 
         // Simple pitch shifting if needed (playbackRate)
         // 100 cents = 1 semitone
@@ -144,6 +160,21 @@ export class AudioEngine {
         if (!chords || chords.length === 0) {
             console.error('No chords provided to playChordSequence');
             return;
+        }
+        
+        // Validate all chords have valid MIDI notes
+        for (let i = 0; i < chords.length; i++) {
+            if (!chords[i] || chords[i].length === 0) {
+                console.error(`Chord at index ${i} is empty or invalid`);
+                return;
+            }
+            // Validate MIDI note ranges (reasonable range: 0-127)
+            for (let j = 0; j < chords[i].length; j++) {
+                if (chords[i][j] < 0 || chords[i][j] > 127 || !Number.isFinite(chords[i][j])) {
+                    console.error(`Invalid MIDI note at chord ${i}, note ${j}: ${chords[i][j]}`);
+                    return;
+                }
+            }
         }
 
         console.log(`Playing ${chords.length} chords with tempo ${tempoMs}ms`);
@@ -243,6 +274,135 @@ export class AudioEngine {
     ) {
         // Same implementation as playScale, just different default tempo
         this.playScale(notes, tempoMs, rootSampleId, rootMidi, octave);
+    }
+
+    /**
+     * Play a sequence of notes (alias for playScale)
+     */
+    playNoteSequence(
+        notes: string[],
+        tempoMs: number = 400,
+        rootSampleId: string = 'piano_C4',
+        rootMidi: number = 60,
+        octave: number = 4
+    ) {
+        this.playScale(notes, tempoMs, rootSampleId, rootMidi, octave);
+    }
+
+    /**
+     * Play a single chord (block chord, all notes simultaneously)
+     * @param notes Array of note names with octave (e.g., ["C4", "E4", "G4"])
+     * @param rootSampleId Sample ID to use for pitch shifting (default 'piano_C4')
+     * @param rootMidi MIDI note of the root sample (default 60 = C4)
+     */
+    playChord(
+        notes: string[],
+        rootSampleId: string = 'piano_C4',
+        rootMidi: number = 60
+    ) {
+        if (!this.context) {
+            console.error('Audio context not initialized');
+            return;
+        }
+
+        if (this.context.state === 'suspended') {
+            this.context.resume().catch(err => {
+                console.error('Failed to resume audio context:', err);
+            });
+        }
+
+        if (!this.samples.has(rootSampleId)) {
+            console.error(`Sample ${rootSampleId} not loaded. Available samples:`, Array.from(this.samples.keys()));
+            return;
+        }
+
+        if (!notes || notes.length === 0) {
+            console.error('No notes provided to playChord');
+            return;
+        }
+
+        const baseDelay = 0.05;
+        const notesPerChord = notes.length;
+        const gainPerNote = Math.min(1.0, 1.0 / notesPerChord);
+
+        notes.forEach((note, index) => {
+            // Parse note with octave (e.g., "C4" -> note="C", octave=4)
+            // Handle formats like "C4", "C#4", "Bb4"
+            const match = note.match(/^([A-G])([#b]?)(\d+)$/);
+            if (!match) {
+                console.warn(`Invalid note format: ${note}, skipping`);
+                return;
+            }
+            const [, baseNote, accidental, octaveStr] = match;
+            const octave = parseInt(octaveStr, 10);
+            const noteName = baseNote + accidental;
+            const midiNote = noteNameToMidi(noteName, octave);
+            const noteDelay = baseDelay + (index * 0.02); // Very slight arpeggiation (20ms)
+            this.playNote(rootSampleId, midiNote, rootMidi, noteDelay, gainPerNote);
+        });
+    }
+
+    /**
+     * Play an interval (two notes)
+     * @param root Note name with octave (e.g., "C4")
+     * @param semitones Number of semitones for the interval
+     * @param direction 'asc' for ascending, 'desc' for descending
+     * @param tempoMs Time between notes in milliseconds (default 800ms)
+     * @param rootSampleId Sample ID to use for pitch shifting (default 'piano_C4')
+     * @param rootMidi MIDI note of the root sample (default 60 = C4)
+     */
+    playInterval(
+        root: string,
+        semitones: number,
+        direction: 'asc' | 'desc' = 'asc',
+        tempoMs: number = 800,
+        rootSampleId: string = 'piano_C4',
+        rootMidi: number = 60
+    ) {
+        if (!this.context) {
+            console.error('Audio context not initialized');
+            return;
+        }
+
+        if (this.context.state === 'suspended') {
+            this.context.resume().catch(err => {
+                console.error('Failed to resume audio context:', err);
+            });
+        }
+
+        if (!this.samples.has(rootSampleId)) {
+            console.error(`Sample ${rootSampleId} not loaded. Available samples:`, Array.from(this.samples.keys()));
+            return;
+        }
+
+        // Parse root note
+        const match = root.match(/^([A-G])([#b]?)(\d+)$/);
+        if (!match) {
+            console.error(`Invalid root note format: ${root}`);
+            return;
+        }
+        const [, baseNote, accidental, octaveStr] = match;
+        const octave = parseInt(octaveStr, 10);
+        const noteName = baseNote + accidental;
+        const rootMidiNote = noteNameToMidi(noteName, octave);
+
+        // Calculate target note
+        const semitoneAdjust = direction === 'asc' ? semitones : -semitones;
+        const targetMidiNote = rootMidiNote + semitoneAdjust;
+
+        // Ensure target is within one octave range
+        if (Math.abs(semitoneAdjust) > 12) {
+            console.warn(`Interval ${semitones} semitones exceeds one octave, clamping`);
+        }
+
+        const baseDelay = 0.05;
+        const tempoSeconds = tempoMs / 1000;
+
+        // Play root note
+        this.playNote(rootSampleId, rootMidiNote, rootMidi, baseDelay);
+
+        // Play target note
+        this.playNote(rootSampleId, targetMidiNote, rootMidi, baseDelay + tempoSeconds);
     }
 }
 

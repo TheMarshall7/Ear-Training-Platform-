@@ -45,7 +45,8 @@ export const ScalesMode: React.FC<ScalesModeProps> = ({
     const hasAutoPlayedRef = useRef(false);
 
     useEffect(() => {
-        loadInstrument('piano');
+        // Only load instrument once, not on every difficulty change
+        // It will be loaded when needed in play functions
         const newQuestion = generateScaleQuestion(difficulty);
         setQuestion(newQuestion);
         hasAutoPlayedRef.current = false; // Reset for new question
@@ -53,12 +54,24 @@ export const ScalesMode: React.FC<ScalesModeProps> = ({
 
     const playScale = useCallback(async () => {
         if (!question || isPlaying) return;
+        
+        // Validate question has valid notes before playing
+        if (!question.notes || question.notes.length === 0) {
+            return;
+        }
+        
         setIsPlaying(true);
 
         try {
             await audioEngine.init();
             await loadInstrument('piano');
             await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Double-check question is still valid
+            if (!question || !question.notes || question.notes.length === 0) {
+                setIsPlaying(false);
+                return;
+            }
             
             audioEngine.playScale(question.notes, 400);
             
@@ -75,12 +88,41 @@ export const ScalesMode: React.FC<ScalesModeProps> = ({
 
     // Auto-play once when question loads
     useEffect(() => {
-        if (question && !hasAutoPlayedRef.current && !selectedId) {
+        // Only auto-play if question is fully ready and we haven't played yet
+        if (!question || !question.notes || question.notes.length === 0) {
+            return;
+        }
+        
+        if (!hasAutoPlayedRef.current && !selectedId && !isPlaying && !checking) {
             hasAutoPlayedRef.current = true;
-            const timer = setTimeout(() => playScale(), 500);
+            const timer = setTimeout(async () => {
+                // Double-check question is still valid before playing
+                if (!question || !question.notes || question.notes.length === 0) {
+                    hasAutoPlayedRef.current = false;
+                    return;
+                }
+                
+                // Ensure audio is ready before playing
+                try {
+                    await audioEngine.init();
+                    await loadInstrument('piano');
+                    // Additional delay to ensure everything is stable
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    
+                    // Final validation before playing
+                    if (question && question.notes && question.notes.length > 0 && !isPlaying) {
+                        playScale();
+                    } else {
+                        hasAutoPlayedRef.current = false; // Reset if question invalid
+                    }
+                } catch (error) {
+                    console.error('Error in auto-play:', error);
+                    hasAutoPlayedRef.current = false; // Reset on error
+                }
+            }, 1000); // Increased delay to ensure everything is ready
             return () => clearTimeout(timer);
         }
-    }, [question, selectedId, playScale]);
+    }, [question, selectedId, isPlaying, checking, playScale]);
 
     const handleAnswer = (id: string) => {
         if (checking || !question || isPlaying) return;
