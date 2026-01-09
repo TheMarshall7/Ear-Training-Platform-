@@ -62,6 +62,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
     const [showParticles, setShowParticles] = useState(false);
     const [celebration, setCelebration] = useState<{ type: 'level-up' | 'perfect-run'; message: string; subtitle?: string } | null>(null);
     const [newAchievement, setNewAchievement] = useState<Achievement | null>(null);
+    const [dailyChallenges, setDailyChallenges] = useState(getDailyChallenges());
     const roundStateRef = useRef(roundState);
     const roundStatusRef = useRef(roundStatus);
     const isPlayingRef = useRef(isPlaying);

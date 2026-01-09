@@ -1,4 +1,5 @@
-import { harmonyRules, type ChordFunction, type Difficulty } from '../config/harmonyRules';
+import { harmonyRules, type ChordFunction } from '../config/harmonyRules';
+import type { Difficulty } from './GameContext';
 
 export interface SessionState {
     history: string[]; // Array of degree sequences like "1-4-5-1"

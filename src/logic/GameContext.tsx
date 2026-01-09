@@ -68,6 +68,11 @@ const initialState: GameState = {
   runProgress: 0,
   sessionCount: parseInt(localStorage.getItem('ear_trainer_sessions') || '0'),
   isLocked: parseInt(localStorage.getItem('ear_trainer_sessions') || '0') >= MAX_FREE_SESSIONS,
+  xp: 0,
+  level: 1,
+  totalQuestions: 0,
+  totalCorrect: 0,
+  bestStreak: 0,
   ...loadStats()
 };
 
