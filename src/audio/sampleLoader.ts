@@ -1,5 +1,5 @@
 import { audioEngine } from './audioEngine';
-import { getInstrument, getDefaultInstrument, type InstrumentConfig } from '../config/instruments';
+import { getInstrument, getDefaultInstrument, instruments } from '../config/instruments';
 
 /**
  * Load an instrument by ID

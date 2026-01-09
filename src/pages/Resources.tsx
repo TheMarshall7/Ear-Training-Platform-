@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { ResourcesLayout } from '../components/resources/ResourcesLayout';
 import { ResourceCategoryCards } from '../components/resources/ResourceCategoryCards';
 import { ResourceList } from '../components/resources/ResourceList';
@@ -11,7 +11,6 @@ import { loadInstrument } from '../audio/sampleLoader';
 
 export const Resources: React.FC = () => {
     const { category } = useParams<{ category?: string }>();
-    const navigate = useNavigate();
     
     const [audioUnlocked, setAudioUnlocked] = useState(false);
     const [intervalDirection, setIntervalDirection] = useState<IntervalDirection>('asc');
@@ -128,7 +127,7 @@ export const Resources: React.FC = () => {
                     <ul className="space-y-2 text-sm text-neutral-700">
                         <li className="flex items-start gap-2">
                             <span className="text-orange-500 mt-0.5">•</span>
-                            <span>Best results: 5 minutes daily.</span>
+                            <span>Best results: 20 minutes daily.</span>
                         </li>
                         <li className="flex items-start gap-2">
                             <span className="text-orange-500 mt-0.5">•</span>

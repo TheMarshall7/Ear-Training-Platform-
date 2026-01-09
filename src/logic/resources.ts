@@ -5,7 +5,6 @@ import intervalsConfig from '../config/intervals.json';
 import chordsConfig from '../config/chords.json';
 import melodiesConfig from '../config/melodies.json';
 import numberSystemConfig from '../config/numberSystem.json';
-import { degreeToMidiChord } from '../config/harmonyRules';
 
 /**
  * Convert scales config to ResourceItems

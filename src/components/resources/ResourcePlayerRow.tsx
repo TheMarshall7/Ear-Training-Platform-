@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import type { ResourceItem, IntervalDirection, PlaySpec } from '../../types/resources';
+import type { ResourceItem, IntervalDirection } from '../../types/resources';
 import { audioEngine } from '../../audio/audioEngine';
 import { loadInstrument } from '../../audio/sampleLoader';
 import { noteNameToMidi } from '../../config/harmonyRules';
-import { degreeToMidiChord } from '../../config/harmonyRules';
 
 interface ResourcePlayerRowProps {
     resource: ResourceItem;

@@ -1,5 +1,5 @@
 import type { PlaySpec, IntervalDirection } from '../types/resources';
-import { degreeToNoteName, degreeToMidiChord, noteNameToMidi } from '../config/harmonyRules';
+import { degreeToNoteName, degreeToMidiChord } from '../config/harmonyRules';
 
 /**
  * Build a playSpec for a scale
