@@ -1,0 +1,124 @@
+{
+  "melodies": [
+    {
+      "id": "melody_easy_1",
+      "name": "Simple Stepwise",
+      "difficulty": "easy",
+      "degrees": [1, 2, 3, 2, 1],
+      "tempoMs": 400,
+      "structureTag": "basicIdea"
+    },
+    {
+      "id": "melody_easy_2",
+      "name": "Tonic Focus",
+      "difficulty": "easy",
+      "degrees": [1, 3, 5, 3, 1],
+      "tempoMs": 450,
+      "structureTag": "basicIdea"
+    },
+    {
+      "id": "melody_easy_3",
+      "name": "Stepwise Descent",
+      "difficulty": "easy",
+      "degrees": [5, 4, 3, 2, 1],
+      "tempoMs": 400,
+      "structureTag": "basicIdea"
+    },
+    {
+      "id": "melody_easy_4",
+      "name": "Simple Arpeggio",
+      "difficulty": "easy",
+      "degrees": [1, 3, 5, 1],
+      "tempoMs": 350,
+      "structureTag": "basicIdea"
+    },
+    {
+      "id": "melody_easy_5",
+      "name": "Up and Down",
+      "difficulty": "easy",
+      "degrees": [1, 2, 3, 4, 3, 2, 1],
+      "tempoMs": 400,
+      "structureTag": "period"
+    },
+    {
+      "id": "melody_medium_1",
+      "name": "Antecedent Phrase",
+      "difficulty": "medium",
+      "degrees": [1, 2, 3, 5, 4, 3, 2, 1],
+      "tempoMs": 400,
+      "structureTag": "period"
+    },
+    {
+      "id": "melody_medium_2",
+      "name": "Consequent Phrase",
+      "difficulty": "medium",
+      "degrees": [5, 6, 5, 4, 3, 2, 1, 2],
+      "tempoMs": 400,
+      "structureTag": "period"
+    },
+    {
+      "id": "melody_medium_3",
+      "name": "Leap and Step",
+      "difficulty": "medium",
+      "degrees": [1, 5, 4, 3, 2, 1, 3, 5],
+      "tempoMs": 450,
+      "structureTag": "sentence"
+    },
+    {
+      "id": "melody_medium_4",
+      "name": "Question Phrase",
+      "difficulty": "medium",
+      "degrees": [1, 3, 5, 6, 5, 4, 3, 2],
+      "tempoMs": 400,
+      "structureTag": "period"
+    },
+    {
+      "id": "melody_medium_5",
+      "name": "Answer Phrase",
+      "difficulty": "medium",
+      "degrees": [5, 4, 3, 2, 1, 3, 5, 1],
+      "tempoMs": 400,
+      "structureTag": "period"
+    },
+    {
+      "id": "melody_hard_1",
+      "name": "Extended Sentence",
+      "difficulty": "hard",
+      "degrees": [1, 2, 3, 5, 4, 3, 2, 1, 3, 5, 1],
+      "tempoMs": 400,
+      "structureTag": "sentence"
+    },
+    {
+      "id": "melody_hard_2",
+      "name": "Varied Contour",
+      "difficulty": "hard",
+      "degrees": [1, 3, 5, 6, 4, 2, 3, 1, 5, 3, 2, 1],
+      "tempoMs": 450,
+      "structureTag": "hybrid"
+    },
+    {
+      "id": "melody_hard_3",
+      "name": "Complex Period",
+      "difficulty": "hard",
+      "degrees": [1, 2, 4, 5, 6, 5, 4, 3, 2, 1, 3, 5],
+      "tempoMs": 400,
+      "structureTag": "period"
+    },
+    {
+      "id": "melody_hard_4",
+      "name": "Extended Arpeggio",
+      "difficulty": "hard",
+      "degrees": [1, 3, 5, 6, 5, 3, 1, 5, 3, 2, 1],
+      "tempoMs": 400,
+      "structureTag": "sentence"
+    },
+    {
+      "id": "melody_hard_5",
+      "name": "Full Scale Exercise",
+      "difficulty": "hard",
+      "degrees": [1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1],
+      "tempoMs": 400,
+      "structureTag": "hybrid"
+    }
+  ]
+}

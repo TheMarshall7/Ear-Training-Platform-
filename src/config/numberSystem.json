@@ -1,0 +1,34 @@
+{
+  "progressions": [
+    {
+      "degrees": [1, 5, 1]
+    },
+    {
+      "degrees": [1, 4, 5, 1]
+    },
+    {
+      "degrees": [6, 4, 5, 1]
+    },
+    {
+      "degrees": [1, 6, 4, 5, 1]
+    },
+    {
+      "degrees": [1, 5, 6, 4, 1]
+    }
+  ],
+  "difficulties": {
+    "easy": {
+      "allowedDegrees": [1, 5, 4]
+    },
+    "medium": {
+      "allowedDegrees": [1, 2, 3, 4, 5, 6]
+    },
+    "hard": {
+      "allowedDegrees": [1, 2, 3, 4, 5, 6, 7]
+    }
+  },
+  "tempoMs": {
+    "progression": 900,
+    "note": 500
+  }
+}

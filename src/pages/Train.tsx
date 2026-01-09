@@ -1,0 +1,495 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useGame } from '../logic/GameContext';
+import { generateIntervalQuestion, type IntervalQuestion } from '../logic/intervalTrainer';
+import { generateChordQuestion, type ChordQuestion } from '../logic/chordTrainer';
+import { audioEngine } from '../audio/audioEngine';
+import { loadInstrument } from '../audio/sampleLoader';
+import { Player } from '../components/Player';
+import { AnswerGrid } from '../components/AnswerGrid';
+import { Feedback } from '../components/Feedback';
+import { ProgressMeter } from '../components/ProgressMeter';
+import { Paywall } from '../components/Paywall';
+import { ProgressionRound } from '../components/ProgressionRound';
+import { ScalesMode } from '../components/modes/ScalesMode';
+import { PerfectPitchMode } from '../components/modes/PerfectPitchMode';
+import { NumberSystemMode } from '../components/modes/NumberSystemMode';
+import { MelodyMode } from '../components/modes/MelodyMode';
+import { ParticleEffect } from '../components/ParticleEffect';
+import { StreakCelebration } from '../components/StreakCelebration';
+import { CelebrationOverlay } from '../components/CelebrationOverlay';
+import { AchievementToast } from '../components/AchievementToast';
+import { recordAnswer, updateBestStreak, loadStats, saveStats } from '../logic/statsTracker';
+import { checkAchievements, loadAchievements, type Achievement } from '../logic/achievements';
+import { getLevelFromXP } from '../logic/GameContext';
+import { updateChallengeProgress, getDailyChallenges } from '../logic/dailyChallenges';
+import { BrandLogo } from '../components/BrandLogo';
+import { Footer } from '../components/Footer';
+
+// Calculate combo multiplier based on streak
+const getComboMultiplier = (streak: number): number => {
+    if (streak >= 20) return 4;
+    if (streak >= 10) return 3;
+    if (streak >= 5) return 2;
+    return 1;
+};
+
+export const Train: React.FC = () => {
+    const navigate = useNavigate();
+    const { state, dispatch } = useGame();
+
+    const [question, setQuestion] = useState<IntervalQuestion | ChordQuestion | null>(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [correctId, setCorrectId] = useState<string | null>(null);
+    const [checking, setChecking] = useState(false);
+    const [showParticles, setShowParticles] = useState(false);
+    const [previousStreak, setPreviousStreak] = useState(0);
+    const [previousLevel, setPreviousLevel] = useState(state.level);
+    const [newAchievement, setNewAchievement] = useState<Achievement | null>(null);
+    const [celebration, setCelebration] = useState<{ type: 'level-up' | 'perfect-run'; message: string; subtitle?: string } | null>(null);
+    const [dailyChallenges, setDailyChallenges] = useState(getDailyChallenges());
+
+    // Init
+    useEffect(() => {
+        if (state.isLocked) {
+            // Show locked state immediately
+        } else {
+            loadNextQuestion();
+        }
+    }, [state.currentMode, state.difficulty]);
+
+    // Preload instrument when component mounts or mode changes
+    useEffect(() => {
+        loadInstrument('piano').catch(() => {
+            // Silent fail - will load on first play
+        });
+    }, [state.currentMode]);
+
+    const loadNextQuestion = () => {
+        setSelectedId(null);
+        setCorrectId(null);
+        setChecking(false);
+
+        // Check limits
+        if (state.runProgress > 0 && state.runProgress % 10 === 0) {
+            dispatch({ type: 'INCREMENT_SESSION' });
+        }
+
+        if (state.currentMode === 'interval') {
+            setQuestion(generateIntervalQuestion(state.difficulty));
+        } else {
+            setQuestion(generateChordQuestion(state.difficulty));
+        }
+    };
+
+    const playQuestion = useCallback(async () => {
+        if (!question || isPlaying) return;
+        setIsPlaying(true);
+
+        try {
+            // Initialize audio context and load sample
+            await audioEngine.init();
+            await loadInstrument('piano');
+            await new Promise(resolve => setTimeout(resolve, 100)); // Small delay to ensure sample is ready
+
+            if ('intervalId' in question) {
+                // Play interval
+                const q = question as IntervalQuestion;
+                audioEngine.playNote('piano_C4', q.rootMidi, 60, 0);
+                audioEngine.playNote('piano_C4', q.targetMidi, 60, 0.8);
+            } else {
+                // Play chord
+                const q = question as ChordQuestion;
+                // Reduce gain per note to prevent clipping when multiple notes play together
+                const gainPerNote = Math.min(1.0, 1.0 / q.notes.length);
+                q.notes.forEach((note, i) => {
+                    // Arpeggiate slightly or verify strum
+                    audioEngine.playNote('piano_C4', note, 60, 0 + (i * 0.05), gainPerNote);
+                });
+            }
+        } catch (e) {
+            console.error('Error playing question:', e);
+            setIsPlaying(false);
+            return;
+        }
+
+        setTimeout(() => setIsPlaying(false), 1500);
+    }, [question, isPlaying]);
+
+    // Auto-play once when question loads
+    const hasAutoPlayedRef = useRef(false);
+    useEffect(() => {
+        // Reset flag when question changes
+        hasAutoPlayedRef.current = false;
+    }, [question]);
+
+    useEffect(() => {
+        if (question && !hasAutoPlayedRef.current && !selectedId) {
+            hasAutoPlayedRef.current = true;
+            const timer = setTimeout(() => playQuestion(), 500);
+            return () => clearTimeout(timer);
+        }
+    }, [question, selectedId, playQuestion]);
+
+    const handleAnswer = (id: string) => {
+        if (checking || !question) return;
+
+        setSelectedId(id);
+        setChecking(true);
+
+        const isCorrect =
+            ('intervalId' in question && id === question.intervalId) ||
+            ('chordId' in question && id === question.chordId);
+
+        if (isCorrect) {
+            setCorrectId(id);
+            setShowParticles(true);
+            setTimeout(() => setShowParticles(false), 100);
+            
+            const newStreak = state.streak + 1;
+            const newRunProgress = state.runProgress + 1;
+            
+            // Check for perfect run
+            const isPerfectRun = newRunProgress === 10 && isCorrect;
+            
+            // Update stats
+            let stats = loadStats();
+            stats = recordAnswer(stats, true, state.currentMode, isPerfectRun);
+            stats = updateBestStreak(stats, newStreak);
+            saveStats(stats);
+            
+            // Check achievements
+            const achievements = loadAchievements();
+            const newlyUnlocked = checkAchievements(achievements, {
+                bestStreak: stats.bestStreak,
+                totalQuestions: stats.totalQuestions,
+                totalCorrect: stats.totalCorrect,
+                perfectRuns: stats.perfectRuns,
+                modeStats: stats.modeStats,
+                dailyStreak: stats.dailyStreak
+            });
+            
+            if (newlyUnlocked.length > 0) {
+                setNewAchievement(newlyUnlocked[0]);
+            }
+            
+            // Update daily challenges
+            let updatedChallenges = dailyChallenges;
+            
+            // Update questions challenge
+            const challengeUpdate1 = updateChallengeProgress(updatedChallenges, 'questions', 1);
+            updatedChallenges = challengeUpdate1.challenges;
+            
+            // Check streak challenges - if streak meets threshold, mark as complete
+            updatedChallenges = updatedChallenges.map(challenge => {
+                if (challenge.completed || challenge.type !== 'streak') return challenge;
+                if (newStreak >= challenge.target) {
+                    return { ...challenge, progress: challenge.target, completed: true };
+                }
+                return challenge;
+            });
+            
+            // Save streak challenge updates
+            if (updatedChallenges.some(c => c.type === 'streak' && !c.completed)) {
+                localStorage.setItem('ear_trainer_daily_challenges', JSON.stringify(updatedChallenges));
+            }
+            
+            if (isPerfectRun) {
+                const challengeUpdate3 = updateChallengeProgress(updatedChallenges, 'perfect', 1);
+                updatedChallenges = challengeUpdate3.challenges;
+            }
+            
+            setDailyChallenges(updatedChallenges);
+            
+            // Check for level up
+            const currentXP = state.xp;
+            const xpGained = Math.floor(30 * (1 + state.streak * 0.1));
+            const newXP = currentXP + xpGained;
+            const newLevel = getLevelFromXP(newXP);
+            
+            if (newLevel > state.level) {
+                setCelebration({
+                    type: 'level-up',
+                    message: `Level ${newLevel}!`,
+                    subtitle: 'Keep it up!'
+                });
+            }
+            
+            // Check for perfect run celebration
+            if (isPerfectRun) {
+                setCelebration({
+                    type: 'perfect-run',
+                    message: 'Perfect Run!',
+                    subtitle: '10/10 Correct!'
+                });
+            }
+            
+            // Apply combo multiplier to points
+            const basePoints = 30;
+            const multiplier = getComboMultiplier(state.streak);
+            const finalPoints = basePoints * multiplier;
+            
+            dispatch({ type: 'CORRECT_ANSWER', payload: finalPoints });
+            setPreviousLevel(state.level);
+        } else {
+            setCorrectId('intervalId' in question ? (question as IntervalQuestion).intervalId : (question as ChordQuestion).chordId);
+            
+            // Update stats
+            let stats = loadStats();
+            stats = recordAnswer(stats, false, state.currentMode);
+            saveStats(stats);
+            
+            dispatch({ type: 'WRONG_ANSWER' });
+        }
+        
+        // Track streak for celebrations
+        setPreviousStreak(state.streak);
+    };
+
+    const handleNext = () => {
+        if (state.isLocked) return; // Keep paywall up if locked state triggered during question
+        loadNextQuestion();
+    };
+
+    // Render mode-specific components
+    if (state.currentMode === 'progression') {
+        return (
+            <>
+                <ProgressionRound
+                    difficulty={state.difficulty}
+                    streak={state.streak}
+                    runProgress={state.runProgress}
+                    onCorrect={(points) => dispatch({ type: 'CORRECT_ANSWER', payload: points })}
+                    onWrong={() => dispatch({ type: 'WRONG_ANSWER' })}
+                    onNext={() => {
+                        if (state.runProgress > 0 && state.runProgress % 10 === 0) {
+                            dispatch({ type: 'INCREMENT_SESSION' });
+                        }
+                    }}
+                />
+                <Paywall
+                    visible={state.isLocked}
+                    onUnlock={() => {
+                        dispatch({ type: 'UNLOCK_FEATURE' });
+                    }}
+                />
+            </>
+        );
+    }
+
+    if (state.currentMode === 'scale') {
+        return (
+            <>
+                <ScalesMode
+                    difficulty={state.difficulty}
+                    streak={state.streak}
+                    runProgress={state.runProgress}
+                    onCorrect={(points) => dispatch({ type: 'CORRECT_ANSWER', payload: points })}
+                    onWrong={() => dispatch({ type: 'WRONG_ANSWER' })}
+                    onNext={() => {
+                        if (state.runProgress > 0 && state.runProgress % 10 === 0) {
+                            dispatch({ type: 'INCREMENT_SESSION' });
+                        }
+                    }}
+                />
+                <Paywall
+                    visible={state.isLocked}
+                    onUnlock={() => {
+                        dispatch({ type: 'UNLOCK_FEATURE' });
+                    }}
+                />
+            </>
+        );
+    }
+
+    if (state.currentMode === 'perfectPitch') {
+        return (
+            <>
+                <PerfectPitchMode
+                    difficulty={state.difficulty}
+                    streak={state.streak}
+                    runProgress={state.runProgress}
+                    onCorrect={(points) => dispatch({ type: 'CORRECT_ANSWER', payload: points })}
+                    onWrong={() => dispatch({ type: 'WRONG_ANSWER' })}
+                    onNext={() => {
+                        if (state.runProgress > 0 && state.runProgress % 10 === 0) {
+                            dispatch({ type: 'INCREMENT_SESSION' });
+                        }
+                    }}
+                />
+                <Paywall
+                    visible={state.isLocked}
+                    onUnlock={() => {
+                        dispatch({ type: 'UNLOCK_FEATURE' });
+                    }}
+                />
+            </>
+        );
+    }
+
+    if (state.currentMode === 'numberSystem') {
+        return (
+            <>
+                <NumberSystemMode
+                    difficulty={state.difficulty}
+                    streak={state.streak}
+                    runProgress={state.runProgress}
+                    onCorrect={(points) => dispatch({ type: 'CORRECT_ANSWER', payload: points })}
+                    onWrong={() => dispatch({ type: 'WRONG_ANSWER' })}
+                    onNext={() => {
+                        if (state.runProgress > 0 && state.runProgress % 10 === 0) {
+                            dispatch({ type: 'INCREMENT_SESSION' });
+                        }
+                    }}
+                />
+                <Paywall
+                    visible={state.isLocked}
+                    onUnlock={() => {
+                        dispatch({ type: 'UNLOCK_FEATURE' });
+                    }}
+                />
+            </>
+        );
+    }
+
+    if (state.currentMode === 'melody') {
+        return (
+            <>
+                <MelodyMode
+                    difficulty={state.difficulty}
+                    streak={state.streak}
+                    runProgress={state.runProgress}
+                    onCorrect={(points) => dispatch({ type: 'CORRECT_ANSWER', payload: points })}
+                    onWrong={() => dispatch({ type: 'WRONG_ANSWER' })}
+                    onNext={() => {
+                        if (state.runProgress > 0 && state.runProgress % 10 === 0) {
+                            dispatch({ type: 'INCREMENT_SESSION' });
+                        }
+                    }}
+                />
+                <Paywall
+                    visible={state.isLocked}
+                    onUnlock={() => {
+                        dispatch({ type: 'UNLOCK_FEATURE' });
+                    }}
+                />
+            </>
+        );
+    }
+
+    if (!question) return <div className="p-8 text-center">Loading...</div>;
+
+    return (
+        <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 relative flex flex-col">
+            {/* Background gradient */}
+            <div className="fixed inset-0 -z-0">
+                <div className="absolute -translate-x-1/2 -translate-y-1/2 animate-pulse-glow bg-gradient-to-br from-orange-400/20 via-red-500/15 to-rose-600/15 opacity-60 mix-blend-multiply w-[500px] h-[500px] rounded-full top-1/4 left-1/4 blur-3xl"></div>
+            </div>
+
+            {/* Top Left Branding */}
+            <div className="absolute top-6 left-4 lg:top-8 lg:left-8 z-50">
+                <BrandLogo showText={false} />
+            </div>
+
+            <div className="relative z-10 flex flex-col items-center pt-6 lg:pt-8 pb-32 flex-1">
+                {/* Header / Nav */}
+                <div className="w-full max-w-4xl px-4 flex justify-between items-center mb-8 relative z-50">
+                    <button 
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            navigate('/');
+                        }} 
+                        className="group flex items-center gap-2 text-neutral-400 hover:text-neutral-600 font-medium text-sm relative z-50 cursor-pointer transition-all duration-300 hover:gap-3"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-x-1 transition-transform duration-300">
+                            <path d="m12 19-7-7 7-7"></path>
+                            <path d="M19 12H5"></path>
+                        </svg>
+                        <span>Home</span>
+                    </button>
+                    <div className="text-xs lg:text-sm font-bold text-neutral-500 uppercase tracking-widest bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20 shadow-sm">
+                        {state.difficulty} {state.currentMode}
+                    </div>
+                    <div className="w-16"></div>
+                </div>
+
+            <ProgressMeter 
+                current={state.runProgress + 1} 
+                total={10} 
+                streak={state.streak}
+                level={state.level}
+                xp={state.xp}
+            />
+
+            <StreakCelebration streak={state.streak} />
+
+            <ParticleEffect trigger={showParticles} />
+
+            {celebration && (
+                <CelebrationOverlay
+                    type={celebration.type}
+                    message={celebration.message}
+                    subtitle={celebration.subtitle}
+                    onComplete={() => setCelebration(null)}
+                />
+            )}
+
+            <AchievementToast
+                achievement={newAchievement}
+                onClose={() => setNewAchievement(null)}
+            />
+
+            <div className="flex-1 w-full max-w-2xl flex flex-col items-center justify-center">
+                <div className="card w-full max-w-xl mx-auto mb-8 bg-white/50 backdrop-blur-sm">
+                    <h2 className="text-center text-xl font-semibold text-stone-700 mb-2">
+                        Listen and Identify
+                    </h2>
+                    <Player
+                        onPlay={playQuestion}
+                        isPlaying={isPlaying}
+                        autoPlay={false} // Handled by effect
+                    />
+                </div>
+
+                <AnswerGrid
+                    options={question.options}
+                    onSelect={handleAnswer}
+                    disabled={checking || isPlaying}
+                    selectedId={selectedId}
+                    correctId={correctId}
+                />
+            </div>
+
+            {checking && (
+                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 p-6 flex flex-col items-center animate-slide-up pb-8">
+                    <Feedback 
+                        correct={correctId === selectedId} 
+                        points={30}
+                        multiplier={getComboMultiplier(state.streak)}
+                        onShowParticles={() => setShowParticles(true)}
+                    />
+                    <button
+                        onClick={handleNext}
+                        className={`mt-4 btn-primary w-full max-w-md text-lg ${state.isLocked ? 'opacity-50 pointer-events-none' : ''}`}
+                    >
+                        Next Question
+                    </button>
+                </div>
+            )}
+
+            <Paywall
+                visible={state.isLocked}
+                onUnlock={() => {
+                    dispatch({ type: 'UNLOCK_FEATURE' });
+                    // Ideally navigate to success or just close
+                }}
+            />
+            </div>
+
+            {/* Footer */}
+            <Footer />
+        </div>
+    );
+};

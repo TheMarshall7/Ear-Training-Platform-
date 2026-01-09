@@ -1,0 +1,13 @@
+{
+  "difficulties": {
+    "easy": {
+      "allowedNotes": ["C", "G", "D"]
+    },
+    "medium": {
+      "allowedNotes": ["C", "D", "E", "F", "G", "A"]
+    },
+    "hard": {
+      "allowedNotes": ["C", "D", "E", "F", "G", "A", "B"]
+    }
+  }
+}

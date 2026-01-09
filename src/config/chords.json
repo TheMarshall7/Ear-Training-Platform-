@@ -1,0 +1,38 @@
+[
+    {
+        "id": "maj",
+        "name": "Major",
+        "intervals": [
+            0,
+            4,
+            7
+        ]
+    },
+    {
+        "id": "min",
+        "name": "Minor",
+        "intervals": [
+            0,
+            3,
+            7
+        ]
+    },
+    {
+        "id": "dim",
+        "name": "Diminished",
+        "intervals": [
+            0,
+            3,
+            6
+        ]
+    },
+    {
+        "id": "aug",
+        "name": "Augmented",
+        "intervals": [
+            0,
+            4,
+            8
+        ]
+    }
+]

@@ -1,0 +1,76 @@
+{
+    "interval": [
+        {
+            "id": "easy",
+            "name": "Easy",
+            "intervals": [
+                "m3",
+                "M3",
+                "P4",
+                "P5",
+                "P8"
+            ]
+        },
+        {
+            "id": "medium",
+            "name": "Medium",
+            "intervals": [
+                "m2",
+                "M2",
+                "m3",
+                "M3",
+                "P4",
+                "P5",
+                "M6",
+                "P8"
+            ]
+        },
+        {
+            "id": "hard",
+            "name": "Hard",
+            "intervals": [
+                "m2",
+                "M2",
+                "m3",
+                "M3",
+                "P4",
+                "tt",
+                "P5",
+                "m6",
+                "M6",
+                "m7",
+                "M7",
+                "P8"
+            ]
+        }
+    ],
+    "chord": [
+        {
+            "id": "easy",
+            "name": "Easy",
+            "chords": [
+                "maj",
+                "min"
+            ]
+        },
+        {
+            "id": "medium",
+            "name": "Medium",
+            "chords": [
+                "maj",
+                "min",
+                "dim"
+            ]
+        },
+        {
+            "id": "hard",
+            "name": "Hard",
+            "chords": [
+                "maj",
+                "min",
+                "dim",
+                "aug"
+            ]
+        }
+    ]
+}
