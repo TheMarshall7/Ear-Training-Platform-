@@ -94,8 +94,7 @@ export function generateProgressionQuestion(
  */
 export function validateProgressionStep(
     targetDegrees: number[],
-    userDegrees: number[],
-    currentStep: number
+    userDegrees: number[]
 ): { isValid: boolean; wrongAtStep: number | null; isComplete: boolean } {
     // Check if current step is correct
     if (userDegrees.length === 0) {

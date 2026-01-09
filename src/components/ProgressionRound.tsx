@@ -13,9 +13,7 @@ import { CelebrationOverlay } from './CelebrationOverlay';
 import { AchievementToast } from './AchievementToast';
 import { recordAnswer, updateBestStreak, loadStats, saveStats } from '../logic/statsTracker';
 import { checkAchievements, loadAchievements, type Achievement } from '../logic/achievements';
-import { getLevelFromXP } from '../logic/GameContext';
 import { updateChallengeProgress, getDailyChallenges } from '../logic/dailyChallenges';
-import { BrandLogo } from './BrandLogo';
 import { Footer } from './Footer';
 import {
     generateProgressionQuestion,
@@ -277,8 +275,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
 
         const validation = validateProgressionStep(
             currentState.question.targetDegrees,
-            newUserDegrees,
-            newUserDegrees.length - 1
+            newUserDegrees
         );
 
         if (!validation.isValid) {

@@ -14,7 +14,6 @@ export const Feedback: React.FC<FeedbackProps> = ({
     onShowParticles 
 }) => {
     const [isVisible, setIsVisible] = useState(false);
-    const [displayPoints, setDisplayPoints] = useState(0);
 
     useEffect(() => {
         if (correct !== null) {
@@ -26,30 +25,10 @@ export const Feedback: React.FC<FeedbackProps> = ({
                     onShowParticles();
                 }
                 
-                // Animate score counter
-                const targetPoints = points * multiplier;
-                const duration = 500;
-                const steps = 20;
-                const increment = targetPoints / steps;
-                let current = 0;
-                
-                const timer = setInterval(() => {
-                    current += increment;
-                    if (current >= targetPoints) {
-                        setDisplayPoints(targetPoints);
-                        clearInterval(timer);
-                    } else {
-                        setDisplayPoints(Math.floor(current));
-                    }
-                }, duration / steps);
-
-                return () => clearInterval(timer);
-            } else {
-                setDisplayPoints(0);
+                // Animation handled by finalPoints calculation
             }
         } else {
             setIsVisible(false);
-            setDisplayPoints(0);
         }
     }, [correct, points, multiplier]); // Removed onShowParticles to prevent infinite loop
 

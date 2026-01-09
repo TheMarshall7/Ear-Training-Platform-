@@ -44,8 +44,6 @@ export const Train: React.FC = () => {
     const [correctId, setCorrectId] = useState<string | null>(null);
     const [checking, setChecking] = useState(false);
     const [showParticles, setShowParticles] = useState(false);
-    const [previousStreak, setPreviousStreak] = useState(0);
-    const [previousLevel, setPreviousLevel] = useState(state.level);
     const [newAchievement, setNewAchievement] = useState<Achievement | null>(null);
     const [celebration, setCelebration] = useState<{ type: 'level-up' | 'perfect-run'; message: string; subtitle?: string } | null>(null);
     const [dailyChallenges, setDailyChallenges] = useState(getDailyChallenges());
@@ -231,7 +229,6 @@ export const Train: React.FC = () => {
             const finalPoints = basePoints * multiplier;
             
             dispatch({ type: 'CORRECT_ANSWER', payload: finalPoints });
-            setPreviousLevel(state.level);
         } else {
             setCorrectId('intervalId' in question ? (question as IntervalQuestion).intervalId : (question as ChordQuestion).chordId);
             
@@ -242,9 +239,6 @@ export const Train: React.FC = () => {
             
             dispatch({ type: 'WRONG_ANSWER' });
         }
-        
-        // Track streak for celebrations
-        setPreviousStreak(state.streak);
     };
 
     const handleNext = () => {
@@ -394,7 +388,7 @@ export const Train: React.FC = () => {
 
             <div className="relative z-10 flex flex-col items-center pt-6 lg:pt-8 pb-32 flex-1">
                 {/* Header / Nav */}
-                <div className="w-full max-w-4xl px-4 flex justify-between items-center mb-8 relative z-50">
+                <div className="w-full max-w-4xl px-4 flex justify-between items-center mb-8 relative z-50 pl-20 lg:pl-24">
                     <button 
                         onClick={(e) => {
                             e.preventDefault();

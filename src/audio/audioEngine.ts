@@ -216,7 +216,6 @@ export class AudioEngine {
             return;
         }
 
-        const currentTime = this.context!.currentTime;
         const baseDelay = 0.05;
         const tempoSeconds = tempoMs / 1000;
 

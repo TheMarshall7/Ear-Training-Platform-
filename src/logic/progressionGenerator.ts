@@ -27,7 +27,7 @@ export function generateProgression(
     let progression: number[] = [];
 
     while (attempts < maxAttempts) {
-        progression = buildProgressionFromTemplate(template, config, difficulty);
+        progression = buildProgressionFromTemplate(template, difficulty);
         const sequenceKey = progression.join('-');
 
         // Check if this progression is unique in history
@@ -63,10 +63,9 @@ export function generateProgression(
  */
 function buildProgressionFromTemplate(
     template: typeof harmonyRules.difficultyTemplates.easy,
-    config: typeof harmonyRules,
     difficulty: Difficulty
 ): number[] {
-    const { functionPools, cadences } = config;
+    const { functionPools } = harmonyRules;
     const progression: number[] = [];
 
     // Determine length
@@ -116,7 +115,7 @@ function buildProgressionFromTemplate(
 
         // Select degree from function pool with weighted randomness
         const pool = functionPools[currentFunction];
-        const degree = selectDegreeFromPool(pool, config);
+        const degree = selectDegreeFromPool(pool);
 
         progression.push(degree);
 
@@ -182,8 +181,7 @@ function buildProgressionFromTemplate(
  * (prefer less-used degrees)
  */
 function selectDegreeFromPool(
-    pool: number[],
-    config: typeof harmonyRules
+    pool: number[]
 ): number {
     // For now, simple random selection
     // In future, could weight by usage frequency

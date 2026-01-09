@@ -200,7 +200,7 @@ export const NumberSystemMode: React.FC<NumberSystemModeProps> = ({
             </div>
 
             <div className="relative z-10 flex flex-col items-center pt-6 lg:pt-8 pb-32 flex-1">
-                <div className="w-full max-w-4xl px-4 flex justify-between items-center mb-4 relative z-50">
+                <div className="w-full max-w-4xl px-4 flex justify-between items-center mb-4 relative z-50 pl-20 lg:pl-24">
                     <button 
                         onClick={(e) => {
                             e.preventDefault();
