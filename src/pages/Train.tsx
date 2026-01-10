@@ -116,8 +116,8 @@ export const Train: React.FC = () => {
         setIsPlaying(true);
 
         try {
-            // Initialize audio context and load sample
-            await audioEngine.init();
+            // Initialize audio context and load sample (force recreate on user interaction)
+            await audioEngine.init(true);
             await loadInstrument('piano');
             await new Promise(resolve => setTimeout(resolve, 100)); // Small delay to ensure sample is ready
 

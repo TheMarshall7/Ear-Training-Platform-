@@ -75,7 +75,8 @@ export const NumberSystemMode: React.FC<NumberSystemModeProps> = ({
         // For replay, preserve notePlayed state so user can still interact after
 
         try {
-            await audioEngine.init();
+            // Force recreate audio context on user interaction
+            await audioEngine.init(true);
             await loadInstrument('piano');
             await new Promise(resolve => setTimeout(resolve, 100));
             
@@ -118,7 +119,8 @@ export const NumberSystemMode: React.FC<NumberSystemModeProps> = ({
         setIsPlaying(true);
 
         try {
-            await audioEngine.init();
+            // Force recreate audio context on user interaction
+            await audioEngine.init(true);
             await loadInstrument('piano');
             await new Promise(resolve => setTimeout(resolve, 100));
             

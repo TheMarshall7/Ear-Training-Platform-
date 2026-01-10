@@ -159,8 +159,8 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
 
         try {
             console.log('Initializing audio...');
-            // Ensure audio context is initialized and sample is loaded
-            await audioEngine.init();
+            // Ensure audio context is initialized and sample is loaded (force recreate on user interaction)
+            await audioEngine.init(true);
             console.log('Audio context initialized');
             
             // Wait a bit to ensure context is ready

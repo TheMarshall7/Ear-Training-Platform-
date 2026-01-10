@@ -63,7 +63,8 @@ export const ScalesMode: React.FC<ScalesModeProps> = ({
         setIsPlaying(true);
 
         try {
-            await audioEngine.init();
+            // Force recreate audio context on user interaction
+            await audioEngine.init(true);
             await loadInstrument('piano');
             await new Promise(resolve => setTimeout(resolve, 100));
             
