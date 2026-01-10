@@ -44,6 +44,7 @@ export const Stats: React.FC = () => {
         perfect: Object.values(achievements).filter(a => a.category === 'perfect'),
         mode: Object.values(achievements).filter(a => a.category === 'mode'),
         daily: Object.values(achievements).filter(a => a.category === 'daily'),
+        special: Object.values(achievements).filter(a => a.category === 'special'),
     };
 
     return (
@@ -196,6 +197,14 @@ export const Stats: React.FC = () => {
                                                     <div className="flex-1">
                                                         <div className={`font-bold text-base ${ach.unlocked ? 'text-neutral-900' : 'text-neutral-400'}`}>
                                                             {ach.name}
+                                                            {ach.id === 'mystery_platinum_gift' && ach.unlocked && (
+                                                                <button
+                                                                    onClick={() => navigate('/platinum-gift')}
+                                                                    className="ml-3 text-xs bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full hover:scale-105 transition-transform"
+                                                                >
+                                                    Claim Reward →
+                                                </button>
+                                                            )}
                                                         </div>
                                                         <div className="text-xs text-neutral-500 mt-1.5">
                                                             {ach.description}

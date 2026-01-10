@@ -15,6 +15,7 @@ import { Locked } from './pages/Locked';
 import { Success } from './pages/Success';
 import { Stats } from './pages/Stats';
 import { Resources } from './pages/Resources';
+import { PlatinumGift } from './pages/PlatinumGift';
 
 function App() {
   return (
@@ -28,6 +29,9 @@ function App() {
           <Route path="/stats" element={<Stats />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/resources/:category" element={<Resources />} />
+          <Route path="/platinum-gift" element={<PlatinumGift />} />
+          {/* Handle URL-encoded path for direct browser access */}
+          <Route path="/%2Fplatinum-gift" element={<PlatinumGift />} />
         </Routes>
       </GameProvider>
     </Router>

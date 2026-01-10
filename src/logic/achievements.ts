@@ -3,7 +3,7 @@ export interface Achievement {
     name: string;
     description: string;
     icon: string;
-    category: 'streak' | 'total' | 'perfect' | 'mode' | 'speed' | 'daily';
+    category: 'streak' | 'total' | 'perfect' | 'mode' | 'speed' | 'daily' | 'special';
     threshold: number;
     unlocked: boolean;
     unlockedAt?: number; // timestamp
@@ -36,6 +36,9 @@ export const ACHIEVEMENTS: Achievement[] = [
     // Daily practice
     { id: 'daily_7', name: 'Week Warrior', description: 'Practice 7 days in a row', icon: '📅', category: 'daily', threshold: 7, unlocked: false },
     { id: 'daily_30', name: 'Monthly Master', description: 'Practice 30 days in a row', icon: '🗓️', category: 'daily', threshold: 30, unlocked: false },
+    
+    // Special achievement - unlocks when all others are unlocked
+    { id: 'mystery_platinum_gift', name: 'Mystery Platinum Gift', description: 'Unlock all achievements to claim your reward!', icon: '💎', category: 'special', threshold: 0, unlocked: false },
 ];
 
 export function loadAchievements(): Record<string, Achievement> {
@@ -96,6 +99,16 @@ export function checkAchievements(
             case 'daily':
                 shouldUnlock = stats.dailyStreak >= ach.threshold;
                 break;
+            case 'special':
+                // Special achievements have custom logic
+                if (ach.id === 'mystery_platinum_gift') {
+                    // Check if all other achievements are unlocked
+                    const allOtherAchievements = Object.values(achievements).filter(
+                        a => a.id !== 'mystery_platinum_gift'
+                    );
+                    shouldUnlock = allOtherAchievements.every(a => a.unlocked);
+                }
+                break;
         }
         
         if (shouldUnlock) {
@@ -110,4 +123,14 @@ export function checkAchievements(
     }
     
     return newlyUnlocked;
+}
+
+/**
+ * Check if all regular achievements are unlocked (for Mystery Platinum Gift)
+ */
+export function areAllAchievementsUnlocked(achievements: Record<string, Achievement>): boolean {
+    const allRegularAchievements = Object.values(achievements).filter(
+        a => a.id !== 'mystery_platinum_gift'
+    );
+    return allRegularAchievements.every(a => a.unlocked);
 }

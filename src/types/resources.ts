@@ -30,5 +30,6 @@ export interface ResourceItem {
         structureTag?: string;
         degrees?: number[];
         chordType?: string;
+        isCadence?: boolean;
     };
 }

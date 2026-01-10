@@ -36,8 +36,9 @@ export const ResourceList: React.FC<ResourceListProps> = ({
             );
         }
 
-        // Apply difficulty filter
-        if (difficultyFilter !== 'all') {
+        // Apply difficulty filter (only for categories that have difficulty levels)
+        // Chords and intervals don't have difficulty, so always show them
+        if (difficultyFilter !== 'all' && (category === 'scales' || category === 'progressions' || category === 'melodies')) {
             filtered = filtered.filter(resource => resource.difficulty === difficultyFilter);
         }
 
@@ -79,8 +80,21 @@ export const ResourceList: React.FC<ResourceListProps> = ({
         }
         
         if (category === 'progressions') {
-            // Group progressions by length (number of chords)
+            // Separate cadences from regular progressions
+            const cadences: ResourceItem[] = [];
+            const regularProgressions: ResourceItem[] = [];
+            
+            filteredResources.forEach(resource => {
+                if (resource.metadata?.isCadence === true) {
+                    cadences.push(resource);
+                } else {
+                    regularProgressions.push(resource);
+                }
+            });
+            
+            // Group regular progressions by length (number of chords)
             const groups: Record<string, ResourceItem[]> = {
+                'cadences': cadences,
                 '2-chord': [],
                 '3-chord': [],
                 '4-chord': [],
@@ -88,7 +102,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
                 '6+ chord': []
             };
 
-            filteredResources.forEach(resource => {
+            regularProgressions.forEach(resource => {
                 const degrees = resource.metadata?.degrees as number[] | undefined;
                 if (degrees) {
                     const length = degrees.length;
@@ -128,18 +142,15 @@ export const ResourceList: React.FC<ResourceListProps> = ({
 
                 <div className="space-y-6">
                     {category === 'progressions' ? (
-                        // Group by length for progressions
-                        (['2-chord', '3-chord', '4-chord', '5-chord', '6+ chord'] as const).map(groupKey => {
-                            const items = groupedResources[groupKey];
-                            if (items.length === 0) return null;
-
-                            return (
-                                <div key={groupKey}>
+                        <>
+                            {/* Show cadences first if they exist */}
+                            {groupedResources['cadences'] && groupedResources['cadences'].length > 0 && (
+                                <div>
                                     <h3 className="text-lg font-semibold text-neutral-700 mb-3">
-                                        {groupKey.charAt(0).toUpperCase() + groupKey.slice(1)} Progressions
+                                        Cadential Progressions
                                     </h3>
                                     <div className="space-y-2 px-4 lg:px-0">
-                                        {items.map(resource => (
+                                        {groupedResources['cadences'].map(resource => (
                                             <ResourcePlayerRow
                                                 key={resource.id}
                                                 resource={resource}
@@ -148,8 +159,30 @@ export const ResourceList: React.FC<ResourceListProps> = ({
                                         ))}
                                     </div>
                                 </div>
-                            );
-                        })
+                            )}
+                            {/* Then show regular progressions grouped by length */}
+                            {(['2-chord', '3-chord', '4-chord', '5-chord', '6+ chord'] as const).map(groupKey => {
+                                const items = groupedResources[groupKey];
+                                if (items.length === 0) return null;
+
+                                return (
+                                    <div key={groupKey}>
+                                        <h3 className="text-lg font-semibold text-neutral-700 mb-3">
+                                            {groupKey.charAt(0).toUpperCase() + groupKey.slice(1)} Progressions
+                                        </h3>
+                                        <div className="space-y-2 px-4 lg:px-0">
+                                            {items.map(resource => (
+                                                <ResourcePlayerRow
+                                                    key={resource.id}
+                                                    resource={resource}
+                                                    intervalDirection={intervalDirection}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </>
                     ) : (
                         // Group by difficulty for scales and melodies
                         <>

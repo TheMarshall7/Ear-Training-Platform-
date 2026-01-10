@@ -200,6 +200,15 @@ export const Train: React.FC = () => {
             
             if (newlyUnlocked.length > 0) {
                 setNewAchievement(newlyUnlocked[0]);
+                
+                // Automatically navigate to platinum gift page if Mystery Platinum Gift is unlocked
+                const platinumGift = newlyUnlocked.find(ach => ach.id === 'mystery_platinum_gift');
+                if (platinumGift) {
+                    // Delay navigation slightly to show the toast first
+                    setTimeout(() => {
+                        navigate('/platinum-gift');
+                    }, 2000);
+                }
             }
             
             // Update daily challenges

@@ -68,6 +68,39 @@ export function getChordResources(): ResourceItem[] {
  * Convert progressions from numberSystem config to ResourceItems
  */
 export function getProgressionResources(): ResourceItem[] {
+    const resources: ResourceItem[] = [];
+    
+    // First, add cadences
+    const cadenceNames: Record<string, string> = {
+        '5-1': 'V-I',
+        '4-1': 'IV-I',
+        '5-6': 'V-vi',
+        '1-5': 'I-V',
+        '2-5': 'ii-V',
+        '4-5': 'IV-V',
+        '6-5': 'vi-V'
+    };
+    
+    if (numberSystemConfig.cadences) {
+        numberSystemConfig.cadences.forEach((cadence, index) => {
+            const degreeString = cadence.degrees.join('-');
+            const romanNumeral = cadenceNames[degreeString] || degreeString;
+            resources.push({
+                id: `cadence_${index}`,
+                category: 'progressions' as ResourceCategory,
+                title: cadence.name || romanNumeral,
+                subtitle: `${romanNumeral} • Degrees: ${degreeString}`,
+                difficulty: 'medium' as Difficulty, // Cadences are typically medium difficulty
+                playSpec: buildProgressionPlaySpec(cadence.degrees, 900),
+                metadata: {
+                    degrees: cadence.degrees,
+                    isCadence: true
+                }
+            });
+        });
+    }
+    
+    // Then add regular progressions
     const progressions = numberSystemConfig.progressions;
     const commonNames: Record<string, string> = {
         '1-5-1': 'I-V-I',
@@ -126,7 +159,7 @@ export function getProgressionResources(): ResourceItem[] {
         '3-6-1-4': 'iii-vi-I-IV'
     };
 
-    return progressions.map((prog, index) => {
+    progressions.forEach((prog, index) => {
         const degreeString = prog.degrees.join('-');
         const name = commonNames[degreeString] || degreeString;
 
@@ -138,7 +171,7 @@ export function getProgressionResources(): ResourceItem[] {
             difficulty = 'medium';
         }
 
-        return {
+        resources.push({
             id: `progression_${index}`,
             category: 'progressions' as ResourceCategory,
             title: name,
@@ -146,10 +179,13 @@ export function getProgressionResources(): ResourceItem[] {
             difficulty,
             playSpec: buildProgressionPlaySpec(prog.degrees, 900),
             metadata: {
-                degrees: prog.degrees
+                degrees: prog.degrees,
+                isCadence: false
             }
-        };
+        });
     });
+    
+    return resources;
 }
 
 /**
