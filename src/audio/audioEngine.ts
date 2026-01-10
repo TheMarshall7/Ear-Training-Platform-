@@ -41,10 +41,27 @@ export class AudioEngine {
                     // #region agent log
                     fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:38',message:'visibilitychange visible with context',data:{contextState:this.context.state,willNullify:this.context.state === 'suspended' || this.context.state === 'closed'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
                     // #endregion
-                    if (this.context.state === 'suspended' || this.context.state === 'closed') {
-                        console.log('Audio context suspended/closed, will reinitialize on next play');
+                    if (this.context.state === 'closed') {
+                        console.log('Audio context closed, will reinitialize on next play');
                         // Don't recreate here - let init() handle it on next play
                         this.context = null;
+                    } else if (this.context.state === 'suspended') {
+                        // CRITICAL FIX: Proactively resume suspended context when page becomes visible
+                        console.log('Audio context suspended, attempting to resume');
+                        // #region agent log
+                        fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:47',message:'visibilitychange resuming context',data:{contextState:this.context.state},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                        // #endregion
+                        this.context.resume().then(() => {
+                            console.log('Audio context resumed successfully');
+                            // #region agent log
+                            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:51',message:'visibilitychange context resumed',data:{contextState:this.context!.state},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                            // #endregion
+                        }).catch((error) => {
+                            console.error('Failed to resume AudioContext on visibility change:', error);
+                            // #region agent log
+                            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:55',message:'visibilitychange resume failed',data:{error:String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                            // #endregion
+                        });
                     }
                 }
             });
@@ -140,6 +157,20 @@ export class AudioEngine {
         // #region agent log
         fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:102',message:'play() context state check',data:{id,contextState:this.context.state,isSuspended:this.context.state === 'suspended',isClosed:this.context.state === 'closed'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
         // #endregion
+        
+        // CRITICAL FIX: Resume context if suspended (common on mobile when app returns from background)
+        if (this.context.state === 'suspended') {
+            console.warn(`AudioContext is suspended, attempting to resume before playing ${id}`);
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:145',message:'play() resuming suspended context',data:{id,contextState:this.context.state},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+            // #endregion
+            this.context.resume().catch((error) => {
+                console.error(`Failed to resume AudioContext:`, error);
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:149',message:'play() resume failed',data:{id,error:String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion
+            });
+        }
         
         if (!this.samples.has(id)) {
             console.warn(`Cannot play ${id}: sample not loaded. Available: ${Array.from(this.samples.keys()).join(', ')}`);
