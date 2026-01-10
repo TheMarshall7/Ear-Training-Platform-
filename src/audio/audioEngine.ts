@@ -32,9 +32,15 @@ export class AudioEngine {
         // Reinitialize audio context when page becomes visible again (fixes mobile Safari timeout)
         if (typeof document !== 'undefined') {
             document.addEventListener('visibilitychange', () => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:34',message:'visibilitychange event',data:{visibilityState:document.visibilityState,contextExists:!!this.context,contextState:this.context?.state},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion
                 if (document.visibilityState === 'visible' && this.context) {
                     // Reinitialize audio context when page becomes visible
                     // This fixes issues on mobile Safari when app is backgrounded
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:38',message:'visibilitychange visible with context',data:{contextState:this.context.state,willNullify:this.context.state === 'suspended' || this.context.state === 'closed'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                    // #endregion
                     if (this.context.state === 'suspended' || this.context.state === 'closed') {
                         console.log('Audio context suspended/closed, will reinitialize on next play');
                         // Don't recreate here - let init() handle it on next play
@@ -52,16 +58,43 @@ export class AudioEngine {
     }
 
     async init() {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:54',message:'init() called',data:{contextExists:!!this.context,contextState:this.context?.state},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         if (!this.context) {
             this.context = new (window.AudioContext || (window as any).webkitAudioContext)();
             this.masterGain = this.context.createGain();
             // Set master gain to prevent clipping when multiple notes play together
             this.masterGain.gain.value = 0.5; // 50% volume to prevent distortion
             this.masterGain.connect(this.context.destination);
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:60',message:'new context created',data:{contextState:this.context.state},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion
+            // Listen for state changes
+            this.context.addEventListener('statechange', () => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:64',message:'AudioContext state changed',data:{newState:this.context!.state},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion
+            });
         }
         if (this.context.state === 'suspended') {
-            await this.context.resume();
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:62',message:'resuming suspended context',data:{contextState:this.context.state},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion
+            try {
+                await this.context.resume();
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:65',message:'context resumed successfully',data:{contextState:this.context.state},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                // #endregion
+            } catch (error) {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:68',message:'context resume failed',data:{error:String(error),contextState:this.context.state},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                // #endregion
+            }
         }
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:70',message:'init() completed',data:{contextState:this.context.state},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
     }
 
     hasSample(id: string): boolean {
@@ -92,11 +125,21 @@ export class AudioEngine {
     }
 
     play(id: string, pitchShiftCents: number = 0, timeOffset: number = 0, gain: number = 1.0) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:94',message:'play() called',data:{id,contextExists:!!this.context,contextState:this.context?.state,hasSample:this.samples.has(id)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         // Strict validation - do not play if context or sample is not ready
         if (!this.context) {
             console.warn(`Cannot play ${id}: audio context not initialized`);
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:98',message:'play() aborted - no context',data:{id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+            // #endregion
             return;
         }
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:102',message:'play() context state check',data:{id,contextState:this.context.state,isSuspended:this.context.state === 'suspended',isClosed:this.context.state === 'closed'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         
         if (!this.samples.has(id)) {
             console.warn(`Cannot play ${id}: sample not loaded. Available: ${Array.from(this.samples.keys()).join(', ')}`);
@@ -135,6 +178,10 @@ export class AudioEngine {
         
         const startTime = this.context.currentTime + timeOffset;
         
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:136',message:'play() starting source',data:{id,contextState:this.context.state,startTime,currentTime:this.context.currentTime},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        
         // Ensure start time is not in the past
         if (startTime < this.context.currentTime) {
             console.warn(`Start time ${startTime} is in the past (current: ${this.context.currentTime}), using currentTime`);
@@ -142,6 +189,9 @@ export class AudioEngine {
         } else {
             source.start(startTime);
         }
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:145',message:'play() source.start() called',data:{id,contextState:this.context.state},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
     }
 
     // Play a note defined by midi number (assuming Middle C = 60 is the sample 'root')
