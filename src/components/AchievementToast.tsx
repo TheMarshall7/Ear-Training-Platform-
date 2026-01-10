@@ -7,7 +7,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import type { Achievement } from '../logic/achievements';
-import { Trophy, Star, Target, BookOpen, GraduationCap, Crown, Calendar, CalendarDays, Music, Piano, Music2, CheckCircle2, Flame } from 'lucide-react';
+import { Trophy, Star, BookOpen, GraduationCap, Crown, Calendar, CalendarDays, Music, Piano, Music2, Flame } from 'lucide-react';
 
 interface AchievementToastProps {
     achievement: Achievement | null;

@@ -13,7 +13,7 @@
  */
 
 import React, { createContext, useContext, useReducer } from 'react';
-import type { GameMode, Difficulty, GameState, GameAction } from '../types/game';
+import type { GameState, GameAction } from '../types/game';
 
 // Maximum number of free sessions before paywall is triggered
 const MAX_FREE_SESSIONS = 5;
