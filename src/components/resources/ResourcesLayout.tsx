@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { ResourceCategory } from '../../types/resources';
 import { BrandLogo } from '../BrandLogo';
+import { AppInfo } from '../AppInfo';
 
 interface ResourcesLayoutProps {
     children: React.ReactNode;
@@ -27,6 +28,7 @@ export const ResourcesLayout: React.FC<ResourcesLayoutProps> = ({ children, cate
             {/* Background gradient */}
             <div className="fixed inset-0 -z-0">
                 <div className="absolute -translate-x-1/2 -translate-y-1/2 animate-pulse-glow bg-gradient-to-br from-orange-400/20 via-red-500/15 to-rose-600/15 opacity-60 mix-blend-multiply w-[500px] h-[500px] rounded-full top-1/4 left-1/4 blur-3xl"></div>
+                <div className="absolute translate-x-1/2 translate-y-1/2 animate-pulse-glow bg-gradient-to-br from-orange-400/20 via-red-500/15 to-rose-600/15 opacity-60 mix-blend-multiply w-[500px] h-[500px] rounded-full bottom-1/4 right-1/4 blur-3xl"></div>
             </div>
 
             {/* Top Left Branding */}
@@ -91,6 +93,13 @@ export const ResourcesLayout: React.FC<ResourcesLayoutProps> = ({ children, cate
             <div className="relative z-10 flex-1 px-4 pb-8">
                 <div className="max-w-6xl mx-auto">
                     {children}
+                </div>
+            </div>
+
+            {/* App Info - Hidden Attribution */}
+            <div className="relative z-10 pt-4 pb-6 px-4">
+                <div className="max-w-6xl mx-auto flex justify-center">
+                    <AppInfo />
                 </div>
             </div>
         </div>

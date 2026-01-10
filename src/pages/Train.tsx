@@ -1,8 +1,17 @@
+/**
+ * Train Page Component
+ * 
+ * Main training interface that handles all game modes.
+ * Manages question generation, audio playback, user input, scoring, and feedback.
+ * Routes to specific mode components based on currentMode from game context.
+ */
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGame } from '../logic/GameContext';
-import { generateIntervalQuestion, type IntervalQuestion } from '../logic/intervalTrainer';
-import { generateChordQuestion, type ChordQuestion } from '../logic/chordTrainer';
+import { useGame } from '../context/GameContext';
+import { getLevelFromXP } from '../context/GameContext';
+import { generateIntervalQuestion, type IntervalQuestion } from '../logic/trainers/intervalTrainer';
+import { generateChordQuestion, type ChordQuestion } from '../logic/trainers/chordTrainer';
 import { audioEngine } from '../audio/audioEngine';
 import { loadInstrument } from '../audio/sampleLoader';
 import { Player } from '../components/Player';
@@ -21,7 +30,6 @@ import { CelebrationOverlay } from '../components/CelebrationOverlay';
 import { AchievementToast } from '../components/AchievementToast';
 import { recordAnswer, updateBestStreak, loadStats, saveStats } from '../logic/statsTracker';
 import { checkAchievements, loadAchievements, type Achievement } from '../logic/achievements';
-import { getLevelFromXP } from '../logic/GameContext';
 import { updateChallengeProgress, getDailyChallenges } from '../logic/dailyChallenges';
 import { BrandLogo } from '../components/BrandLogo';
 import { Footer } from '../components/Footer';
@@ -63,6 +71,28 @@ export const Train: React.FC = () => {
             // Silent fail - will load on first play
         });
     }, [state.currentMode]);
+
+    // Reinitialize audio when page becomes visible (fixes mobile Safari timeout)
+    useEffect(() => {
+        const handleVisibilityChange = async () => {
+            if (document.visibilityState === 'visible') {
+                try {
+                    // Reinitialize audio context when page becomes visible
+                    await audioEngine.init();
+                    // Reload instrument to ensure samples are available
+                    await loadInstrument('piano');
+                } catch (error) {
+                    console.log('Audio reinitialization on visibility change:', error);
+                    // Silent fail - will retry on next play
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, []);
 
     const loadNextQuestion = () => {
         setSelectedId(null);
@@ -379,6 +409,7 @@ export const Train: React.FC = () => {
             {/* Background gradient */}
             <div className="fixed inset-0 -z-0">
                 <div className="absolute -translate-x-1/2 -translate-y-1/2 animate-pulse-glow bg-gradient-to-br from-orange-400/20 via-red-500/15 to-rose-600/15 opacity-60 mix-blend-multiply w-[500px] h-[500px] rounded-full top-1/4 left-1/4 blur-3xl"></div>
+                <div className="absolute translate-x-1/2 translate-y-1/2 animate-pulse-glow bg-gradient-to-br from-orange-400/20 via-red-500/15 to-rose-600/15 opacity-60 mix-blend-multiply w-[500px] h-[500px] rounded-full bottom-1/4 right-1/4 blur-3xl"></div>
             </div>
 
             {/* Top Left Branding */}

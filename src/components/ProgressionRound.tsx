@@ -21,8 +21,8 @@ import {
     calculatePoints,
     createProgressionRoundState,
     type ProgressionRoundState
-} from '../logic/progressionTrainer';
-import type { Difficulty } from '../logic/GameContext';
+} from '../logic/trainers/progressionTrainer';
+import type { Difficulty } from '../types/game';
 
 // Calculate combo multiplier based on streak
 const getComboMultiplier = (streak: number): number => {
@@ -552,6 +552,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
             {/* Background gradient */}
             <div className="fixed inset-0 -z-0">
                 <div className="absolute -translate-x-1/2 -translate-y-1/2 animate-pulse-glow bg-gradient-to-br from-orange-400/20 via-red-500/15 to-rose-600/15 opacity-60 mix-blend-multiply w-[500px] h-[500px] rounded-full top-1/4 left-1/4 blur-3xl"></div>
+                <div className="absolute translate-x-1/2 translate-y-1/2 animate-pulse-glow bg-gradient-to-br from-orange-400/20 via-red-500/15 to-rose-600/15 opacity-60 mix-blend-multiply w-[500px] h-[500px] rounded-full bottom-1/4 right-1/4 blur-3xl"></div>
             </div>
 
             <div className="relative z-10 flex flex-col items-center pt-6 lg:pt-8 pb-32">

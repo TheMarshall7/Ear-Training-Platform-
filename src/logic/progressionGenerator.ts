@@ -1,6 +1,29 @@
-import { harmonyRules, type ChordFunction } from '../config/harmonyRules';
-import type { Difficulty } from './GameContext';
+/**
+ * Progression Generator
+ * 
+ * Generates musically valid chord progressions using functional harmony rules.
+ * Implements anti-memorization features to ensure variety across sessions.
+ * 
+ * Key features:
+ * - Uses harmony rules from config to ensure musically valid progressions
+ * - Tracks session history to avoid repeating progressions
+ * - Balances degree usage to prevent over-reliance on certain chords
+ * - Supports difficulty-based templates (easy, medium, hard)
+ * 
+ * The generator follows functional harmony principles:
+ * - Tonic (I) - stable, can go anywhere
+ * - Predominant (ii, IV) - leads to dominant
+ * - Dominant (V, vii°) - resolves to tonic
+ * - Submediant (vi) - can substitute for tonic
+ */
 
+import { harmonyRules, type ChordFunction } from '../config/harmonyRules';
+import type { Difficulty } from '../types/game';
+
+/**
+ * Session state tracks progression history and degree usage.
+ * Used to prevent repetition and ensure variety.
+ */
 export interface SessionState {
     history: string[]; // Array of degree sequences like "1-4-5-1"
     degreeUsageCount: Record<number, number>; // Track frequency of each degree

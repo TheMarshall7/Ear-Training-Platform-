@@ -56,7 +56,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
         return filtered;
     }, [resources, searchQuery, difficultyFilter]);
 
-    // Group by difficulty if applicable
+    // Group by difficulty if applicable, or by length for progressions
     const groupedResources = useMemo(() => {
         if (category === 'scales' || category === 'melodies') {
             const groups: Record<string, ResourceItem[]> = {
@@ -77,11 +77,43 @@ export const ResourceList: React.FC<ResourceListProps> = ({
 
             return groups;
         }
+        
+        if (category === 'progressions') {
+            // Group progressions by length (number of chords)
+            const groups: Record<string, ResourceItem[]> = {
+                '2-chord': [],
+                '3-chord': [],
+                '4-chord': [],
+                '5-chord': [],
+                '6+ chord': []
+            };
+
+            filteredResources.forEach(resource => {
+                const degrees = resource.metadata?.degrees as number[] | undefined;
+                if (degrees) {
+                    const length = degrees.length;
+                    if (length === 2) {
+                        groups['2-chord'].push(resource);
+                    } else if (length === 3) {
+                        groups['3-chord'].push(resource);
+                    } else if (length === 4) {
+                        groups['4-chord'].push(resource);
+                    } else if (length === 5) {
+                        groups['5-chord'].push(resource);
+                    } else {
+                        groups['6+ chord'].push(resource);
+                    }
+                }
+            });
+
+            return groups;
+        }
+        
         return null;
     }, [filteredResources, category]);
 
     if (groupedResources) {
-        // Render with collapsible difficulty sections
+        // Render with grouped sections
         return (
             <div>
                 <ResourceFilters
@@ -95,43 +127,71 @@ export const ResourceList: React.FC<ResourceListProps> = ({
                 />
 
                 <div className="space-y-6">
-                    {(['easy', 'medium', 'hard'] as const).map(difficulty => {
-                        const items = groupedResources[difficulty];
-                        if (items.length === 0) return null;
+                    {category === 'progressions' ? (
+                        // Group by length for progressions
+                        (['2-chord', '3-chord', '4-chord', '5-chord', '6+ chord'] as const).map(groupKey => {
+                            const items = groupedResources[groupKey];
+                            if (items.length === 0) return null;
 
-                        return (
-                            <div key={difficulty}>
-                                <h3 className="text-lg font-semibold text-neutral-700 mb-3 capitalize">
-                                    {difficulty}
-                                </h3>
-                                <div className="space-y-2">
-                                    {items.map(resource => (
-                                        <ResourcePlayerRow
-                                            key={resource.id}
-                                            resource={resource}
-                                            intervalDirection={intervalDirection}
-                                        />
-                                    ))}
+                            return (
+                                <div key={groupKey}>
+                                    <h3 className="text-lg font-semibold text-neutral-700 mb-3">
+                                        {groupKey.charAt(0).toUpperCase() + groupKey.slice(1)} Progressions
+                                    </h3>
+                                    <div className="space-y-2 px-4 lg:px-0">
+                                        {items.map(resource => (
+                                            <ResourcePlayerRow
+                                                key={resource.id}
+                                                resource={resource}
+                                                intervalDirection={intervalDirection}
+                                            />
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })
+                    ) : (
+                        // Group by difficulty for scales and melodies
+                        <>
+                            {(['easy', 'medium', 'hard'] as const).map(difficulty => {
+                                const items = groupedResources[difficulty];
+                                if (items.length === 0) return null;
 
-                    {groupedResources.other.length > 0 && (
-                        <div>
-                            <h3 className="text-lg font-semibold text-neutral-700 mb-3">
-                                Other
-                            </h3>
-                            <div className="space-y-2">
-                                {groupedResources.other.map(resource => (
-                                    <ResourcePlayerRow
-                                        key={resource.id}
-                                        resource={resource}
-                                        intervalDirection={intervalDirection}
-                                    />
-                                ))}
-                            </div>
-                        </div>
+                                return (
+                                    <div key={difficulty}>
+                                        <h3 className="text-lg font-semibold text-neutral-700 mb-3 capitalize">
+                                            {difficulty}
+                                        </h3>
+                                        <div className="space-y-2 px-4 lg:px-0">
+                                            {items.map(resource => (
+                                                <ResourcePlayerRow
+                                                    key={resource.id}
+                                                    resource={resource}
+                                                    intervalDirection={intervalDirection}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                            {groupedResources.other && groupedResources.other.length > 0 && (
+                                <div>
+                                    <h3 className="text-lg font-semibold text-neutral-700 mb-3">
+                                        Other
+                                    </h3>
+                                    <div className="space-y-2 px-4 lg:px-0">
+                                        {groupedResources.other.map(resource => (
+                                            <ResourcePlayerRow
+                                                key={resource.id}
+                                                resource={resource}
+                                                intervalDirection={intervalDirection}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
 
@@ -157,7 +217,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
                 onSearchChange={onSearchChange}
             />
 
-            <div className="space-y-2">
+            <div className="space-y-2 px-4 lg:px-0">
                 {filteredResources.map(resource => (
                     <ResourcePlayerRow
                         key={resource.id}

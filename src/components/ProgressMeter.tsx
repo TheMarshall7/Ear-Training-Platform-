@@ -1,5 +1,5 @@
 import React from 'react';
-import { getXPForLevel } from '../logic/GameContext';
+import { getXPForLevel } from '../context/GameContext';
 
 interface ProgressMeterProps {
     current: number;

@@ -1,3 +1,23 @@
+/**
+ * Audio Engine
+ * 
+ * Core audio playback system using Web Audio API with sample-based synthesis.
+ * This engine loads audio samples (WAV files) and plays them with pitch shifting
+ * to create different notes. No MIDI synthesis - all sounds are pre-recorded samples.
+ * 
+ * Key features:
+ * - Sample-based playback (loads WAV files)
+ * - Pitch shifting via playbackRate
+ * - Gain control to prevent distortion when playing multiple notes
+ * - Support for intervals, chords, scales, melodies, and progressions
+ * - Automatic audio context management (handles browser autoplay policies)
+ * 
+ * Usage:
+ * 1. Initialize: await audioEngine.init()
+ * 2. Load sample: await audioEngine.loadSample('/path/to/sample.wav', 'sampleId')
+ * 3. Play: audioEngine.playNote('sampleId', midiNote, rootMidi)
+ */
+
 import { noteNameToMidi } from '../config/harmonyRules';
 
 export class AudioEngine {
@@ -8,6 +28,21 @@ export class AudioEngine {
 
     constructor() {
         // Context is initialized on user interaction to comply with browser policies
+        
+        // Reinitialize audio context when page becomes visible again (fixes mobile Safari timeout)
+        if (typeof document !== 'undefined') {
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible' && this.context) {
+                    // Reinitialize audio context when page becomes visible
+                    // This fixes issues on mobile Safari when app is backgrounded
+                    if (this.context.state === 'suspended' || this.context.state === 'closed') {
+                        console.log('Audio context suspended/closed, will reinitialize on next play');
+                        // Don't recreate here - let init() handle it on next play
+                        this.context = null;
+                    }
+                }
+            });
+        }
     }
 
     toggleMute() {

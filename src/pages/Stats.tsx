@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGame } from '../logic/GameContext';
+import { useGame } from '../context/GameContext';
+import { getXPForLevel } from '../context/GameContext';
 import { loadStats, getAccuracy } from '../logic/statsTracker';
 import { loadAchievements, type Achievement } from '../logic/achievements';
 import { StatCard } from '../components/StatCard';
 import { AchievementToast } from '../components/AchievementToast';
-import { getXPForLevel } from '../logic/GameContext';
 import { BrandLogo } from '../components/BrandLogo';
 import { Footer } from '../components/Footer';
 import { 
@@ -51,7 +51,7 @@ export const Stats: React.FC = () => {
             {/* Background gradient */}
             <div className="fixed inset-0 -z-0">
                 <div className="absolute -translate-x-1/2 -translate-y-1/2 animate-pulse-glow bg-gradient-to-br from-orange-400/20 via-red-500/15 to-rose-600/15 opacity-60 mix-blend-multiply w-[500px] h-[500px] rounded-full top-1/4 left-1/4 blur-3xl"></div>
-                <div className="absolute -translate-x-1/2 -translate-y-1/2 animate-pulse-glow bg-gradient-to-br from-blue-400/20 via-purple-500/15 to-pink-600/15 opacity-50 mix-blend-multiply w-[400px] h-[400px] rounded-full bottom-1/4 right-1/4 blur-3xl"></div>
+                <div className="absolute translate-x-1/2 translate-y-1/2 animate-pulse-glow bg-gradient-to-br from-orange-400/20 via-red-500/15 to-rose-600/15 opacity-60 mix-blend-multiply w-[500px] h-[500px] rounded-full bottom-1/4 right-1/4 blur-3xl"></div>
             </div>
 
             {/* Top Left Branding */}

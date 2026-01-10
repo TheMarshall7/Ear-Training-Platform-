@@ -7,6 +7,8 @@ export type Difficulty = 'easy' | 'medium' | 'hard';
 
 export type IntervalDirection = 'asc' | 'desc';
 
+export type ScaleDirection = 'ascending' | 'descending' | 'scrambled-asc' | 'scrambled-desc';
+
 export interface PlaySpec {
     type: 'noteSequence' | 'interval' | 'chord' | 'chordSequence';
     notes?: string[];

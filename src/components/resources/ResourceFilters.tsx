@@ -25,7 +25,7 @@ export const ResourceFilters: React.FC<ResourceFiltersProps> = ({
     const showSearch = category !== 'intervals';
 
     return (
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-4 mb-6 px-4 lg:px-0">
             {showIntervalToggle && (
                 <div className="flex items-center gap-2 bg-white/50 backdrop-blur-sm rounded-lg p-2 border border-neutral-200/50">
                     <span className="text-sm font-medium text-neutral-700 px-2">Direction:</span>

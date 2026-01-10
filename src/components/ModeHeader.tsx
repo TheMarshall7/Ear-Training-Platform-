@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Difficulty } from '../logic/GameContext';
+import type { Difficulty } from '../types/game';
 
 interface ModeHeaderProps {
     title: string;

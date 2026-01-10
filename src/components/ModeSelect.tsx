@@ -1,5 +1,5 @@
 import React from 'react';
-import type { GameMode, Difficulty } from '../logic/GameContext';
+import type { GameMode, Difficulty } from '../types/game';
 
 interface ModeSelectProps {
     currentMode: GameMode;

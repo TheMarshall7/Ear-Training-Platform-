@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGame } from '../../logic/GameContext';
-import { generatePerfectPitchQuestion, type PerfectPitchQuestion } from '../../logic/perfectPitchTrainer';
+import { useGame } from '../../context/GameContext';
+import { generatePerfectPitchQuestion, type PerfectPitchQuestion } from '../../logic/trainers/perfectPitchTrainer';
 import { audioEngine } from '../../audio/audioEngine';
 import { loadInstrument } from '../../audio/sampleLoader';
 import { noteNameToMidi } from '../../config/harmonyRules';
@@ -15,7 +15,7 @@ import { BrandLogo } from '../BrandLogo';
 import { Footer } from '../Footer';
 import { recordAnswer, updateBestStreak, loadStats, saveStats } from '../../logic/statsTracker';
 import { updateChallengeProgress, getDailyChallenges } from '../../logic/dailyChallenges';
-import type { Difficulty } from '../../logic/GameContext';
+import type { Difficulty } from '../../types/game';
 
 interface PerfectPitchModeProps {
     difficulty: Difficulty;
@@ -187,6 +187,7 @@ export const PerfectPitchMode: React.FC<PerfectPitchModeProps> = ({
         <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 relative flex flex-col">
             <div className="fixed inset-0 -z-0">
                 <div className="absolute -translate-x-1/2 -translate-y-1/2 animate-pulse-glow bg-gradient-to-br from-orange-400/20 via-red-500/15 to-rose-600/15 opacity-60 mix-blend-multiply w-[500px] h-[500px] rounded-full top-1/4 left-1/4 blur-3xl"></div>
+                <div className="absolute translate-x-1/2 translate-y-1/2 animate-pulse-glow bg-gradient-to-br from-orange-400/20 via-red-500/15 to-rose-600/15 opacity-60 mix-blend-multiply w-[500px] h-[500px] rounded-full bottom-1/4 right-1/4 blur-3xl"></div>
             </div>
 
             <div className="absolute top-6 left-4 lg:top-8 lg:left-8 z-50">

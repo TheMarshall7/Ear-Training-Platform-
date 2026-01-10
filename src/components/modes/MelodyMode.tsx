@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGame } from '../../logic/GameContext';
-import { generateMelodyQuestion, type MelodyQuestion } from '../../logic/melodyTrainer';
+import { useGame } from '../../context/GameContext';
+import { generateMelodyQuestion, type MelodyQuestion } from '../../logic/trainers/melodyTrainer';
 import { audioEngine } from '../../audio/audioEngine';
 import { loadInstrument } from '../../audio/sampleLoader';
 import { ModeHeader } from '../ModeHeader';
@@ -15,7 +15,7 @@ import { BrandLogo } from '../BrandLogo';
 import { Footer } from '../Footer';
 import { recordAnswer, updateBestStreak, loadStats, saveStats } from '../../logic/statsTracker';
 import { updateChallengeProgress, getDailyChallenges } from '../../logic/dailyChallenges';
-import type { Difficulty } from '../../logic/GameContext';
+import type { Difficulty } from '../../types/game';
 
 interface MelodyModeProps {
     difficulty: Difficulty;
@@ -56,43 +56,6 @@ export const MelodyMode: React.FC<MelodyModeProps> = ({
         hasAutoPlayedRef.current = false; // Reset for new question
     }, [difficulty]);
 
-    const playRootChord = useCallback(async () => {
-        if (!question || isPlaying) return;
-        
-        // Validate question is fully ready before playing
-        if (!question.notes || question.notes.length === 0) {
-            return;
-        }
-        
-        try {
-            await audioEngine.init();
-            await loadInstrument('piano');
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
-            // Final validation check before playing
-            if (!question || !question.notes || question.notes.length === 0) {
-                return;
-            }
-            
-            // Ensure sample is loaded before playing
-            const sampleId = 'piano_C4';
-            // Check if sample exists by trying to access it (will be checked in playNote)
-            
-            // Play root chord (degree 1 = C Major) to tonicize the key
-            // Play all notes simultaneously with slight arpeggiation
-            const rootChord = [60, 64, 67]; // C Major: C4, E4, G4
-            const gainPerNote = 1.0 / rootChord.length;
-            rootChord.forEach((midiNote, index) => {
-                audioEngine.playNote(sampleId, midiNote, 60, index * 0.05, gainPerNote);
-            });
-            
-            // Wait for chord to finish (about 2 seconds)
-            return new Promise(resolve => setTimeout(resolve, 2000));
-        } catch (error) {
-            console.error('Error playing root chord:', error);
-        }
-    }, [question, isPlaying]);
-
     const playMelody = useCallback(async () => {
         if (!question || isPlaying) return;
         
@@ -114,12 +77,6 @@ export const MelodyMode: React.FC<MelodyModeProps> = ({
                 return;
             }
             
-            // Play root chord first, then melody
-            await playRootChord();
-            
-            // Small pause between chord and melody
-            await new Promise(resolve => setTimeout(resolve, 300));
-            
             // Final check before playing melody
             if (!question || !question.notes || question.notes.length === 0) {
                 setIsPlaying(false);
@@ -137,7 +94,7 @@ export const MelodyMode: React.FC<MelodyModeProps> = ({
             console.error('Error playing melody:', error);
             setIsPlaying(false);
         }
-    }, [question, isPlaying, playRootChord]);
+    }, [question, isPlaying]);
 
     // Auto-play once when question loads
     useEffect(() => {
@@ -284,6 +241,7 @@ export const MelodyMode: React.FC<MelodyModeProps> = ({
         <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 relative flex flex-col">
             <div className="fixed inset-0 -z-0">
                 <div className="absolute -translate-x-1/2 -translate-y-1/2 animate-pulse-glow bg-gradient-to-br from-orange-400/20 via-red-500/15 to-rose-600/15 opacity-60 mix-blend-multiply w-[500px] h-[500px] rounded-full top-1/4 left-1/4 blur-3xl"></div>
+                <div className="absolute translate-x-1/2 translate-y-1/2 animate-pulse-glow bg-gradient-to-br from-orange-400/20 via-red-500/15 to-rose-600/15 opacity-60 mix-blend-multiply w-[500px] h-[500px] rounded-full bottom-1/4 right-1/4 blur-3xl"></div>
             </div>
 
             <div className="absolute top-6 left-4 lg:top-8 lg:left-8 z-50">

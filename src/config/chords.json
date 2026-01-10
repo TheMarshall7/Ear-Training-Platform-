@@ -34,5 +34,93 @@
             4,
             8
         ]
+    },
+    {
+        "id": "maj7",
+        "name": "Major 7th",
+        "intervals": [
+            0,
+            4,
+            7,
+            11
+        ]
+    },
+    {
+        "id": "min7",
+        "name": "Minor 7th",
+        "intervals": [
+            0,
+            3,
+            7,
+            10
+        ]
+    },
+    {
+        "id": "dom7",
+        "name": "Dominant 7th",
+        "intervals": [
+            0,
+            4,
+            7,
+            10
+        ]
+    },
+    {
+        "id": "dim7",
+        "name": "Diminished 7th",
+        "intervals": [
+            0,
+            3,
+            6,
+            9
+        ]
+    },
+    {
+        "id": "halfdim7",
+        "name": "Half-Diminished 7th",
+        "intervals": [
+            0,
+            3,
+            6,
+            10
+        ]
+    },
+    {
+        "id": "minmaj7",
+        "name": "Minor-Major 7th",
+        "intervals": [
+            0,
+            3,
+            7,
+            11
+        ]
+    },
+    {
+        "id": "sus4",
+        "name": "Suspended 4th",
+        "intervals": [
+            0,
+            5,
+            7
+        ]
+    },
+    {
+        "id": "sus2",
+        "name": "Suspended 2nd",
+        "intervals": [
+            0,
+            2,
+            7
+        ]
+    },
+    {
+        "id": "add9",
+        "name": "Add 9",
+        "intervals": [
+            0,
+            4,
+            7,
+            14
+        ]
     }
 ]

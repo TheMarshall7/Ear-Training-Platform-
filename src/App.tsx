@@ -1,6 +1,14 @@
 
+/**
+ * Main App Component
+ * 
+ * Root component that sets up routing and provides game context.
+ * Uses HashRouter for client-side routing (works with static hosting).
+ * Wraps all routes in GameProvider for global state management.
+ */
+
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
-import { GameProvider } from './logic/GameContext';
+import { GameProvider } from './context/GameContext';
 import { Home } from './pages/Home';
 import { Train } from './pages/Train';
 import { Locked } from './pages/Locked';

@@ -1,7 +1,18 @@
+/**
+ * Player Component
+ * 
+ * Reusable play/replay button component for audio playback.
+ * Displays a large circular button with play or replay icon.
+ * Handles auto-play functionality and visual feedback during playback.
+ * 
+ * Features:
+ * - Large, accessible play button
+ * - Visual state changes (playing vs idle)
+ * - Auto-play support
+ * - Disabled state during playback
+ */
+
 import React, { useState, useEffect } from 'react';
-// User didn't ask for lucide-react, so I'll use SVGs inline to avoid extra dependency issues unless specified.
-// Or I can install it. It's standard. But "No unnecessary libraries".
-// I'll use inline SVGs for "vanilla" feel.
 
 interface PlayerProps {
     onPlay: () => void;
