@@ -11,7 +11,8 @@ export const AudioStatusBanner: React.FC<AudioStatusBannerProps> = ({ isUnlocked
 
     const handleUnlock = async () => {
         try {
-            await audioEngine.init();
+            // Force recreate audio context on user interaction
+            await audioEngine.init(true);
             onUnlock();
         } catch (error) {
             console.error('Failed to unlock audio:', error);
