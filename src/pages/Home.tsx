@@ -7,6 +7,7 @@ import { DailyChallenges } from '../components/DailyChallenge';
 import { getDailyChallenges } from '../logic/dailyChallenges';
 import { BrandLogo } from '../components/BrandLogo';
 import { Footer } from '../components/Footer';
+import logoImage from '../assets/logo.png';
 
 export const Home: React.FC = () => {
     const navigate = useNavigate();
@@ -43,12 +44,12 @@ export const Home: React.FC = () => {
                 <div className="w-full max-w-5xl mx-auto">
                     {/* Hero Section */}
                     <div className="text-center mb-12 lg:mb-16 animate-fade-in-up">
-                        <div className="inline-flex items-center justify-center w-20 h-20 lg:w-24 lg:h-24 rounded-2xl bg-gradient-to-br from-orange-500/10 to-red-500/10 backdrop-blur-xl border border-white/20 shadow-lg mb-8">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lg:w-12 lg:h-12">
-                                <path d="M9 18V5l12-2v13"></path>
-                                <circle cx="6" cy="18" r="3"></circle>
-                                <circle cx="18" cy="16" r="3"></circle>
-                            </svg>
+                        <div className="inline-flex items-center justify-center mb-8 group">
+                            <img 
+                                src={logoImage} 
+                                alt="Logo" 
+                                className="w-20 h-20 lg:w-24 lg:h-24 object-contain transition-all duration-300 group-hover:scale-105 group-hover:drop-shadow-lg drop-shadow-md"
+                            />
                         </div>
                         <h1 className="text-5xl lg:text-7xl xl:text-8xl tracking-tighter leading-[0.95] mb-6 text-neutral-900">
                             <span className="font-light block">Master Your</span>
