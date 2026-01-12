@@ -112,10 +112,11 @@ export class AudioEngine {
                 await this.context.resume();
                 // Wait a bit and check if it actually resumed
                 await new Promise(resolve => setTimeout(resolve, 50));
-                if (this.context.state !== 'running') {
+                const currentState = this.context.state;
+                if (currentState === 'suspended' || currentState === 'closed') {
                     console.warn('Context resume did not work, recreating...');
                     // #region agent log
-                    fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:106',message:'resume did not work, recreating',data:{contextState:this.context.state},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                    fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:106',message:'resume did not work, recreating',data:{contextState:currentState},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
                     // #endregion
                     // Recreate the context
                     this.context = new (window.AudioContext || (window as any).webkitAudioContext)();
