@@ -50,26 +50,36 @@
             "name": "Easy",
             "chords": [
                 "maj",
-                "min"
+                "min",
+                "dim",
+                "aug"
             ]
         },
         {
             "id": "medium",
             "name": "Medium",
             "chords": [
-                "maj",
-                "min",
-                "dim"
+                "maj7",
+                "min7",
+                "dom7",
+                "halfdim7"
             ]
         },
         {
             "id": "hard",
             "name": "Hard",
             "chords": [
-                "maj",
-                "min",
-                "dim",
-                "aug"
+                "maj9",
+                "min9",
+                "dom9",
+                "maj11",
+                "min11",
+                "maj13",
+                "dom13",
+                "dom7b9",
+                "dom7sharp9",
+                "dom7b5",
+                "dom7sharp5"
             ]
         }
     ]

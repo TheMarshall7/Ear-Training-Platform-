@@ -15,9 +15,11 @@ export type GameMode =
   | 'chord'           // Identify chord types
   | 'progression'     // Identify chord progressions
   | 'scale'           // Identify scale types
-  | 'perfectPitch'    // Identify absolute note names
+  | 'keyFinder'       // Identify key from chord progressions (replaces perfectPitch)
+  | 'perfectPitch'    // Identify absolute note names (legacy, mapped to keyFinder)
   | 'numberSystem'    // Identify scale degrees within a key
-  | 'melody';         // Identify scale degrees in a melodic sequence
+  | 'melody'          // Identify scale degrees in a melodic sequence
+  | 'tempo';          // Identify BPM/tempo from rhythm patterns
 
 /**
  * Difficulty levels for game questions.

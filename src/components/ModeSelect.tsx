@@ -21,15 +21,17 @@ export const ModeSelect: React.FC<ModeSelectProps> = ({
             <div className="glass-card">
                 <h3 className="text-xs uppercase tracking-widest text-neutral-400 font-semibold mb-6">Training Mode</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {(['interval', 'chord', 'progression', 'scale', 'perfectPitch', 'numberSystem', 'melody'] as GameMode[]).map(mode => {
+                    {(['interval', 'chord', 'progression', 'scale', 'keyFinder', 'numberSystem', 'melody', 'tempo'] as GameMode[]).map(mode => {
                         const displayNames: Record<GameMode, string> = {
                             interval: 'Intervals',
                             chord: 'Chords',
                             progression: 'Progressions',
                             scale: 'Scales',
-                            perfectPitch: 'Perfect Pitch',
+                            keyFinder: 'Key Finder',
+                            perfectPitch: 'Key Finder',
                             numberSystem: 'Number System',
-                            melody: 'Melody'
+                            melody: 'Melody',
+                            tempo: 'Tempo Trainer'
                         };
                         
                         return (

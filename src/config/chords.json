@@ -122,5 +122,128 @@
             7,
             14
         ]
+    },
+    {
+        "id": "maj9",
+        "name": "Major 9th",
+        "intervals": [
+            0,
+            4,
+            7,
+            11,
+            14
+        ]
+    },
+    {
+        "id": "min9",
+        "name": "Minor 9th",
+        "intervals": [
+            0,
+            3,
+            7,
+            10,
+            14
+        ]
+    },
+    {
+        "id": "dom9",
+        "name": "Dominant 9th",
+        "intervals": [
+            0,
+            4,
+            7,
+            10,
+            14
+        ]
+    },
+    {
+        "id": "maj11",
+        "name": "Major 11th",
+        "intervals": [
+            0,
+            4,
+            7,
+            11,
+            14,
+            17
+        ]
+    },
+    {
+        "id": "min11",
+        "name": "Minor 11th",
+        "intervals": [
+            0,
+            3,
+            7,
+            10,
+            14,
+            17
+        ]
+    },
+    {
+        "id": "maj13",
+        "name": "Major 13th",
+        "intervals": [
+            0,
+            4,
+            7,
+            11,
+            14,
+            21
+        ]
+    },
+    {
+        "id": "dom13",
+        "name": "Dominant 13th",
+        "intervals": [
+            0,
+            4,
+            7,
+            10,
+            14,
+            21
+        ]
+    },
+    {
+        "id": "dom7b9",
+        "name": "Dominant 7th ♭9",
+        "intervals": [
+            0,
+            4,
+            7,
+            10,
+            13
+        ]
+    },
+    {
+        "id": "dom7sharp9",
+        "name": "Dominant 7th ♯9",
+        "intervals": [
+            0,
+            4,
+            7,
+            10,
+            15
+        ]
+    },
+    {
+        "id": "dom7b5",
+        "name": "Dominant 7th ♭5",
+        "intervals": [
+            0,
+            4,
+            6,
+            10
+        ]
+    },
+    {
+        "id": "dom7sharp5",
+        "name": "Dominant 7th ♯5",
+        "intervals": [
+            0,
+            4,
+            8,
+            10
+        ]
     }
 ]

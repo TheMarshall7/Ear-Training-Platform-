@@ -21,9 +21,10 @@ import { ProgressMeter } from '../components/ProgressMeter';
 import { Paywall } from '../components/Paywall';
 import { ProgressionRound } from '../components/ProgressionRound';
 import { ScalesMode } from '../components/modes/ScalesMode';
-import { PerfectPitchMode } from '../components/modes/PerfectPitchMode';
+import { KeyFinderMode } from '../components/modes/KeyFinderMode';
 import { NumberSystemMode } from '../components/modes/NumberSystemMode';
 import { MelodyMode } from '../components/modes/MelodyMode';
+import { TempoMode } from '../components/modes/TempoMode';
 import { ParticleEffect } from '../components/ParticleEffect';
 import { StreakCelebration } from '../components/StreakCelebration';
 import { CelebrationOverlay } from '../components/CelebrationOverlay';
@@ -358,10 +359,11 @@ export const Train: React.FC = () => {
         );
     }
 
-    if (state.currentMode === 'perfectPitch') {
+    // Legacy: perfectPitch mode now routes to keyFinder
+    if (state.currentMode === 'perfectPitch' || state.currentMode === 'keyFinder') {
         return (
             <>
-                <PerfectPitchMode
+                <KeyFinderMode
                     difficulty={state.difficulty}
                     streak={state.streak}
                     runProgress={state.runProgress}
@@ -412,6 +414,31 @@ export const Train: React.FC = () => {
         return (
             <>
                 <MelodyMode
+                    difficulty={state.difficulty}
+                    streak={state.streak}
+                    runProgress={state.runProgress}
+                    onCorrect={(points) => dispatch({ type: 'CORRECT_ANSWER', payload: points })}
+                    onWrong={() => dispatch({ type: 'WRONG_ANSWER' })}
+                    onNext={() => {
+                        if (state.runProgress > 0 && state.runProgress % 10 === 0) {
+                            dispatch({ type: 'INCREMENT_SESSION' });
+                        }
+                    }}
+                />
+                <Paywall
+                    visible={state.isLocked}
+                    onUnlock={() => {
+                        dispatch({ type: 'UNLOCK_FEATURE' });
+                    }}
+                />
+            </>
+        );
+    }
+
+    if (state.currentMode === 'tempo') {
+        return (
+            <>
+                <TempoMode
                     difficulty={state.difficulty}
                     streak={state.streak}
                     runProgress={state.runProgress}
