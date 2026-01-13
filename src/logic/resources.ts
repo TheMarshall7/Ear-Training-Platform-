@@ -36,6 +36,84 @@ export function getIntervalResources(): ResourceItem[] {
 }
 
 /**
+ * Determine chord difficulty based on chord type
+ */
+function getChordDifficulty(chordId: string): Difficulty {
+    // Easy: Basic triads
+    const easyChords = ['maj', 'min', 'dim', 'aug'];
+    
+    // Medium: 7th chords and suspensions
+    const mediumChords = [
+        'maj7', 'min7', 'dom7', 'dim7', 'halfdim7', 'minmaj7',
+        'sus4', 'sus2', 'add9'
+    ];
+    
+    // Hard: Extended and altered jazz chords (everything else)
+    // Includes: 9ths, 11ths, 13ths, and all altered dominants
+    
+    if (easyChords.includes(chordId)) {
+        return 'easy';
+    } else if (mediumChords.includes(chordId)) {
+        return 'medium';
+    } else {
+        return 'hard';
+    }
+}
+
+/**
+ * Get descriptive subtitle for jazz chords
+ */
+function getChordSubtitle(chordType: any): string {
+    const chordId = chordType.id;
+    
+    // Add helpful descriptions for jazz chords
+    if (chordId.includes('altered')) {
+        return 'C7♯9♯5 • Altered Scale';
+    }
+    if (chordId.includes('13')) {
+        const alterations = [];
+        if (chordId.includes('b5')) alterations.push('♭5');
+        if (chordId.includes('sharp5')) alterations.push('♯5');
+        if (chordId.includes('b9')) alterations.push('♭9');
+        if (chordId.includes('sharp9')) alterations.push('♯9');
+        
+        if (alterations.length > 0) {
+            return `C13${alterations.join('')} • Jazz Extension`;
+        }
+        return 'C13 • Jazz Extension';
+    }
+    if (chordId.includes('11')) {
+        return 'C11 • Extended Harmony';
+    }
+    if (chordId.includes('9')) {
+        const alterations = [];
+        if (chordId.includes('b5')) alterations.push('♭5');
+        if (chordId.includes('sharp5')) alterations.push('♯5');
+        if (chordId.includes('b9')) alterations.push('♭9');
+        if (chordId.includes('sharp9')) alterations.push('♯9');
+        
+        if (alterations.length > 0) {
+            return `C9${alterations.join('')} • Altered`;
+        }
+        return 'C9 • Extended';
+    }
+    if (chordId.includes('7')) {
+        const alterations = [];
+        if (chordId.includes('b5')) alterations.push('♭5');
+        if (chordId.includes('sharp5')) alterations.push('♯5');
+        if (chordId.includes('b9')) alterations.push('♭9');
+        if (chordId.includes('sharp9')) alterations.push('♯9');
+        
+        if (alterations.length > 0) {
+            return `C7${alterations.join('')} • Altered Dominant`;
+        }
+        return `C${chordType.name}`;
+    }
+    
+    return `C ${chordType.name}`;
+}
+
+/**
  * Convert chords config to ResourceItems
  * For each chord type, create a resource with a C root chord
  */
@@ -51,14 +129,19 @@ export function getChordResources(): ResourceItem[] {
             return noteNames[noteInOctave] + octave;
         });
 
+        const difficulty = getChordDifficulty(chordType.id);
+        const subtitle = getChordSubtitle(chordType);
+
         return {
             id: `chord_${chordType.id}`,
             category: 'chords' as ResourceCategory,
-            title: `${chordType.name} Chord`,
-            subtitle: `C ${chordType.name}`,
+            title: `${chordType.name}`,
+            subtitle: subtitle,
+            difficulty: difficulty,
             playSpec: buildChordPlaySpec(notes),
             metadata: {
-                chordType: chordType.name
+                chordType: chordType.name,
+                isJazzChord: difficulty === 'hard'
             }
         };
     });

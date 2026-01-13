@@ -36,9 +36,8 @@ export const ResourceList: React.FC<ResourceListProps> = ({
             );
         }
 
-        // Apply difficulty filter (only for categories that have difficulty levels)
-        // Chords and intervals don't have difficulty, so always show them
-        if (difficultyFilter !== 'all' && (category === 'scales' || category === 'progressions' || category === 'melodies')) {
+        // Apply difficulty filter (intervals are the only category without difficulty)
+        if (difficultyFilter !== 'all' && category !== 'intervals') {
             filtered = filtered.filter(resource => resource.difficulty === difficultyFilter);
         }
 
@@ -59,7 +58,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
 
     // Group by difficulty if applicable, or by length for progressions
     const groupedResources = useMemo(() => {
-        if (category === 'scales' || category === 'melodies') {
+        if (category === 'scales' || category === 'melodies' || category === 'chords') {
             const groups: Record<string, ResourceItem[]> = {
                 easy: [],
                 medium: [],
@@ -184,17 +183,41 @@ export const ResourceList: React.FC<ResourceListProps> = ({
                             })}
                         </>
                     ) : (
-                        // Group by difficulty for scales and melodies
+                        // Group by difficulty for scales, melodies, and chords
                         <>
                             {(['easy', 'medium', 'hard'] as const).map(difficulty => {
                                 const items = groupedResources[difficulty];
                                 if (items.length === 0) return null;
 
+                                // Custom titles for chords category
+                                let title = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+                                let subtitle = '';
+                                
+                                if (category === 'chords') {
+                                    if (difficulty === 'easy') {
+                                        title = 'Basic Triads';
+                                        subtitle = 'Major, Minor, Diminished, Augmented';
+                                    } else if (difficulty === 'medium') {
+                                        title = '7th Chords & Extensions';
+                                        subtitle = 'Maj7, Min7, Dom7, Sus, Add9';
+                                    } else if (difficulty === 'hard') {
+                                        title = 'Jazz Extensions & Altered Chords';
+                                        subtitle = '9ths, 11ths, 13ths, Altered Dominants (♭5, ♯5, ♭9, ♯9)';
+                                    }
+                                }
+
                                 return (
                                     <div key={difficulty}>
-                                        <h3 className="text-lg font-semibold text-neutral-700 mb-3 capitalize">
-                                            {difficulty}
-                                        </h3>
+                                        <div className="mb-3">
+                                            <h3 className="text-lg font-semibold text-neutral-700">
+                                                {title}
+                                            </h3>
+                                            {subtitle && (
+                                                <p className="text-sm text-neutral-500 mt-1">
+                                                    {subtitle}
+                                                </p>
+                                            )}
+                                        </div>
                                         <div className="space-y-2 px-4 lg:px-0">
                                             {items.map(resource => (
                                                 <ResourcePlayerRow
