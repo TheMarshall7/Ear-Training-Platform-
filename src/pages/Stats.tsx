@@ -6,6 +6,7 @@ import { loadStats, getAccuracy } from '../logic/statsTracker';
 import { loadAchievements, type Achievement } from '../logic/achievements';
 import { StatCard } from '../components/StatCard';
 import { AchievementToast } from '../components/AchievementToast';
+import { AchievementCarousel } from '../components/AchievementCarousel';
 import { BrandLogo } from '../components/BrandLogo';
 import { Footer } from '../components/Footer';
 import { 
@@ -38,13 +39,20 @@ export const Stats: React.FC = () => {
     const unlockedCount = Object.values(achievements).filter(a => a.unlocked).length;
     const totalAchievements = Object.keys(achievements).length;
 
+    // Separate mystery gift from other achievements
+    const mysteryGift = Object.values(achievements).find(a => a.id === 'mystery_platinum_gift');
+    const regularAchievements = Object.values(achievements).filter(a => a.id !== 'mystery_platinum_gift');
+    
     const achievementCategories = {
-        streak: Object.values(achievements).filter(a => a.category === 'streak'),
-        total: Object.values(achievements).filter(a => a.category === 'total'),
-        perfect: Object.values(achievements).filter(a => a.category === 'perfect'),
-        mode: Object.values(achievements).filter(a => a.category === 'mode'),
-        daily: Object.values(achievements).filter(a => a.category === 'daily'),
-        special: Object.values(achievements).filter(a => a.category === 'special'),
+        streak: regularAchievements.filter(a => a.category === 'streak'),
+        total: regularAchievements.filter(a => a.category === 'total'),
+        perfect: regularAchievements.filter(a => a.category === 'perfect'),
+        mode: regularAchievements.filter(a => a.category === 'mode'),
+        daily: regularAchievements.filter(a => a.category === 'daily'),
+        accuracy: regularAchievements.filter(a => a.category === 'accuracy'),
+        level: regularAchievements.filter(a => a.category === 'level'),
+        multimode: regularAchievements.filter(a => a.category === 'multimode'),
+        special: regularAchievements.filter(a => a.category === 'special'),
     };
 
     return (
@@ -146,7 +154,60 @@ export const Stats: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Achievements */}
+                    {/* Mystery Platinum Gift - Special Tier */}
+                    {mysteryGift && (
+                        <div className="glass-card mb-8 lg:mb-12">
+                            <div className="flex items-center gap-2 mb-4">
+                                <Trophy className="w-5 h-5 text-orange-600" strokeWidth={2} />
+                                <h2 className="text-xs uppercase tracking-widest text-orange-600 font-semibold">
+                                    Ultimate Achievement
+                                </h2>
+                            </div>
+                            
+                            <div className={`p-6 rounded-2xl border-2 transition-all duration-300 ${
+                                mysteryGift.unlocked
+                                    ? 'bg-gradient-to-br from-orange-50 to-orange-100/50 border-orange-300/50 shadow-lg'
+                                    : 'bg-white/30 border-white/20 opacity-75'
+                            }`}>
+                                <div className="flex items-center gap-6">
+                                    <div className={`flex items-center justify-center w-20 h-20 rounded-2xl flex-shrink-0 ${
+                                        mysteryGift.unlocked 
+                                            ? 'bg-white/80 border-2 border-orange-200/50 shadow-md' 
+                                            : 'bg-white/50 border-2 border-neutral-300'
+                                    }`}>
+                                        <Trophy className={`w-12 h-12 ${mysteryGift.unlocked ? 'text-orange-600' : 'text-neutral-400'}`} strokeWidth={2} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <h3 className={`text-2xl font-bold ${mysteryGift.unlocked ? 'text-neutral-900' : 'text-neutral-500'}`}>
+                                                {mysteryGift.name}
+                                            </h3>
+                                            {mysteryGift.unlocked && (
+                                                <CheckCircle2 className="w-7 h-7 text-orange-600" strokeWidth={2.5} />
+                                            )}
+                                        </div>
+                                        <p className="text-neutral-600 mb-4">
+                                            {mysteryGift.description}
+                                        </p>
+                                        {mysteryGift.unlocked ? (
+                                            <button
+                                                onClick={() => navigate('/platinum-gift')}
+                                                className="btn-primary inline-flex items-center gap-2"
+                                            >
+                                                Claim Your Reward →
+                                            </button>
+                                        ) : (
+                                            <div className="text-sm text-neutral-500 bg-white/50 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20 inline-block">
+                                                Unlock all {totalAchievements - 1} other achievements to reveal this mystery
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Achievements Carousel */}
                     <div className="glass-card mb-8 lg:mb-12">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl lg:text-2xl font-bold text-neutral-900">Achievements</h2>
@@ -155,71 +216,7 @@ export const Stats: React.FC = () => {
                             </span>
                         </div>
                         
-                        {Object.entries(achievementCategories).map(([category, achievements]) => (
-                            <div key={category} className="mb-8 last:mb-0">
-                                <h3 className="text-xs uppercase tracking-widest text-neutral-400 font-semibold mb-4">
-                                    {category}
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {achievements.map(ach => {
-                                        // Map emoji icons to Lucide icons
-                                        const getIcon = () => {
-                                            if (ach.icon === '🔥' || ach.icon.startsWith('🔥')) return <Flame className="w-8 h-8 text-orange-600" strokeWidth={2} />;
-                                            if (ach.icon === '⭐' || ach.icon.startsWith('⭐')) return <Star className="w-8 h-8 text-yellow-600" strokeWidth={2} />;
-                                            if (ach.icon === '🎯') return <Target className="w-8 h-8 text-blue-600" strokeWidth={2} />;
-                                            if (ach.icon === '🎵') return <Music className="w-8 h-8 text-purple-600" strokeWidth={2} />;
-                                            if (ach.icon === '🎹') return <Piano className="w-8 h-8 text-indigo-600" strokeWidth={2} />;
-                                            if (ach.icon === '🎼') return <Music2 className="w-8 h-8 text-pink-600" strokeWidth={2} />;
-                                            if (ach.icon === '🏆' || ach.icon === '👑') return <Trophy className="w-8 h-8 text-amber-600" strokeWidth={2} />;
-                                            if (ach.icon === '📚' || ach.icon === '📖' || ach.icon === '🎓') return <BarChart3 className="w-8 h-8 text-blue-600" strokeWidth={2} />;
-                                            if (ach.icon === '📅' || ach.icon === '🗓️') return <Star className="w-8 h-8 text-green-600" strokeWidth={2} />;
-                                            // Default fallback
-                                            return <Trophy className="w-8 h-8 text-neutral-400" strokeWidth={2} />;
-                                        };
-                                        
-                                        return (
-                                            <div
-                                                key={ach.id}
-                                                className={`p-5 rounded-2xl border-2 transition-all duration-300 ${
-                                                    ach.unlocked
-                                                        ? 'bg-gradient-to-br from-orange-50 to-orange-100/50 border-orange-300/50 shadow-md'
-                                                        : 'bg-white/30 border-white/20 opacity-60'
-                                                }`}
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`flex items-center justify-center w-12 h-12 rounded-xl ${
-                                                        ach.unlocked 
-                                                            ? 'bg-white/80 border border-orange-200/50' 
-                                                            : 'bg-white/30 border border-white/20'
-                                                    }`}>
-                                                        {getIcon()}
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className={`font-bold text-base ${ach.unlocked ? 'text-neutral-900' : 'text-neutral-400'}`}>
-                                                            {ach.name}
-                                                            {ach.id === 'mystery_platinum_gift' && ach.unlocked && (
-                                                                <button
-                                                                    onClick={() => navigate('/platinum-gift')}
-                                                                    className="ml-3 text-xs bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full hover:scale-105 transition-transform"
-                                                                >
-                                                    Claim Reward →
-                                                </button>
-                                                            )}
-                                                        </div>
-                                                        <div className="text-xs text-neutral-500 mt-1.5">
-                                                            {ach.description}
-                                                        </div>
-                                                    </div>
-                                                    {ach.unlocked && (
-                                                        <CheckCircle2 className="w-6 h-6 text-orange-600" strokeWidth={2.5} />
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        ))}
+                        <AchievementCarousel categories={achievementCategories} />
                     </div>
 
                     {/* Mode Stats */}
