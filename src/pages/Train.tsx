@@ -218,7 +218,9 @@ export const Train: React.FC = () => {
                 totalCorrect: stats.totalCorrect,
                 perfectRuns: stats.perfectRuns,
                 modeStats: stats.modeStats,
-                dailyStreak: stats.dailyStreak
+                dailyStreak: stats.dailyStreak,
+                level: state.level,
+                currentSessionQuestions: state.runProgress
             });
             
             if (newlyUnlocked.length > 0) {
@@ -316,6 +318,8 @@ export const Train: React.FC = () => {
                     difficulty={state.difficulty}
                     streak={state.streak}
                     runProgress={state.runProgress}
+                    level={state.level}
+                    xp={state.xp}
                     onCorrect={(points) => dispatch({ type: 'CORRECT_ANSWER', payload: points })}
                     onWrong={() => dispatch({ type: 'WRONG_ANSWER' })}
                     onNext={() => {

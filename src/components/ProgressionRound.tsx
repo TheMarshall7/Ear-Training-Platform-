@@ -36,6 +36,8 @@ interface ProgressionRoundProps {
     difficulty: Difficulty;
     streak: number;
     runProgress: number;
+    level?: number;
+    xp?: number;
     onCorrect: (points: number) => void;
     onWrong: () => void;
     onNext: () => void;
@@ -47,6 +49,8 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
     difficulty,
     streak,
     runProgress,
+    level = 1,
+    xp = 0,
     onCorrect,
     onWrong,
     onNext
@@ -371,7 +375,9 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                 totalCorrect: stats.totalCorrect,
                 perfectRuns: stats.perfectRuns,
                 modeStats: stats.modeStats,
-                dailyStreak: stats.dailyStreak
+                dailyStreak: stats.dailyStreak,
+                level: level,
+                currentSessionQuestions: runProgress
             });
             
             if (newlyUnlocked.length > 0) {
@@ -596,6 +602,8 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                 current={runProgress + 1} 
                 total={10} 
                 streak={streak}
+                level={level}
+                xp={xp}
             />
 
             <StreakCelebration streak={streak} />
