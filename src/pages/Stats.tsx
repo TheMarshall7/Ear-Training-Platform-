@@ -83,13 +83,13 @@ export const Stats: React.FC = () => {
                             <span>Home</span>
                         </button>
                         <h1 className="text-4xl lg:text-5xl font-bold text-neutral-900 tracking-tight">
-                            Statistics
+                            Achievements
                         </h1>
                         <div className="w-16"></div>
                     </div>
 
                     {/* Overview Stats */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8 lg:mb-12">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8 lg:mb-12 animate-fade-in-up">
                         <StatCard 
                             title="Total Questions" 
                             value={stats.totalQuestions} 
@@ -114,7 +114,7 @@ export const Stats: React.FC = () => {
                     </div>
 
                     {/* Level and XP */}
-                    <div className="glass-card mb-8 lg:mb-12">
+                    <div className="glass-card mb-8 lg:mb-12 animate-fade-in-up hover:shadow-lg transition-all duration-300">
                         <h2 className="text-xl lg:text-2xl font-bold text-neutral-900 mb-6">Progress</h2>
                         <div className="space-y-6">
                             <div>
@@ -147,8 +147,8 @@ export const Stats: React.FC = () => {
                                     })()}
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 text-sm text-neutral-600 bg-white/50 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/20">
-                                <Flame className="w-5 h-5 text-orange-600" strokeWidth={2} />
+                            <div className="group flex items-center gap-2 text-sm text-neutral-600 bg-white/50 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/20 hover:border-orange-300 hover:shadow-md transition-all duration-300 cursor-pointer hover:scale-105">
+                                <Flame className="w-5 h-5 text-orange-600 group-hover:scale-125 transition-transform duration-300" strokeWidth={2} />
                                 <span className="font-medium">Daily Streak: {stats.dailyStreak} days</span>
                             </div>
                         </div>
@@ -156,7 +156,7 @@ export const Stats: React.FC = () => {
 
                     {/* Mystery Platinum Gift - Special Tier */}
                     {mysteryGift && (
-                        <div className="glass-card mb-8 lg:mb-12">
+                        <div className="glass-card mb-8 lg:mb-12 animate-fade-in-up">
                             <div className="flex items-center gap-2 mb-4">
                                 <Trophy className="w-5 h-5 text-orange-600" strokeWidth={2} />
                                 <h2 className="text-xs uppercase tracking-widest text-orange-600 font-semibold">
@@ -164,15 +164,15 @@ export const Stats: React.FC = () => {
                                 </h2>
                             </div>
                             
-                            <div className={`p-6 rounded-2xl border-2 transition-all duration-300 ${
+                            <div className={`group p-6 rounded-2xl border-2 transition-all duration-300 hover:scale-[1.02] cursor-pointer ${
                                 mysteryGift.unlocked
-                                    ? 'bg-gradient-to-br from-orange-50 to-orange-100/50 border-orange-300/50 shadow-lg'
-                                    : 'bg-white/30 border-white/20 opacity-75'
+                                    ? 'bg-gradient-to-br from-orange-50 to-orange-100/50 border-orange-300/50 shadow-lg hover:shadow-xl'
+                                    : 'bg-white/30 border-white/20 opacity-75 hover:opacity-85'
                             }`}>
                                 <div className="flex items-center gap-6">
-                                    <div className={`flex items-center justify-center w-20 h-20 rounded-2xl flex-shrink-0 ${
+                                    <div className={`flex items-center justify-center w-20 h-20 rounded-2xl flex-shrink-0 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 ${
                                         mysteryGift.unlocked 
-                                            ? 'bg-white/80 border-2 border-orange-200/50 shadow-md' 
+                                            ? 'bg-white/80 border-2 border-orange-200/50 shadow-md group-hover:shadow-lg' 
                                             : 'bg-white/50 border-2 border-neutral-300'
                                     }`}>
                                         <Trophy className={`w-12 h-12 ${mysteryGift.unlocked ? 'text-orange-600' : 'text-neutral-400'}`} strokeWidth={2} />
@@ -192,7 +192,7 @@ export const Stats: React.FC = () => {
                                         {mysteryGift.unlocked ? (
                                             <button
                                                 onClick={() => navigate('/platinum-gift')}
-                                                className="btn-primary inline-flex items-center gap-2"
+                                                className="btn-primary inline-flex items-center gap-2 hover:gap-3 transition-all duration-300"
                                             >
                                                 Claim Your Reward →
                                             </button>
@@ -208,7 +208,7 @@ export const Stats: React.FC = () => {
                     )}
 
                     {/* Achievements Carousel */}
-                    <div className="glass-card mb-8 lg:mb-12">
+                    <div className="glass-card mb-8 lg:mb-12 animate-fade-in-up">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl lg:text-2xl font-bold text-neutral-900">Achievements</h2>
                             <span className="text-sm lg:text-base text-neutral-500 font-medium bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
@@ -220,7 +220,7 @@ export const Stats: React.FC = () => {
                     </div>
 
                     {/* Mode Stats */}
-                    <div className="glass-card">
+                    <div className="glass-card animate-fade-in-up hover:shadow-lg transition-all duration-300">
                         <h2 className="text-xl lg:text-2xl font-bold text-neutral-900 mb-6">Mode Performance</h2>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
                             <StatCard 

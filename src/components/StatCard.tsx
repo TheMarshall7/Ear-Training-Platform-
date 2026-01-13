@@ -10,14 +10,14 @@ interface StatCardProps {
 
 export const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, subtitle }) => {
     return (
-        <div className="glass-card">
+        <div className="glass-card group hover:scale-105 hover:shadow-lg transition-all duration-300 cursor-pointer">
             <div className="flex items-start justify-between mb-3">
-                <div className="text-xs font-semibold text-neutral-400 uppercase tracking-widest">
+                <div className="text-xs font-semibold text-neutral-400 uppercase tracking-widest group-hover:text-orange-600 transition-colors duration-300">
                     {title}
                 </div>
                 {Icon && (
-                    <div className="p-2 rounded-lg bg-gradient-to-br from-orange-100 to-orange-50 border border-orange-200/50">
-                        <Icon className="w-5 h-5 lg:w-6 lg:h-6 text-orange-600" strokeWidth={2} />
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-orange-100 to-orange-50 border border-orange-200/50 group-hover:shadow-md transition-all duration-300">
+                        <Icon className="w-5 h-5 lg:w-6 lg:h-6 text-orange-600 group-hover:scale-110 transition-transform duration-300" strokeWidth={2} />
                     </div>
                 )}
             </div>

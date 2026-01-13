@@ -87,16 +87,16 @@ export const AchievementCarousel: React.FC<AchievementCarouselProps> = ({ catego
             <div className="flex items-center justify-between gap-4">
                 <button
                     onClick={prevCategory}
-                    className="flex items-center justify-center w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm border border-white/20 hover:bg-white/80 transition-all hover:scale-110"
+                    className="group flex items-center justify-center w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm border border-white/20 hover:bg-white/80 hover:border-orange-300 transition-all hover:scale-110 hover:shadow-lg"
                     aria-label="Previous category"
                 >
-                    <ChevronLeft className="w-5 h-5 text-neutral-700" strokeWidth={2.5} />
+                    <ChevronLeft className="w-5 h-5 text-neutral-700 group-hover:text-orange-600 transition-colors" strokeWidth={2.5} />
                 </button>
 
                 <div className="flex-1 text-center">
-                    <div className="flex items-center justify-center gap-3 mb-2">
-                        <div className="w-12 h-12 rounded-xl bg-white/80 flex items-center justify-center border border-orange-200/50 shadow-sm">
-                            <CategoryIcon className="w-6 h-6 text-orange-600" strokeWidth={2} />
+                    <div className="flex items-center justify-center gap-3 mb-2 group">
+                        <div className="w-12 h-12 rounded-xl bg-white/80 flex items-center justify-center border border-orange-200/50 shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all duration-300">
+                            <CategoryIcon className="w-6 h-6 text-orange-600 group-hover:rotate-6 transition-transform duration-300" strokeWidth={2} />
                         </div>
                         <h3 className="text-xl font-bold text-neutral-900">{categoryInfo.title}</h3>
                     </div>
@@ -107,10 +107,10 @@ export const AchievementCarousel: React.FC<AchievementCarouselProps> = ({ catego
 
                 <button
                     onClick={nextCategory}
-                    className="flex items-center justify-center w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm border border-white/20 hover:bg-white/80 transition-all hover:scale-110"
+                    className="group flex items-center justify-center w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm border border-white/20 hover:bg-white/80 hover:border-orange-300 transition-all hover:scale-110 hover:shadow-lg"
                     aria-label="Next category"
                 >
-                    <ChevronRight className="w-5 h-5 text-neutral-700" strokeWidth={2.5} />
+                    <ChevronRight className="w-5 h-5 text-neutral-700 group-hover:text-orange-600 transition-colors" strokeWidth={2.5} />
                 </button>
             </div>
 
@@ -120,10 +120,10 @@ export const AchievementCarousel: React.FC<AchievementCarouselProps> = ({ catego
                     <button
                         key={index}
                         onClick={() => goToCategory(index)}
-                        className={`transition-all duration-300 rounded-full ${
+                        className={`transition-all duration-300 rounded-full hover:scale-125 ${
                             index === currentIndex
-                                ? 'w-8 h-2 bg-orange-500'
-                                : 'w-2 h-2 bg-neutral-300 hover:bg-neutral-400'
+                                ? 'w-8 h-2 bg-orange-500 shadow-md'
+                                : 'w-2 h-2 bg-neutral-300 hover:bg-orange-400'
                         }`}
                         aria-label={`Go to category ${index + 1}`}
                     />
@@ -135,16 +135,16 @@ export const AchievementCarousel: React.FC<AchievementCarouselProps> = ({ catego
                 {currentAchievements.map(ach => (
                     <div
                         key={ach.id}
-                        className={`p-4 rounded-xl border-2 transition-all duration-300 ${
+                        className={`group p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer hover:scale-105 ${
                             ach.unlocked
-                                ? 'bg-gradient-to-br from-orange-50 to-orange-100/50 border-orange-300/50 shadow-md'
-                                : 'bg-white/30 border-white/20 opacity-60'
+                                ? 'bg-gradient-to-br from-orange-50 to-orange-100/50 border-orange-300/50 shadow-md hover:shadow-lg'
+                                : 'bg-white/30 border-white/20 opacity-60 hover:opacity-80 hover:border-orange-200/30'
                         }`}
                     >
                         <div className="flex items-start gap-3">
-                            <div className={`flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0 ${
+                            <div className={`flex items-center justify-center w-10 h-10 rounded-lg flex-shrink-0 group-hover:scale-110 transition-transform duration-300 ${
                                 ach.unlocked 
-                                    ? 'bg-white/80 border border-orange-200/50' 
+                                    ? 'bg-white/80 border border-orange-200/50 group-hover:shadow-md' 
                                     : 'bg-white/30 border border-white/20'
                             }`}>
                                 {getAchievementIcon(ach)}
