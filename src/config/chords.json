@@ -245,5 +245,200 @@
             8,
             10
         ]
+    },
+    {
+        "id": "dom9b5",
+        "name": "Dominant 9th ♭5",
+        "intervals": [
+            0,
+            4,
+            6,
+            10,
+            14
+        ]
+    },
+    {
+        "id": "dom9sharp5",
+        "name": "Dominant 9th ♯5",
+        "intervals": [
+            0,
+            4,
+            8,
+            10,
+            14
+        ]
+    },
+    {
+        "id": "dom13b5",
+        "name": "Dominant 13th ♭5",
+        "intervals": [
+            0,
+            4,
+            6,
+            10,
+            14,
+            21
+        ]
+    },
+    {
+        "id": "dom13sharp5",
+        "name": "Dominant 13th ♯5",
+        "intervals": [
+            0,
+            4,
+            8,
+            10,
+            14,
+            21
+        ]
+    },
+    {
+        "id": "dom13b9",
+        "name": "Dominant 13th ♭9",
+        "intervals": [
+            0,
+            4,
+            7,
+            10,
+            13,
+            21
+        ]
+    },
+    {
+        "id": "dom13sharp9",
+        "name": "Dominant 13th ♯9",
+        "intervals": [
+            0,
+            4,
+            7,
+            10,
+            15,
+            21
+        ]
+    },
+    {
+        "id": "dom7b5b9",
+        "name": "Dominant 7th ♭5♭9",
+        "intervals": [
+            0,
+            4,
+            6,
+            10,
+            13
+        ]
+    },
+    {
+        "id": "dom7sharp5b9",
+        "name": "Dominant 7th ♯5♭9",
+        "intervals": [
+            0,
+            4,
+            8,
+            10,
+            13
+        ]
+    },
+    {
+        "id": "dom7b5sharp9",
+        "name": "Dominant 7th ♭5♯9",
+        "intervals": [
+            0,
+            4,
+            6,
+            10,
+            15
+        ]
+    },
+    {
+        "id": "dom7sharp5sharp9",
+        "name": "Dominant 7th ♯5♯9",
+        "intervals": [
+            0,
+            4,
+            8,
+            10,
+            15
+        ]
+    },
+    {
+        "id": "dom9b5b9",
+        "name": "Dominant 9th ♭5♭9",
+        "intervals": [
+            0,
+            4,
+            6,
+            10,
+            13
+        ]
+    },
+    {
+        "id": "altered",
+        "name": "Altered Dominant (7♯9♯5)",
+        "intervals": [
+            0,
+            4,
+            8,
+            10,
+            15
+        ]
+    },
+    {
+        "id": "min9b5",
+        "name": "Minor 9th ♭5",
+        "intervals": [
+            0,
+            3,
+            6,
+            10,
+            14
+        ]
+    },
+    {
+        "id": "dom13b5b9",
+        "name": "Dominant 13th ♭5♭9",
+        "intervals": [
+            0,
+            4,
+            6,
+            10,
+            13,
+            21
+        ]
+    },
+    {
+        "id": "dom13sharp5b9",
+        "name": "Dominant 13th ♯5♭9",
+        "intervals": [
+            0,
+            4,
+            8,
+            10,
+            13,
+            21
+        ]
+    },
+    {
+        "id": "dom13b5sharp9",
+        "name": "Dominant 13th ♭5♯9",
+        "intervals": [
+            0,
+            4,
+            6,
+            10,
+            15,
+            21
+        ]
+    },
+    {
+        "id": "dom13sharp5sharp9",
+        "name": "Dominant 13th ♯5♯9",
+        "intervals": [
+            0,
+            4,
+            8,
+            10,
+            15,
+            21
+        ]
     }
 ]
