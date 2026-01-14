@@ -8,31 +8,39 @@ export const AudioEnableBanner: React.FC = () => {
     const [isUnlocked, setIsUnlocked] = useState(true); // Optimistic
     const [showBanner, setShowBanner] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
+        // Detect mobile
+        const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        setIsMobile(mobile);
+
         const check = () => sessionStorage.getItem('audioUnlocked') === 'true' || localStorage.getItem('audioUnlocked') === 'true';
         if (check()) {
             setIsUnlocked(true);
             return;
         }
 
-        // Show banner after 3 seconds if still not unlocked
-        const timer = setTimeout(() => {
-            if (!check()) {
-                setShowBanner(true);
-                setIsUnlocked(false);
-            }
-        }, 3000);
+        // Only run timeout logic if on mobile
+        if (mobile) {
+            // Show banner after 3 seconds if still not unlocked
+            const timer = setTimeout(() => {
+                if (!check()) {
+                    setShowBanner(true);
+                    setIsUnlocked(false);
+                }
+            }, 3000);
 
-        const poll = setInterval(() => {
-            if (check()) {
-                setIsUnlocked(true);
-                setShowBanner(false);
-                clearInterval(poll);
-            }
-        }, 500);
+            const poll = setInterval(() => {
+                if (check()) {
+                    setIsUnlocked(true);
+                    setShowBanner(false);
+                    clearInterval(poll);
+                }
+            }, 500);
 
-        return () => { clearTimeout(timer); clearInterval(poll); };
+            return () => { clearTimeout(timer); clearInterval(poll); };
+        }
     }, []);
 
     const handleEnableAudio = () => {
@@ -62,7 +70,8 @@ export const AudioEnableBanner: React.FC = () => {
         }
     };
 
-    if (isUnlocked || !showBanner) return null;
+    // Hide if not mobile, or if unlocked, or if we haven't determined we need to show the banner yet
+    if (!isMobile || isUnlocked || !showBanner) return null;
 
     return (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-between shadow-sm">
