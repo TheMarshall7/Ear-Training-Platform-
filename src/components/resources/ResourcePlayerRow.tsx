@@ -175,7 +175,7 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
 
             // Initialize audio and load sample
             await audioEngine.init();
-            await loadInstrument('piano');
+            await loadInstrument(state.currentInstrument);
             await new Promise(resolve => setTimeout(resolve, 100));
 
             const playSpec = resource.playSpec;

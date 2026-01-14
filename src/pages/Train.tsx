@@ -99,12 +99,12 @@ export const Train: React.FC = () => {
         }
     }, [state.currentMode, state.difficulty]);
 
-    // Preload instrument when component mounts or mode changes
+    // Preload instrument when component mounts or mode/instrument changes
     useEffect(() => {
-        loadInstrument('piano').catch(() => {
+        loadInstrument(state.currentInstrument).catch(() => {
             // Silent fail - will load on first play
         });
-    }, [state.currentMode]);
+    }, [state.currentMode, state.currentInstrument]);
 
     // Check audio context state on mount and visibility change (for mobile)
     useEffect(() => {
@@ -113,7 +113,7 @@ export const Train: React.FC = () => {
                 await audioEngine.init();
                 setAudioUnlocked(true);
                 // Preload instrument
-                await loadInstrument('piano');
+                await loadInstrument(state.currentInstrument);
             } catch (error) {
                 console.error('Audio initialization failed:', error);
                 setAudioUnlocked(false);
@@ -130,7 +130,7 @@ export const Train: React.FC = () => {
                     // Reinitialize audio context when page becomes visible
                     await audioEngine.init(true); // Force recreate on visibility change
                     // Reload instrument to ensure samples are available
-                    await loadInstrument('piano');
+                    await loadInstrument(state.currentInstrument);
                     setAudioUnlocked(true);
                 } catch (error) {
                     console.log('Audio reinitialization on visibility change:', error);

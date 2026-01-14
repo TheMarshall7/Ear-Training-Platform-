@@ -78,7 +78,7 @@ export const KeyFinderMode: React.FC<KeyFinderModeProps> = ({
             
             // Force recreate audio context on user interaction
             await audioEngine.init(true);
-            await loadInstrument('piano');
+            await loadInstrument(state.currentInstrument);
             await new Promise(resolve => setTimeout(resolve, 100));
             
             // Double-check question is still valid
@@ -120,7 +120,7 @@ export const KeyFinderMode: React.FC<KeyFinderModeProps> = ({
                 
                 try {
                     await audioEngine.init();
-                    await loadInstrument('piano');
+                    await loadInstrument(state.currentInstrument);
                     await new Promise(resolve => setTimeout(resolve, 300));
                     
                     if (question && question.chordSequence && !isPlaying) {

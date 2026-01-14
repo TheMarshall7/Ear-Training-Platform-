@@ -8,9 +8,11 @@ import { getResourcesByCategory, getAllResources } from '../logic/resources';
 import type { ResourceCategory, IntervalDirection, Difficulty } from '../types/resources';
 import { audioEngine } from '../audio/audioEngine';
 import { loadInstrument } from '../audio/sampleLoader';
+import { useGame } from '../context/GameContext';
 
 export const Resources: React.FC = () => {
     const { category } = useParams<{ category?: string }>();
+    const { state } = useGame();
     
     const [audioUnlocked, setAudioUnlocked] = useState(false);
     const [intervalDirection, setIntervalDirection] = useState<IntervalDirection>('asc');
@@ -24,7 +26,7 @@ export const Resources: React.FC = () => {
                 await audioEngine.init();
                 setAudioUnlocked(true);
                 // Preload instrument
-                await loadInstrument('piano');
+                await loadInstrument(state.currentInstrument);
             } catch (error) {
                 console.error('Audio initialization failed:', error);
                 setAudioUnlocked(false);

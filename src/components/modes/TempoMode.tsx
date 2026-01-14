@@ -78,7 +78,7 @@ export const TempoMode: React.FC<TempoModeProps> = ({
             
             // Force recreate audio context on user interaction
             await audioEngine.init(true);
-            await loadInstrument('piano');
+            await loadInstrument(state.currentInstrument);
             await new Promise(resolve => setTimeout(resolve, 100));
             
             // Double-check question is still valid
@@ -131,7 +131,7 @@ export const TempoMode: React.FC<TempoModeProps> = ({
                 
                 try {
                     await audioEngine.init();
-                    await loadInstrument('piano');
+                    await loadInstrument(state.currentInstrument);
                     await new Promise(resolve => setTimeout(resolve, 300));
                     
                     if (question && !isPlaying) {

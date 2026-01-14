@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useGame } from '../context/GameContext';
 import { audioEngine } from '../audio/audioEngine';
-import { loadInstrument } from '../audio/sampleLoader';
+import { loadInstrument, getInstrumentSampleId } from '../audio/sampleLoader';
 import { DegreeGrid } from './DegreeGrid';
 import { InputChain } from './InputChain';
 import { Player } from './Player';
@@ -56,6 +57,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
     onNext
 }) => {
     const navigate = useNavigate();
+    const { state } = useGame();
     const [roundState, setRoundState] = useState<ProgressionRoundState>(createProgressionRoundState());
     const [roundStatus, setRoundStatus] = useState<RoundStatus>('idle');
     const [isPlaying, setIsPlaying] = useState(false);
@@ -102,8 +104,8 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
 
     // Load audio sample on mount
     useEffect(() => {
-        loadInstrument('piano');
-    }, []);
+        loadInstrument(state.currentInstrument);
+    }, [state.currentInstrument]);
 
     // Initialize question
     useEffect(() => {
@@ -186,7 +188,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
             // Wait a bit to ensure context is ready
             await new Promise(resolve => setTimeout(resolve, 100));
             
-            await loadInstrument('piano');
+            await loadInstrument(state.currentInstrument);
             console.log('Piano sample loaded');
             
             // Wait a bit more to ensure sample is fully loaded
@@ -221,7 +223,8 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
             });
             
             console.log('Calling playChordSequence with', midiChords.length, 'chords');
-            audioEngine.playChordSequence(midiChords, 900);
+            const sampleId = getInstrumentSampleId(state.currentInstrument);
+            audioEngine.playChordSequence(midiChords, 900, sampleId, 60);
             console.log('playChordSequence called');
             
             // Wait for playback to finish
@@ -292,7 +295,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                     // Ensure audio is initialized before playing
                     await audioEngine.init();
                     // Only load instrument if not already loaded (check happens inside)
-                    await loadInstrument('piano');
+                    await loadInstrument(state.currentInstrument);
                     // Small additional delay to ensure sample is loaded
                     setTimeout(() => {
                         if (isCancelled) return;

@@ -66,7 +66,7 @@ export const PerfectPitchMode: React.FC<PerfectPitchModeProps> = ({
             
             // Force recreate audio context on user interaction
             await audioEngine.init(true);
-            await loadInstrument('piano');
+            await loadInstrument(state.currentInstrument);
             await new Promise(resolve => setTimeout(resolve, 100));
             
             // Double-check question is still valid
@@ -108,7 +108,7 @@ export const PerfectPitchMode: React.FC<PerfectPitchModeProps> = ({
                 // Ensure audio is ready before playing
                 try {
                     await audioEngine.init();
-                    await loadInstrument('piano');
+                    await loadInstrument(state.currentInstrument);
                     // Additional delay to ensure everything is stable
                     await new Promise(resolve => setTimeout(resolve, 300));
                     
