@@ -2,104 +2,106 @@ import React, { useState, useEffect } from 'react';
 import { audioEngine } from '../audio/audioEngine';
 
 /**
- * AudioEnableBanner - Minimal banner to prompt user to enable audio
- * Required for iOS Safari and mobile browsers due to autoplay policies
+ * AudioEnableBanner - FALLBACK banner shown only if auto-unlock fails
  * 
  * Behavior:
- * - Automatically attempts unlock on mount (no manual click needed)
- * - Shows loading state during auto-unlock
- * - Hides after successful unlock
- * - Detects iOS Silent mode and shows warning
- * - Persists unlock state for the session
+ * - Hidden by default (auto-unlock via global listeners should work)
+ * - Only appears if audio is still locked after 3 seconds
+ * - Provides manual "Enable Audio" button as fallback
+ * - Detects iOS Silent mode and shows helpful warning
+ * - Auto-hides when audio successfully unlocks
  */
 export const AudioEnableBanner: React.FC = () => {
-    const [isUnlocked, setIsUnlocked] = useState(false);
-    const [isLoading, setIsLoading] = useState(true); // Start as loading
+    const [isUnlocked, setIsUnlocked] = useState(true); // Optimistic - assume auto-unlock will work
+    const [showBanner, setShowBanner] = useState(false);
     const [showSilentWarning, setShowSilentWarning] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
-    // Auto-unlock on mount and periodically check unlock status
     useEffect(() => {
         let mounted = true;
         let checkInterval: number;
+        let showBannerTimeout: number;
 
-        const attemptUnlock = async () => {
-            // Check if already unlocked via global listeners
-            const wasUnlocked = sessionStorage.getItem('audioUnlocked') === 'true';
-            if (wasUnlocked) {
-                if (mounted) {
-                    setIsUnlocked(true);
-                    setIsLoading(false);
-                }
-                return;
-            }
-
-            try {
-                await audioEngine.ensureUnlocked();
-                if (mounted) {
-                    setIsUnlocked(true);
-                    sessionStorage.setItem('audioUnlocked', 'true');
-                    setIsLoading(false);
-                }
-            } catch (error) {
-                console.debug('Auto-unlock attempt failed (expected on first load):', error);
-                if (mounted) {
-                    setIsLoading(false);
-                }
-            }
+        // Check if already unlocked
+        const checkUnlockStatus = () => {
+            const wasUnlocked = sessionStorage.getItem('audioUnlocked') === 'true' || 
+                               localStorage.getItem('audioUnlocked') === 'true';
+            return wasUnlocked;
         };
 
-        // Try immediate unlock
-        attemptUnlock();
+        // Initial check
+        if (checkUnlockStatus()) {
+            setIsUnlocked(true);
+            setShowBanner(false);
+            return;
+        }
 
-        // Check periodically if audio was unlocked by global listeners
+        // Give global listeners 3 seconds to unlock audio automatically
+        // Only show banner if still not unlocked after that
+        showBannerTimeout = window.setTimeout(() => {
+            if (mounted && !checkUnlockStatus()) {
+                console.log('⚠️ Audio not auto-unlocked, showing fallback banner');
+                setShowBanner(true);
+                setIsUnlocked(false);
+            }
+        }, 3000);
+
+        // Poll for unlock status (in case global listeners succeed)
         checkInterval = window.setInterval(() => {
-            const wasUnlocked = sessionStorage.getItem('audioUnlocked') === 'true';
-            if (wasUnlocked && mounted) {
+            if (checkUnlockStatus() && mounted) {
                 setIsUnlocked(true);
-                setIsLoading(false);
+                setShowBanner(false);
                 clearInterval(checkInterval);
             }
         }, 500);
 
-        // Detect iOS Silent mode
-        const detectSilentMode = () => {
-            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-            if (isIOS && mounted) {
-                // Show warning after 2 seconds if still not unlocked
-                setTimeout(() => {
-                    if (!isUnlocked && mounted) {
-                        setShowSilentWarning(true);
-                    }
-                }, 2000);
-            }
-        };
-        detectSilentMode();
+        // iOS Silent mode detection
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isIOS) {
+            // Show Silent mode warning after 5 seconds if still not unlocked
+            const silentTimeout = window.setTimeout(() => {
+                if (mounted && !checkUnlockStatus()) {
+                    setShowSilentWarning(true);
+                }
+            }, 5000);
+            
+            return () => {
+                mounted = false;
+                clearInterval(checkInterval);
+                clearTimeout(showBannerTimeout);
+                clearTimeout(silentTimeout);
+            };
+        }
 
         return () => {
             mounted = false;
-            if (checkInterval) clearInterval(checkInterval);
+            clearInterval(checkInterval);
+            clearTimeout(showBannerTimeout);
         };
-    }, [isUnlocked]);
+    }, []);
 
-    if (isUnlocked) {
-        return null; // Hide banner when audio is unlocked
+    const handleEnableAudio = async () => {
+        setIsLoading(true);
+        try {
+            await audioEngine.ensureUnlocked();
+            setIsUnlocked(true);
+            setShowBanner(false);
+            localStorage.setItem('audioUnlocked', 'true');
+            sessionStorage.setItem('audioUnlocked', 'true');
+            console.log('✅ Audio manually unlocked via fallback button');
+        } catch (error) {
+            console.error('Failed to enable audio:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Hide if unlocked or if we haven't determined we need to show the banner yet
+    if (isUnlocked || !showBanner) {
+        return null;
     }
 
-    // Show loading state
-    if (isLoading) {
-        return (
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 mb-4 shadow-sm">
-                <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
-                    <p className="text-sm text-blue-900">
-                        Enabling audio...
-                    </p>
-                </div>
-            </div>
-        );
-    }
-
-    // Show Silent mode warning for iOS
+    // Show Silent mode warning for iOS (highest priority)
     if (showSilentWarning) {
         return (
             <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-lg p-3 mb-4 shadow-sm">
@@ -133,6 +135,38 @@ export const AudioEnableBanner: React.FC = () => {
         );
     }
 
-    // Banner should auto-hide, but this is a fallback
-    return null;
+    // Fallback "Enable Audio" button (only shown if auto-unlock failed)
+    return (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 mb-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-blue-600 flex-shrink-0"
+                    >
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                    <p className="text-sm text-blue-900 font-medium">
+                        Tap to enable audio
+                    </p>
+                </div>
+                <button
+                    onClick={handleEnableAudio}
+                    disabled={isLoading}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors text-sm font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                    {isLoading ? 'Enabling...' : 'Enable Audio'}
+                </button>
+            </div>
+        </div>
+    );
 };

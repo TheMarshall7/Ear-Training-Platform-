@@ -50,9 +50,9 @@ export interface GlobalUnlockOptions {
 }
 
 /**
- * Attach global one-time listeners to unlock audio on first user interaction
- * Listens for: click, touchstart, touchend, mousedown, pointerdown, keydown
- * Multiple events to ensure we catch ANY user interaction
+ * Attach global one-time listeners to unlock audio on FIRST user interaction
+ * Preferred order: pointerdown > touchend > click > scroll
+ * These capture ANY user interaction to unlock iOS audio seamlessly
  * @param opts Options containing audioContext and optional callback
  */
 export function attachGlobalAudioUnlock(opts: GlobalUnlockOptions): void {
@@ -68,34 +68,38 @@ export function attachGlobalAudioUnlock(opts: GlobalUnlockOptions): void {
         if (unlocked) return;
         unlocked = true;
 
-        console.log('User interaction detected, unlocking audio...', event.type);
+        console.log('🎵 First user interaction detected:', event.type);
 
         const success = await unlockAudio(audioContext);
         
         if (success) {
             console.log('✅ Audio unlocked successfully via', event.type);
+            // Store in both memory flag and localStorage for persistence
+            localStorage.setItem('audioUnlocked', 'true');
+            sessionStorage.setItem('audioUnlocked', 'true');
             onUnlock?.();
             detachGlobalAudioUnlock();
         } else {
-            console.warn('Audio unlock failed, will try again on next interaction');
-            unlocked = false; // Allow retry
+            console.warn('⚠️ Audio unlock failed, will retry on next interaction');
+            unlocked = false; // Allow retry on next interaction
         }
     };
 
-    // Multiple event types to catch ANY user interaction
-    const events = ['click', 'touchstart', 'touchend', 'mousedown', 'pointerdown', 'keydown'];
+    // Prioritized event types - pointerdown is most reliable on modern devices
+    // scroll added to catch any scrolling as interaction
+    const events = ['pointerdown', 'touchend', 'click', 'scroll', 'touchstart', 'mousedown', 'keydown'];
     
     events.forEach(eventType => {
-        document.addEventListener(eventType, handleUnlock, { once: true, capture: true });
+        document.addEventListener(eventType, handleUnlock, { once: true, capture: true, passive: true });
     });
 
-    // Store references for manual cleanup if needed
+    // Store cleanup functions
     globalUnlockListeners = events.map(eventType => 
         () => document.removeEventListener(eventType, handleUnlock, { capture: true })
     );
 
     isGlobalUnlockAttached = true;
-    console.log('🎵 Global audio unlock listeners attached, waiting for user interaction...');
+    console.log('🎧 Audio unlock listeners ready (waiting for first interaction)');
 }
 
 /**
