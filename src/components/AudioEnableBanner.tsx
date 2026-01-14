@@ -6,45 +6,104 @@ import { audioEngine } from '../audio/audioEngine';
  * Required for iOS Safari and mobile browsers due to autoplay policies
  * 
  * Behavior:
- * - Shows when audio is not unlocked
+ * - Automatically attempts unlock on mount (no manual click needed)
+ * - Shows loading state during auto-unlock
  * - Hides after successful unlock
+ * - Detects iOS Silent mode and shows warning
  * - Persists unlock state for the session
- * - Consistent styling with existing design
  */
 export const AudioEnableBanner: React.FC = () => {
     const [isUnlocked, setIsUnlocked] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true); // Start as loading
+    const [showSilentWarning, setShowSilentWarning] = useState(false);
 
-    // Check if audio was previously unlocked in this session
+    // Auto-unlock on mount and periodically check unlock status
     useEffect(() => {
-        const wasUnlocked = sessionStorage.getItem('audioUnlocked') === 'true';
-        if (wasUnlocked) {
-            setIsUnlocked(true);
-        }
-    }, []);
+        let mounted = true;
+        let checkInterval: number;
 
-    const handleEnableAudio = async () => {
-        setIsLoading(true);
-        try {
-            await audioEngine.ensureUnlocked();
-            setIsUnlocked(true);
-            sessionStorage.setItem('audioUnlocked', 'true');
-        } catch (error) {
-            console.error('Failed to enable audio:', error);
-            // Don't show error to user - they can try again if needed
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        const attemptUnlock = async () => {
+            // Check if already unlocked via global listeners
+            const wasUnlocked = sessionStorage.getItem('audioUnlocked') === 'true';
+            if (wasUnlocked) {
+                if (mounted) {
+                    setIsUnlocked(true);
+                    setIsLoading(false);
+                }
+                return;
+            }
+
+            try {
+                await audioEngine.ensureUnlocked();
+                if (mounted) {
+                    setIsUnlocked(true);
+                    sessionStorage.setItem('audioUnlocked', 'true');
+                    setIsLoading(false);
+                }
+            } catch (error) {
+                console.debug('Auto-unlock attempt failed (expected on first load):', error);
+                if (mounted) {
+                    setIsLoading(false);
+                }
+            }
+        };
+
+        // Try immediate unlock
+        attemptUnlock();
+
+        // Check periodically if audio was unlocked by global listeners
+        checkInterval = window.setInterval(() => {
+            const wasUnlocked = sessionStorage.getItem('audioUnlocked') === 'true';
+            if (wasUnlocked && mounted) {
+                setIsUnlocked(true);
+                setIsLoading(false);
+                clearInterval(checkInterval);
+            }
+        }, 500);
+
+        // Detect iOS Silent mode
+        const detectSilentMode = () => {
+            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isIOS && mounted) {
+                // Show warning after 2 seconds if still not unlocked
+                setTimeout(() => {
+                    if (!isUnlocked && mounted) {
+                        setShowSilentWarning(true);
+                    }
+                }, 2000);
+            }
+        };
+        detectSilentMode();
+
+        return () => {
+            mounted = false;
+            if (checkInterval) clearInterval(checkInterval);
+        };
+    }, [isUnlocked]);
 
     if (isUnlocked) {
         return null; // Hide banner when audio is unlocked
     }
 
-    return (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 mb-4 shadow-sm">
-            <div className="flex items-center justify-between gap-3">
+    // Show loading state
+    if (isLoading) {
+        return (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 mb-4 shadow-sm">
                 <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
+                    <p className="text-sm text-blue-900">
+                        Enabling audio...
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    // Show Silent mode warning for iOS
+    if (showSilentWarning) {
+        return (
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-lg p-3 mb-4 shadow-sm">
+                <div className="flex items-start gap-2">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="20"
@@ -55,23 +114,25 @@ export const AudioEnableBanner: React.FC = () => {
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        className="text-blue-600 flex-shrink-0"
+                        className="text-amber-600 flex-shrink-0 mt-0.5"
                     >
-                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
                     </svg>
-                    <p className="text-sm text-blue-900 font-medium">
-                        Tap to enable audio
-                    </p>
+                    <div className="flex-1">
+                        <p className="text-sm text-amber-900 font-medium mb-1">
+                            Check your iPhone's Silent switch
+                        </p>
+                        <p className="text-xs text-amber-800">
+                            Audio won't play when your phone is on Silent or Vibrate mode. Flip the switch on the side of your phone to enable sound.
+                        </p>
+                    </div>
                 </div>
-                <button
-                    onClick={handleEnableAudio}
-                    disabled={isLoading}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors text-sm font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                >
-                    {isLoading ? 'Enabling...' : 'Enable Audio'}
-                </button>
             </div>
-        </div>
-    );
+        );
+    }
+
+    // Banner should auto-hide, but this is a fallback
+    return null;
 };

@@ -51,7 +51,8 @@ export interface GlobalUnlockOptions {
 
 /**
  * Attach global one-time listeners to unlock audio on first user interaction
- * Listens for: click, touchend, pointerup
+ * Listens for: click, touchstart, touchend, mousedown, pointerdown, keydown
+ * Multiple events to ensure we catch ANY user interaction
  * @param opts Options containing audioContext and optional callback
  */
 export function attachGlobalAudioUnlock(opts: GlobalUnlockOptions): void {
@@ -63,36 +64,38 @@ export function attachGlobalAudioUnlock(opts: GlobalUnlockOptions): void {
     const { audioContext, onUnlock } = opts;
     let unlocked = false;
 
-    const handleUnlock = async () => {
+    const handleUnlock = async (event: Event) => {
         if (unlocked) return;
         unlocked = true;
+
+        console.log('User interaction detected, unlocking audio...', event.type);
 
         const success = await unlockAudio(audioContext);
         
         if (success) {
-            console.log('Audio unlocked via global listener');
+            console.log('✅ Audio unlocked successfully via', event.type);
             onUnlock?.();
             detachGlobalAudioUnlock();
+        } else {
+            console.warn('Audio unlock failed, will try again on next interaction');
+            unlocked = false; // Allow retry
         }
     };
 
-    const clickHandler = () => handleUnlock();
-    const touchHandler = () => handleUnlock();
-    const pointerHandler = () => handleUnlock();
-
-    // Attach listeners with once: true for automatic cleanup
-    document.addEventListener('click', clickHandler, { once: true, capture: true });
-    document.addEventListener('touchend', touchHandler, { once: true, capture: true });
-    document.addEventListener('pointerup', pointerHandler, { once: true, capture: true });
+    // Multiple event types to catch ANY user interaction
+    const events = ['click', 'touchstart', 'touchend', 'mousedown', 'pointerdown', 'keydown'];
+    
+    events.forEach(eventType => {
+        document.addEventListener(eventType, handleUnlock, { once: true, capture: true });
+    });
 
     // Store references for manual cleanup if needed
-    globalUnlockListeners = [
-        () => document.removeEventListener('click', clickHandler, { capture: true }),
-        () => document.removeEventListener('touchend', touchHandler, { capture: true }),
-        () => document.removeEventListener('pointerup', pointerHandler, { capture: true })
-    ];
+    globalUnlockListeners = events.map(eventType => 
+        () => document.removeEventListener(eventType, handleUnlock, { capture: true })
+    );
 
     isGlobalUnlockAttached = true;
+    console.log('🎵 Global audio unlock listeners attached, waiting for user interaction...');
 }
 
 /**

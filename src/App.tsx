@@ -24,20 +24,36 @@ import { attachGlobalAudioUnlock, detachGlobalAudioUnlock, setupVisibilityResume
 
 function App() {
   useEffect(() => {
+    let mounted = true;
+    
     // Initialize audio engine and setup unlock system
     const setupAudio = async () => {
       try {
         await audioEngine.init();
         
         const context = audioEngine.getContext();
-        if (context) {
+        if (context && mounted) {
+          // Attempt immediate unlock (will work if user already interacted)
+          try {
+            await audioEngine.ensureUnlocked();
+            sessionStorage.setItem('audioUnlocked', 'true');
+            console.log('Audio unlocked immediately');
+          } catch (err) {
+            // Expected to fail on first load before user interaction
+            console.debug('Immediate unlock not possible yet, setting up listeners');
+          }
+          
           // Setup global one-time audio unlock listeners
           // This automatically unlocks audio on first user interaction (click/touch)
           attachGlobalAudioUnlock({
             audioContext: context,
             onUnlock: () => {
-              console.log('Audio unlocked via global listener');
-              sessionStorage.setItem('audioUnlocked', 'true');
+              if (mounted) {
+                console.log('Audio unlocked via global listener');
+                sessionStorage.setItem('audioUnlocked', 'true');
+                // Force banner to update by triggering a storage event
+                window.dispatchEvent(new Event('storage'));
+              }
             }
           });
 
@@ -53,6 +69,7 @@ function App() {
 
     // Cleanup on unmount
     return () => {
+      mounted = false;
       detachGlobalAudioUnlock();
     };
   }, []);
