@@ -351,40 +351,70 @@ export const TempoMode: React.FC<TempoModeProps> = ({
                 </div>
 
                 {checking && result && (
-                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 p-6 flex flex-col items-center animate-slide-up pb-8">
-                        <div className="text-center mb-4">
-                            {result.correct ? (
-                                <>
-                                    <h3 className="text-2xl font-bold text-green-600 mb-2">
-                                        {result.accuracy === 'perfect' ? '🎯 Perfect!' : '✓ Close!'}
-                                    </h3>
-                                    <p className="text-neutral-600">
-                                        Target: <strong>{question.targetBPM} BPM</strong> • Your guess: <strong>{userBPM} BPM</strong>
-                                    </p>
-                                    <p className="text-sm text-neutral-500 mt-1">
-                                        Difference: ±{result.difference} BPM
-                                    </p>
-                                </>
-                            ) : (
-                                <>
-                                    <h3 className="text-2xl font-bold text-red-600 mb-2">
-                                        Not quite
-                                    </h3>
-                                    <p className="text-neutral-600">
-                                        Target: <strong>{question.targetBPM} BPM</strong> • Your guess: <strong>{userBPM} BPM</strong>
-                                    </p>
-                                    <p className="text-sm text-neutral-500 mt-1">
-                                        Difference: {result.difference} BPM (need ±6 or better)
-                                    </p>
-                                </>
-                            )}
+                    <div className="fixed bottom-0 left-0 right-0 p-6 flex flex-col items-center animate-slide-up pb-8">
+                        <div className={`w-full max-w-md mx-auto rounded-2xl p-8 backdrop-blur-lg shadow-2xl border transition-all duration-300 ${
+                            result.correct
+                                ? 'bg-gradient-to-br from-orange-50/90 to-amber-100/80 border-orange-200/50'
+                                : 'bg-white/90 border-neutral-200/50'
+                        }`}>
+                            <div className="text-center">
+                                {result.correct ? (
+                                    <>
+                                        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
+                                            result.accuracy === 'perfect'
+                                                ? 'bg-gradient-to-br from-orange-400 to-orange-600'
+                                                : 'bg-gradient-to-br from-orange-300 to-orange-500'
+                                        } shadow-lg`}>
+                                            <span className="text-3xl">{result.accuracy === 'perfect' ? '🎯' : '✓'}</span>
+                                        </div>
+                                        <h3 className="text-3xl font-bold text-neutral-900 mb-4">
+                                            {result.accuracy === 'perfect' ? 'Perfect!' : 'Close!'}
+                                        </h3>
+                                        <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 mb-3 border border-orange-200/30">
+                                            <div className="flex items-center justify-center gap-2 text-lg text-neutral-700 mb-2">
+                                                <span className="text-neutral-500">Target:</span>
+                                                <span className="font-bold text-orange-600">{question.targetBPM} BPM</span>
+                                            </div>
+                                            <div className="flex items-center justify-center gap-2 text-lg text-neutral-700">
+                                                <span className="text-neutral-500">Your guess:</span>
+                                                <span className="font-bold text-neutral-900">{userBPM} BPM</span>
+                                            </div>
+                                        </div>
+                                        <div className="text-sm text-neutral-600 bg-white/50 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/30 inline-block">
+                                            Difference: ±{result.difference} BPM
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-neutral-200 to-neutral-300 mb-4 shadow-lg">
+                                            <span className="text-3xl">✕</span>
+                                        </div>
+                                        <h3 className="text-3xl font-bold text-neutral-800 mb-4">
+                                            Not quite
+                                        </h3>
+                                        <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 mb-3 border border-neutral-200/50">
+                                            <div className="flex items-center justify-center gap-2 text-lg text-neutral-700 mb-2">
+                                                <span className="text-neutral-500">Target:</span>
+                                                <span className="font-bold text-orange-600">{question.targetBPM} BPM</span>
+                                            </div>
+                                            <div className="flex items-center justify-center gap-2 text-lg text-neutral-700">
+                                                <span className="text-neutral-500">Your guess:</span>
+                                                <span className="font-bold text-neutral-900">{userBPM} BPM</span>
+                                            </div>
+                                        </div>
+                                        <div className="text-sm text-neutral-600 bg-white/50 backdrop-blur-sm px-4 py-2 rounded-lg border border-neutral-200/30 inline-block">
+                                            Difference: {result.difference} BPM • Need ±6 or better
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                            <button
+                                onClick={handleNext}
+                                className="mt-6 btn-primary w-full text-lg"
+                            >
+                                Next Question
+                            </button>
                         </div>
-                        <button
-                            onClick={handleNext}
-                            className="mt-4 btn-primary w-full max-w-md text-lg"
-                        >
-                            Next Question
-                        </button>
                     </div>
                 )}
             </div>
