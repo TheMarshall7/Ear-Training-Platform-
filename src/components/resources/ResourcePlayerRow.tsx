@@ -184,14 +184,34 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
     }, []);
 
     const stopVocalWarmup = () => {
+        console.log('Stopping vocal warmup');
         vocalWarmupActiveRef.current = false;
         setIsVocalWarmupActive(false);
-        setVocalWarmupIndex(0);
         setIsPlaying(false);
         audioEngine.stopAll();
+        // Don't reset index immediately so user can see where they stopped
+        setTimeout(() => {
+            if (!vocalWarmupActiveRef.current) {
+                setVocalWarmupIndex(0);
+            }
+        }, 500);
+    };
+    
+    const jumpToStep = (step: number) => {
+        // If already playing, just update the index
+        // If not playing, start from that step
+        if (vocalWarmupActiveRef.current) {
+            audioEngine.stopAll();
+        }
+        setVocalWarmupIndex(step);
+        
+        // Start warmup from this step
+        if (!vocalWarmupActiveRef.current) {
+            playVocalWarmupSequence(step);
+        }
     };
 
-    const playVocalWarmupSequence = async () => {
+    const playVocalWarmupSequence = async (startStep: number = 0) => {
         if (vocalWarmupActiveRef.current) {
             // Stop if already playing
             stopVocalWarmup();
@@ -202,7 +222,6 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
             vocalWarmupActiveRef.current = true;
             setIsVocalWarmupActive(true);
             setIsPlaying(true);
-            setVocalWarmupIndex(0);
             setError(null);
 
             // Initialize audio
@@ -223,8 +242,11 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
             
             const sampleId = getInstrumentSampleId(state.currentInstrument);
             
-            for (let step = 0; step < totalSteps; step++) {
-                if (!vocalWarmupActiveRef.current) break; // Check if stopped
+            for (let step = startStep; step < totalSteps; step++) {
+                if (!vocalWarmupActiveRef.current) {
+                    console.log('Warmup stopped at step', step);
+                    break; // Check if stopped
+                }
                 
                 setVocalWarmupIndex(step);
                 
@@ -246,10 +268,11 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
             }
             
             // Finished the sequence
+            console.log('Warmup sequence completed');
             vocalWarmupActiveRef.current = false;
             setIsVocalWarmupActive(false);
-            setVocalWarmupIndex(0);
             setIsPlaying(false);
+            setTimeout(() => setVocalWarmupIndex(0), 500);
             
         } catch (error) {
             console.error('Error in vocal warmup sequence:', error);
@@ -257,8 +280,8 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
             if (onError) onError('Failed to play vocal warmup sequence');
             vocalWarmupActiveRef.current = false;
             setIsVocalWarmupActive(false);
-            setVocalWarmupIndex(0);
             setIsPlaying(false);
+            setTimeout(() => setVocalWarmupIndex(0), 500);
         }
     };
 
@@ -387,13 +410,28 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                             {resource.subtitle}
                         </p>
                     )}
-                    {isVocalWarmupActive && (
+                    {(isVocalWarmupActive || vocalWarmupIndex > 0) && (
                         <div className="mt-2 flex items-center gap-2">
-                            <div className="flex-1 h-2 bg-neutral-200 rounded-full overflow-hidden">
+                            <div 
+                                className="flex-1 h-3 bg-neutral-200 rounded-full overflow-hidden cursor-pointer hover:h-4 transition-all group relative"
+                                onClick={(e) => {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const x = e.clientX - rect.left;
+                                    const percentage = x / rect.width;
+                                    const step = Math.floor(percentage * 25);
+                                    jumpToStep(Math.max(0, Math.min(24, step)));
+                                }}
+                                title="Click to jump to a position"
+                            >
                                 <div 
-                                    className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-300"
+                                    className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-200 relative"
                                     style={{ width: `${(vocalWarmupIndex / 24) * 100}%` }}
-                                />
+                                >
+                                    {/* Scrubber handle */}
+                                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md border-2 border-orange-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                </div>
+                                {/* Hover indicator */}
+                                <div className="absolute inset-0 bg-orange-400/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                             </div>
                             <span className="text-xs text-neutral-500 font-medium whitespace-nowrap">
                                 {vocalWarmupIndex + 1}/25
