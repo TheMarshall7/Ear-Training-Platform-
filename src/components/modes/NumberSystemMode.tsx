@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/GameContext';
 import { generateNumberSystemQuestion, type NumberSystemQuestion } from '../../logic/trainers/numberSystemTrainer';
 import { audioEngine } from '../../audio/audioEngine';
-import { loadInstrument } from '../../audio/sampleLoader';
+import { loadInstrument, getInstrumentSampleId } from '../../audio/sampleLoader';
 import numberSystemConfig from '../../config/numberSystem.json';
 import { ModeHeader } from '../ModeHeader';
 import { RoundControls } from '../RoundControls';
@@ -145,7 +145,8 @@ export const NumberSystemMode: React.FC<NumberSystemModeProps> = ({
             }
             
             // Play ONLY the single note - no chords
-            audioEngine.playNote('piano_C4', question.targetMidi, 60, 0, 1.0);
+            const sampleId = getInstrumentSampleId(state.currentInstrument);
+            audioEngine.playNote(sampleId, question.targetMidi, 60, 0, 1.0);
             
             setTimeout(() => {
                 setIsPlaying(false);

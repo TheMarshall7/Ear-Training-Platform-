@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/GameContext';
 import { generateKeyFinderQuestion, type KeyFinderQuestion } from '../../logic/trainers/keyFinderTrainer';
 import { audioEngine } from '../../audio/audioEngine';
-import { loadInstrument } from '../../audio/sampleLoader';
+import { loadInstrument, getInstrumentSampleId } from '../../audio/sampleLoader';
 import { ModeHeader } from '../ModeHeader';
 import { RoundControls } from '../RoundControls';
 import { AnswerGrid } from '../AnswerGrid';
@@ -89,7 +89,8 @@ export const KeyFinderMode: React.FC<KeyFinderModeProps> = ({
             
             // Play the chord progression using the audio engine
             // Tempo: 800ms per chord (slower for easier listening)
-            audioEngine.playChordSequence(question.chordSequence, 800, 'piano_C4', 60);
+            const sampleId = getInstrumentSampleId(state.currentInstrument);
+            audioEngine.playChordSequence(question.chordSequence, 800, sampleId, 60);
             
             // Calculate total duration: (number of chords * tempo) + extra buffer
             const totalDuration = question.chordSequence.length * 800 + 500;

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import type { ResourceItem, IntervalDirection, ScaleDirection } from '../../types/resources';
 import { audioEngine } from '../../audio/audioEngine';
-import { loadInstrument } from '../../audio/sampleLoader';
+import { loadInstrument, getInstrumentSampleId } from '../../audio/sampleLoader';
 import { noteNameToMidi } from '../../config/harmonyRules';
+import { useGame } from '../../context/GameContext';
 
 interface ResourcePlayerRowProps {
     resource: ResourceItem;
@@ -153,6 +154,7 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
     intervalDirection,
     onError
 }) => {
+    const { state } = useGame();
     const [isPlaying, setIsPlaying] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [scaleDirection, setScaleDirection] = useState<ScaleDirection>('ascending');
@@ -196,7 +198,8 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                             const octave = parseInt(octaveStr, 10);
                             const midiNote = noteNameToMidi(noteName, octave);
                             const noteDelay = baseDelay + (index * tempoSeconds);
-                            audioEngine.playNote('piano_C4', midiNote, 60, noteDelay);
+                            const sampleId = getInstrumentSampleId(state.currentInstrument);
+                            audioEngine.playNote(sampleId, midiNote, 60, noteDelay);
                         }
                     });
                     
@@ -204,10 +207,11 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                     setTimeout(() => setIsPlaying(false), duration + 200);
                 } else {
                     // For non-scales, use normal playback
+                    const sampleId = getInstrumentSampleId(state.currentInstrument);
                     audioEngine.playNoteSequence(
                         playSpec.notes,
                         playSpec.tempoMs,
-                        'piano_C4',
+                        sampleId,
                         60,
                         4
                     );
@@ -222,7 +226,8 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                 audioEngine.playInterval(root, semitones, direction, playSpec.tempoMs);
                 setTimeout(() => setIsPlaying(false), playSpec.tempoMs * 2 + 200);
             } else if (playSpec.type === 'chord' && playSpec.notes) {
-                audioEngine.playChord(playSpec.notes, 'piano_C4', 60);
+                const sampleId = getInstrumentSampleId(state.currentInstrument);
+                audioEngine.playChord(playSpec.notes, sampleId, 60);
                 setTimeout(() => setIsPlaying(false), 1000);
             } else if (playSpec.type === 'chordSequence' && playSpec.chords) {
                 // Convert chord notes to MIDI arrays
@@ -235,7 +240,8 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                         return noteNameToMidi(noteName, parseInt(octaveStr, 10));
                     });
                 });
-                audioEngine.playChordSequence(midiChords, playSpec.tempoMs, 'piano_C4', 60);
+                const sampleId = getInstrumentSampleId(state.currentInstrument);
+                audioEngine.playChordSequence(midiChords, playSpec.tempoMs, sampleId, 60);
                 const duration = playSpec.chords.length * playSpec.tempoMs;
                 setTimeout(() => setIsPlaying(false), duration + 200);
             } else {

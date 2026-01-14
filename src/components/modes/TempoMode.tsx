@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/GameContext';
 import { generateTempoQuestion, checkTempoAnswer, type TempoQuestion } from '../../logic/trainers/tempoTrainer';
 import { audioEngine } from '../../audio/audioEngine';
-import { loadInstrument } from '../../audio/sampleLoader';
+import { loadInstrument, getInstrumentSampleId } from '../../audio/sampleLoader';
 import { ModeHeader } from '../ModeHeader';
 import { RoundControls } from '../RoundControls';
 import { ProgressMeter } from '../ProgressMeter';
@@ -90,10 +90,11 @@ export const TempoMode: React.FC<TempoModeProps> = ({
             // Play metronome clicks
             // Use a higher note for click (e.g., C6 = MIDI 84)
             const clickNote = 84;
+            const sampleId = getInstrumentSampleId(state.currentInstrument);
             
             for (let i = 0; i < question.beatsToPlay; i++) {
                 const delay = (i * question.beatInterval) / 1000; // Convert to seconds
-                audioEngine.playNote('piano_C4', clickNote, 60, delay, 0.8);
+                audioEngine.playNote(sampleId, clickNote, 60, delay, 0.8);
             }
             
             // Calculate total duration

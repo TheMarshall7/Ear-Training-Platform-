@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/GameContext';
 import { generatePerfectPitchQuestion, type PerfectPitchQuestion } from '../../logic/trainers/perfectPitchTrainer';
 import { audioEngine } from '../../audio/audioEngine';
-import { loadInstrument } from '../../audio/sampleLoader';
+import { loadInstrument, getInstrumentSampleId } from '../../audio/sampleLoader';
 import { noteNameToMidi } from '../../config/harmonyRules';
 import { ModeHeader } from '../ModeHeader';
 import { RoundControls } from '../RoundControls';
@@ -77,7 +77,8 @@ export const PerfectPitchMode: React.FC<PerfectPitchModeProps> = ({
             
             // Play ONLY the single note - no chords
             const midiNote = noteNameToMidi(question.targetNote, 4);
-            audioEngine.playNote('piano_C4', midiNote, 60, 0, 1.0);
+            const sampleId = getInstrumentSampleId(state.currentInstrument);
+            audioEngine.playNote(sampleId, midiNote, 60, 0, 1.0);
             
             setTimeout(() => {
                 setIsPlaying(false);
