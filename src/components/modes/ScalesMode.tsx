@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/GameContext';
 import { generateScaleQuestion, type ScaleQuestion } from '../../logic/trainers/scaleTrainer';
 import { audioEngine } from '../../audio/audioEngine';
-import { loadInstrument } from '../../audio/sampleLoader';
+import { loadInstrument, getInstrumentSampleId } from '../../audio/sampleLoader';
 import { ModeHeader } from '../ModeHeader';
 import { RoundControls } from '../RoundControls';
 import { AnswerGrid } from '../AnswerGrid';
@@ -88,7 +88,8 @@ export const ScalesMode: React.FC<ScalesModeProps> = ({
                 return;
             }
             
-            audioEngine.playScale(question.notes, 400);
+            const sampleId = getInstrumentSampleId(state.currentInstrument);
+            audioEngine.playScale(question.notes, 400, sampleId, 60, 4);
             
             // Wait for scale to finish (approximate: notes.length * 400ms + buffer)
             const duration = question.notes.length * 400 + 500;

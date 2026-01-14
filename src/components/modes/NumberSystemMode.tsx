@@ -101,7 +101,8 @@ export const NumberSystemMode: React.FC<NumberSystemModeProps> = ({
             }
             
             const tempoMs = numberSystemConfig.tempoMs.progression;
-            audioEngine.playChordSequence(question.progressionChords, tempoMs);
+            const sampleId = getInstrumentSampleId(state.currentInstrument);
+            audioEngine.playChordSequence(question.progressionChords, tempoMs, sampleId, 60);
             
             // Wait for progression to finish
             const progressionDuration = question.progressionChords.length * tempoMs + 2000;

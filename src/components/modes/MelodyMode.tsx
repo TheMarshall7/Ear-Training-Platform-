@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/GameContext';
 import { generateMelodyQuestion, type MelodyQuestion } from '../../logic/trainers/melodyTrainer';
 import { audioEngine } from '../../audio/audioEngine';
-import { loadInstrument } from '../../audio/sampleLoader';
+import { loadInstrument, getInstrumentSampleId } from '../../audio/sampleLoader';
 import { ModeHeader } from '../ModeHeader';
 import { RoundControls } from '../RoundControls';
 import { DegreeGrid } from '../DegreeGrid';
@@ -98,7 +98,8 @@ export const MelodyMode: React.FC<MelodyModeProps> = ({
                 return;
             }
             
-            audioEngine.playMelody(question.notes, question.tempoMs);
+            const sampleId = getInstrumentSampleId(state.currentInstrument);
+            audioEngine.playMelody(question.notes, question.tempoMs, sampleId, 60, 4);
             
             // Wait for melody to finish
             const duration = question.notes.length * question.tempoMs + 1000;
