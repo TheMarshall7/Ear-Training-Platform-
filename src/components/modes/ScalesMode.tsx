@@ -67,6 +67,9 @@ export const ScalesMode: React.FC<ScalesModeProps> = ({
     }, [difficulty]);
 
     const playScale = useCallback(async () => {
+        // CRITICAL: Unlock audio FIRST, inside user gesture
+        await audioEngine.ensureUnlocked();
+        
         if (!question || isPlaying) return;
         
         // Validate question has valid notes before playing

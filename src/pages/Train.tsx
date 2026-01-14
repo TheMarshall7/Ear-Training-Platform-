@@ -135,6 +135,9 @@ export const Train: React.FC = () => {
     };
 
     const playQuestion = useCallback(async () => {
+        // CRITICAL: Unlock audio FIRST, inside user gesture, before ANY async work
+        await audioEngine.ensureUnlocked();
+        
         // #region agent log
         fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:playQuestion:entry',message:'playQuestion called',data:{hasQuestion:!!question,isPlaying,questionType:'intervalId' in (question||{}) ? 'interval' : 'chord'},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
         // #endregion

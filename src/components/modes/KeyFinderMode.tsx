@@ -67,6 +67,9 @@ export const KeyFinderMode: React.FC<KeyFinderModeProps> = ({
     }, [difficulty]);
 
     const playProgression = useCallback(async () => {
+        // CRITICAL: Unlock audio FIRST, inside user gesture
+        await audioEngine.ensureUnlocked();
+        
         if (!question || isPlaying) return;
         setIsPlaying(true);
 

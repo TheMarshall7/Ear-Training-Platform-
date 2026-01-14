@@ -72,6 +72,9 @@ export const NumberSystemMode: React.FC<NumberSystemModeProps> = ({
     }, [difficulty]);
 
     const playProgression = useCallback(async (autoPlayNoteAfter: boolean = false) => {
+        // CRITICAL: Unlock audio FIRST, inside user gesture
+        await audioEngine.ensureUnlocked();
+        
         if (!question || isPlaying) return;
         
         // Validate question has valid progression chords
@@ -124,6 +127,9 @@ export const NumberSystemMode: React.FC<NumberSystemModeProps> = ({
     }, [question, isPlaying]);
 
     const playNote = useCallback(async () => {
+        // CRITICAL: Unlock audio FIRST, inside user gesture
+        await audioEngine.ensureUnlocked();
+        
         if (!question || isPlaying) return;
         
         // Validate question has valid target MIDI
