@@ -11,6 +11,7 @@
  * - Gain control to prevent distortion when playing multiple notes
  * - Support for intervals, chords, scales, melodies, and progressions
  * - Automatic audio context management (handles browser autoplay policies)
+ * - iOS-safe audio unlock system
  * 
  * Usage:
  * 1. Initialize: await audioEngine.init()
@@ -19,6 +20,7 @@
  */
 
 import { noteNameToMidi } from '../config/harmonyRules';
+import { unlockAudio } from './unlockAudio';
 
 export class AudioEngine {
     private context: AudioContext | null = null;
@@ -78,44 +80,41 @@ export class AudioEngine {
     }
 
     /**
-     * Unlock audio for mobile devices (especially older iOS)
-     * This creates a silent buffer and plays it on user interaction
-     * to satisfy iOS audio unlock requirements
+     * Ensure audio is unlocked before playback
+     * MUST be called before any audio playback on iOS/mobile
+     * Uses the production-safe unlock utility
      */
-    async unlockAudio(): Promise<void> {
-        if (this.isUnlocked) {
-            console.log('Audio already unlocked');
+    async ensureUnlocked(): Promise<void> {
+        if (this.isUnlocked && this.context?.state === 'running') {
+            return; // Already unlocked and running
+        }
+
+        // Initialize context if needed
+        if (!this.context) {
+            await this.init();
+        }
+
+        if (!this.context) {
+            console.error('Failed to create audio context');
             return;
         }
 
-        try {
-            await this.init(true); // Force recreate context
-            
-            if (!this.context) {
-                throw new Error('Failed to create audio context');
-            }
-
-            // Create and play a silent buffer to unlock audio on iOS
-            const buffer = this.context.createBuffer(1, 1, 22050);
-            const source = this.context.createBufferSource();
-            source.buffer = buffer;
-            source.connect(this.context.destination);
-            source.start(0);
-
-            // Wait for context to start running
-            if (this.context.state === 'suspended') {
-                await this.context.resume();
-            }
-
-            // Wait a bit to ensure everything is ready
-            await new Promise(resolve => setTimeout(resolve, 100));
-
+        // Attempt unlock
+        const success = await unlockAudio(this.context);
+        
+        if (success) {
             this.isUnlocked = true;
-            console.log('Audio unlocked successfully, context state:', this.context.state);
-        } catch (error) {
-            console.error('Failed to unlock audio:', error);
-            throw error;
+        } else {
+            console.warn('Audio unlock did not fully succeed, context state:', this.context.state);
         }
+    }
+
+    /**
+     * Legacy method - use ensureUnlocked() instead
+     * @deprecated
+     */
+    async unlockAudio(): Promise<void> {
+        await this.ensureUnlocked();
     }
 
     async init(forceRecreate: boolean = false) {
@@ -203,6 +202,14 @@ export class AudioEngine {
         return this.samples.has(id);
     }
 
+    /**
+     * Get the audio context (for global unlock setup)
+     * @returns AudioContext | null
+     */
+    getContext(): AudioContext | null {
+        return this.context;
+    }
+
     async loadSample(url: string, id: string): Promise<void> {
         await this.init(); // Ensure context is ready
         if (this.samples.has(id)) {
@@ -227,6 +234,9 @@ export class AudioEngine {
     }
 
     async play(id: string, pitchShiftCents: number = 0, timeOffset: number = 0, gain: number = 1.0) {
+        // Ensure audio is unlocked before any playback (iOS requirement)
+        await this.ensureUnlocked();
+        
         // #region agent log
         fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:94',message:'play() called',data:{id,contextExists:!!this.context,contextState:this.context?.state,hasSample:this.samples.has(id)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
         // #endregion
@@ -242,25 +252,6 @@ export class AudioEngine {
         // #region agent log
         fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:102',message:'play() context state check',data:{id,contextState:this.context.state,isSuspended:this.context.state === 'suspended',isClosed:this.context.state === 'closed'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
         // #endregion
-        
-        // CRITICAL FIX: Resume context if suspended (common on mobile when app returns from background)
-        // MUST await this to ensure context is ready before playing
-        if (this.context.state === 'suspended') {
-            console.warn(`AudioContext is suspended, attempting to resume before playing ${id}`);
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:145',message:'play() resuming suspended context',data:{id,contextState:this.context.state},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-            // #endregion
-            try {
-                await this.context.resume();
-                console.log(`AudioContext resumed successfully, state: ${this.context.state}`);
-            } catch (error) {
-                console.error(`Failed to resume AudioContext:`, error);
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:149',message:'play() resume failed',data:{id,error:String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-                // #endregion
-                return; // Don't attempt to play if resume failed
-            }
-        }
         
         if (!this.samples.has(id)) {
             console.warn(`Cannot play ${id}: sample not loaded. Available: ${Array.from(this.samples.keys()).join(', ')}`);
@@ -316,13 +307,13 @@ export class AudioEngine {
     }
 
     // Play a note defined by midi number (assuming Middle C = 60 is the sample 'root')
-    playNote(rootSampleId: string, midiNote: number, rootMidi: number = 60, timeOffset: number = 0, gain: number = 1.0) {
+    async playNote(rootSampleId: string, midiNote: number, rootMidi: number = 60, timeOffset: number = 0, gain: number = 1.0) {
         // #region agent log
         fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:playNote',message:'playNote called',data:{rootSampleId,midiNote,rootMidi,timeOffset,gain},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
         // #endregion
         const semitoneDiff = midiNote - rootMidi;
         const cents = semitoneDiff * 100;
-        this.play(rootSampleId, cents, timeOffset, gain);
+        await this.play(rootSampleId, cents, timeOffset, gain);
     }
 
     stopAll() {
@@ -362,20 +353,12 @@ export class AudioEngine {
         rootSampleId: string = 'piano_C4',
         rootMidi: number = 60
     ) {
+        // Ensure audio is unlocked before playback
+        await this.ensureUnlocked();
+        
         if (!this.context) {
             console.error('Audio context not initialized');
             return;
-        }
-        
-        // Ensure context is running - MUST await
-        if (this.context.state === 'suspended') {
-            console.log('Resuming suspended audio context');
-            try {
-                await this.context.resume();
-            } catch (err) {
-                console.error('Failed to resume audio context:', err);
-                return;
-            }
         }
         
         if (!this.samples.has(rootSampleId)) {
@@ -452,18 +435,12 @@ export class AudioEngine {
         rootMidi: number = 60,
         octave: number = 4
     ) {
+        // Ensure audio is unlocked before playback
+        await this.ensureUnlocked();
+        
         if (!this.context) {
             console.error('Audio context not initialized');
             return;
-        }
-
-        if (this.context.state === 'suspended') {
-            try {
-                await this.context.resume();
-            } catch (err) {
-                console.error('Failed to resume audio context:', err);
-                return;
-            }
         }
 
         if (!this.samples.has(rootSampleId)) {
@@ -529,18 +506,12 @@ export class AudioEngine {
         rootSampleId: string = 'piano_C4',
         rootMidi: number = 60
     ) {
+        // Ensure audio is unlocked before playback
+        await this.ensureUnlocked();
+        
         if (!this.context) {
             console.error('Audio context not initialized');
             return;
-        }
-
-        if (this.context.state === 'suspended') {
-            try {
-                await this.context.resume();
-            } catch (err) {
-                console.error('Failed to resume audio context:', err);
-                return;
-            }
         }
 
         if (!this.samples.has(rootSampleId)) {
@@ -591,18 +562,12 @@ export class AudioEngine {
         rootSampleId: string = 'piano_C4',
         rootMidi: number = 60
     ) {
+        // Ensure audio is unlocked before playback
+        await this.ensureUnlocked();
+        
         if (!this.context) {
             console.error('Audio context not initialized');
             return;
-        }
-
-        if (this.context.state === 'suspended') {
-            try {
-                await this.context.resume();
-            } catch (err) {
-                console.error('Failed to resume audio context:', err);
-                return;
-            }
         }
 
         if (!this.samples.has(rootSampleId)) {

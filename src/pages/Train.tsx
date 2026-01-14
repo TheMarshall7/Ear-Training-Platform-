@@ -34,7 +34,7 @@ import { checkAchievements, loadAchievements, type Achievement } from '../logic/
 import { updateChallengeProgress, getDailyChallenges } from '../logic/dailyChallenges';
 import { BrandLogo } from '../components/BrandLogo';
 import { Footer } from '../components/Footer';
-import { AudioStatusBanner } from '../components/resources/AudioStatusBanner';
+import { AudioEnableBanner } from '../components/AudioEnableBanner';
 
 // Calculate combo multiplier based on streak
 const getComboMultiplier = (streak: number): number => {
@@ -57,10 +57,6 @@ export const Train: React.FC = () => {
     const [newAchievement, setNewAchievement] = useState<Achievement | null>(null);
     const [celebration, setCelebration] = useState<{ type: 'level-up' | 'perfect-run'; message: string; subtitle?: string } | null>(null);
     const [dailyChallenges, setDailyChallenges] = useState(getDailyChallenges());
-    const [audioUnlocked, setAudioUnlocked] = useState(false);
-    
-    // Detect mobile device
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     // Init - only for interval and chord modes (other modes have their own components)
     useEffect(() => {
@@ -106,44 +102,8 @@ export const Train: React.FC = () => {
         });
     }, [state.currentMode, state.currentInstrument]);
 
-    // Check audio context state on mount and visibility change (for mobile)
-    useEffect(() => {
-        const checkAudioState = async () => {
-            try {
-                await audioEngine.init();
-                setAudioUnlocked(true);
-                // Preload instrument
-                await loadInstrument(state.currentInstrument);
-            } catch (error) {
-                console.error('Audio initialization failed:', error);
-                setAudioUnlocked(false);
-            }
-        };
-        checkAudioState();
-    }, []);
-
-    // Reinitialize audio when page becomes visible (fixes mobile Safari timeout)
-    useEffect(() => {
-        const handleVisibilityChange = async () => {
-            if (document.visibilityState === 'visible') {
-                try {
-                    // Reinitialize audio context when page becomes visible
-                    await audioEngine.init(true); // Force recreate on visibility change
-                    // Reload instrument to ensure samples are available
-                    await loadInstrument(state.currentInstrument);
-                    setAudioUnlocked(true);
-                } catch (error) {
-                    console.log('Audio reinitialization on visibility change:', error);
-                    setAudioUnlocked(false);
-                }
-            }
-        };
-
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-        };
-    }, []);
+    // Audio initialization is now handled globally in App.tsx
+    // No need for per-page audio state management
 
     const loadNextQuestion = () => {
         // #region agent log
@@ -568,15 +528,10 @@ export const Train: React.FC = () => {
                     <div className="w-16"></div>
                 </div>
 
-            {/* Audio Status Banner - Mobile Only */}
-            {isMobile && (
-                <div className="w-full max-w-4xl px-4 mb-4">
-                    <AudioStatusBanner
-                        isUnlocked={audioUnlocked}
-                        onUnlock={() => setAudioUnlocked(true)}
-                    />
-                </div>
-            )}
+            {/* Audio Enable Banner - All Devices */}
+            <div className="w-full max-w-4xl px-4 mb-4">
+                <AudioEnableBanner />
+            </div>
 
             <ProgressMeter 
                 current={state.runProgress + 1} 
