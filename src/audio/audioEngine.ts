@@ -281,11 +281,23 @@ export class AudioEngine {
         this.activeSources.forEach(source => {
             try {
                 source.stop();
+                source.disconnect();
             } catch (e) {
                 // Source may already be stopped, ignore error
             }
         });
         this.activeSources.clear();
+        
+        // Suspend and resume the audio context to clear any scheduled events
+        if (this.context && this.context.state === 'running') {
+            this.context.suspend().then(() => {
+                if (this.context) {
+                    this.context.resume();
+                }
+            }).catch(err => {
+                console.warn('Error suspending/resuming audio context:', err);
+            });
+        }
     }
 
     /**

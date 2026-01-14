@@ -200,23 +200,24 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
     const jumpToStep = (step: number) => {
         console.log('Jumping to step:', step);
         
-        // Stop current playback
-        if (vocalWarmupActiveRef.current) {
-            console.log('Stopping current warmup to jump');
-            vocalWarmupActiveRef.current = false;
-            audioEngine.stopAll();
-            setIsVocalWarmupActive(false);
-            setIsPlaying(false);
-        }
+        // Always stop current playback completely
+        vocalWarmupActiveRef.current = false;
+        setIsVocalWarmupActive(false);
+        setIsPlaying(false);
+        
+        // Stop all audio and clear any scheduled notes
+        audioEngine.stopAll();
         
         // Update index
         setVocalWarmupIndex(step);
         
-        // Wait a moment for the stop to complete, then start from new position
+        // Wait longer for all audio to fully stop before starting new position
         setTimeout(() => {
+            // Double-check everything is stopped
+            audioEngine.stopAll();
             console.log('Starting warmup from step:', step);
             playVocalWarmupSequence(step);
-        }, 100);
+        }, 250);
     };
 
     const playVocalWarmupSequence = async (startStep: number = 0) => {
