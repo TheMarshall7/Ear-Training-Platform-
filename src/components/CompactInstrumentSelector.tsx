@@ -1,6 +1,7 @@
 import React from 'react';
 import { instruments } from '../config/instruments';
-import { Music2, Bell, Guitar, Music } from 'lucide-react';
+import { Bell, Guitar } from 'lucide-react';
+import { PianoIcon, BassGuitarIcon } from './icons/InstrumentIcons';
 
 interface CompactInstrumentSelectorProps {
     currentInstrument: string;
@@ -14,10 +15,10 @@ const getInstrumentIcon = (id: string) => {
         case 'guitar':
             return Guitar;
         case 'bass':
-            return Music;
+            return BassGuitarIcon;
         case 'piano':
         default:
-            return Music2;
+            return PianoIcon;
     }
 };
 

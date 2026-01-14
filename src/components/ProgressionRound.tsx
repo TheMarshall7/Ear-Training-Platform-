@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { audioEngine } from '../audio/audioEngine';
 import { loadInstrument, getInstrumentSampleId } from '../audio/sampleLoader';
+import { voiceBassChord, voiceGuitarChord } from '../logic/voicing/guitarVoicing';
 import { DegreeGrid } from './DegreeGrid';
 import { InputChain } from './InputChain';
 import { Player } from './Player';
@@ -198,7 +199,15 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
             await new Promise(resolve => setTimeout(resolve, 100));
             
             const chordSpecs = currentState.question.chordSpecs;
-            const midiChords = chordSpecs.map(spec => spec.midiNotes);
+            const midiChords = chordSpecs.map(spec => {
+                if (state.currentInstrument === 'guitar') {
+                    return voiceGuitarChord(spec.midiNotes, spec.midiNotes[0]);
+                }
+                if (state.currentInstrument === 'bass') {
+                    return voiceBassChord(spec.midiNotes, spec.midiNotes[0]);
+                }
+                return spec.midiNotes;
+            });
             
             // Debug logging
             console.log('Playing progression:', {

@@ -3,6 +3,7 @@ import type { ResourceItem, IntervalDirection, ScaleDirection } from '../../type
 import { audioEngine } from '../../audio/audioEngine';
 import { loadInstrument, getInstrumentSampleId } from '../../audio/sampleLoader';
 import { noteNameToMidi } from '../../config/harmonyRules';
+import { voiceBassChord, voiceGuitarChord } from '../../logic/voicing/guitarVoicing';
 import { useGame } from '../../context/GameContext';
 
 interface ResourcePlayerRowProps {
@@ -360,21 +361,54 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                 setTimeout(() => setIsPlaying(false), playSpec.tempoMs * 2 + 200);
             } else if (playSpec.type === 'chord' && playSpec.notes) {
                 const sampleId = getInstrumentSampleId(state.currentInstrument);
-                audioEngine.playChord(playSpec.notes, sampleId, 60);
+                if (state.currentInstrument === 'guitar') {
+                    const midiNotes = playSpec.notes
+                        .map(note => {
+                            const match = note.match(/^([A-G])([#b]?)(\d+)$/);
+                            if (!match) return null;
+                            const [, baseNote, accidental, octaveStr] = match;
+                            const noteName = baseNote + accidental;
+                            return noteNameToMidi(noteName, parseInt(octaveStr, 10));
+                        })
+                        .filter((note): note is number => note !== null);
+                    const voiced = voiceGuitarChord(midiNotes);
+                    audioEngine.playChordSequence([voiced], 900, sampleId, 60);
+                } else if (state.currentInstrument === 'bass') {
+                    const midiNotes = playSpec.notes
+                        .map(note => {
+                            const match = note.match(/^([A-G])([#b]?)(\d+)$/);
+                            if (!match) return null;
+                            const [, baseNote, accidental, octaveStr] = match;
+                            const noteName = baseNote + accidental;
+                            return noteNameToMidi(noteName, parseInt(octaveStr, 10));
+                        })
+                        .filter((note): note is number => note !== null);
+                    const voiced = voiceBassChord(midiNotes);
+                    audioEngine.playChordSequence([voiced], 900, sampleId, 60);
+                } else {
+                    audioEngine.playChord(playSpec.notes, sampleId, 60);
+                }
                 setTimeout(() => setIsPlaying(false), 1000);
             } else if (playSpec.type === 'chordSequence' && playSpec.chords) {
                 // Convert chord notes to MIDI arrays
                 const midiChords = playSpec.chords.map(chord => {
-                    return chord.notes.map(note => {
-                        const match = note.match(/^([A-G])([#b]?)(\d+)$/);
-                        if (!match) return 60; // Fallback to C4
-                        const [, baseNote, accidental, octaveStr] = match;
-                        const noteName = baseNote + accidental;
-                        return noteNameToMidi(noteName, parseInt(octaveStr, 10));
-                    });
+                    return chord.notes
+                        .map(note => {
+                            const match = note.match(/^([A-G])([#b]?)(\d+)$/);
+                            if (!match) return null;
+                            const [, baseNote, accidental, octaveStr] = match;
+                            const noteName = baseNote + accidental;
+                            return noteNameToMidi(noteName, parseInt(octaveStr, 10));
+                        })
+                        .filter((note): note is number => note !== null);
                 });
+                const voicedChords = state.currentInstrument === 'guitar'
+                    ? midiChords.map(chord => voiceGuitarChord(chord, chord[0]))
+                    : state.currentInstrument === 'bass'
+                        ? midiChords.map(chord => voiceBassChord(chord, chord[0]))
+                        : midiChords;
                 const sampleId = getInstrumentSampleId(state.currentInstrument);
-                audioEngine.playChordSequence(midiChords, playSpec.tempoMs, sampleId, 60);
+                audioEngine.playChordSequence(voicedChords, playSpec.tempoMs, sampleId, 60);
                 const duration = playSpec.chords.length * playSpec.tempoMs;
                 setTimeout(() => setIsPlaying(false), duration + 200);
             } else {

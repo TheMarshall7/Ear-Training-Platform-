@@ -12,6 +12,7 @@ import { useGame } from '../context/GameContext';
 import { getLevelFromXP } from '../context/GameContext';
 import { generateIntervalQuestion, type IntervalQuestion } from '../logic/trainers/intervalTrainer';
 import { generateChordQuestion, type ChordQuestion } from '../logic/trainers/chordTrainer';
+import { voiceBassChord, voiceGuitarChord } from '../logic/voicing/guitarVoicing';
 import { audioEngine } from '../audio/audioEngine';
 import { loadInstrument, getInstrumentSampleId } from '../audio/sampleLoader';
 import { Player } from '../components/Player';
@@ -170,9 +171,14 @@ export const Train: React.FC = () => {
                 // #region agent log
                 fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:playQuestion:playingChord',message:'Playing chord',data:{chordId:q.chordId,notesCount:q.notes.length,notes:q.notes},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'E'})}).catch(()=>{});
                 // #endregion
+                const chordNotes = state.currentInstrument === 'guitar'
+                    ? voiceGuitarChord(q.notes, q.rootMidi)
+                    : state.currentInstrument === 'bass'
+                        ? voiceBassChord(q.notes, q.rootMidi)
+                        : q.notes;
                 // Reduce gain per note to prevent clipping when multiple notes play together
-                const gainPerNote = Math.min(1.0, 1.0 / q.notes.length);
-                q.notes.forEach((note, i) => {
+                const gainPerNote = Math.min(1.0, 1.0 / chordNotes.length);
+                chordNotes.forEach((note, i) => {
                     // Arpeggiate slightly or verify strum
                     audioEngine.playNote(sampleId, note, 60, 0 + (i * 0.05), gainPerNote);
                 });

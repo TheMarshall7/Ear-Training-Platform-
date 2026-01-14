@@ -3,10 +3,9 @@ import React, { useState, useEffect } from 'react';
 /**
  * IOSSilentModeWarning - Persistent warning for iOS users about Silent mode
  * 
- * iOS hardware limitation: When the physical Silent switch is ON,
- * iOS mutes ALL Web Audio API sounds. This CANNOT be bypassed by code.
- * 
- * This component shows an immediate, dismissible warning to iOS users.
+ * iOS behavior: When the physical Silent switch is ON,
+ * Web Audio may be muted. We try to use media playback to allow sound,
+ * but some devices still require Silent mode OFF.
  */
 export const IOSSilentModeWarning: React.FC = () => {
     const [isDismissed, setIsDismissed] = useState(false);
@@ -55,18 +54,18 @@ export const IOSSilentModeWarning: React.FC = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                     <h3 className="text-base font-bold text-red-900 mb-2">
-                        ⚠️ iPhone Silent Mode Will Block All Audio
+                        ⚠️ iPhone Silent Mode May Block Audio
                     </h3>
                     <div className="text-sm text-red-800 space-y-2">
                         <p className="font-medium">
                             If you don't hear sound, check your iPhone's <strong>physical Silent switch</strong> (on the left side of your phone):
                         </p>
                         <ul className="list-disc list-inside space-y-1 ml-2">
-                            <li><strong>Orange visible</strong> = Silent mode ON → <span className="text-red-600 font-bold">Audio blocked by iOS</span></li>
-                            <li><strong>No orange</strong> = Silent mode OFF → Audio will work</li>
+                            <li><strong>Orange visible</strong> = Silent mode ON → <span className="text-red-600 font-bold">Audio may be muted</span></li>
+                            <li><strong>No orange</strong> = Silent mode OFF → Audio should play</li>
                         </ul>
                         <p className="text-xs mt-2 italic text-red-700">
-                            This is an iOS hardware limitation - no app can play sound when the Silent switch is ON.
+                            If audio is still silent, toggle Silent mode OFF and try again.
                         </p>
                     </div>
                 </div>

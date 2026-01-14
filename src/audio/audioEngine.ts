@@ -6,7 +6,9 @@ export class AudioEngine {
     private context: AudioContext | null = null;
     private masterGain: GainNode | null = null;
     private samples: Map<string, AudioBuffer> = new Map();
+    private sampleUrls: Map<string, string> = new Map();
     private activeSources: Set<AudioBufferSourceNode> = new Set();
+    private activeMedia: Set<HTMLAudioElement> = new Set();
     private unlocked = false;
 
     /**
@@ -77,6 +79,10 @@ export class AudioEngine {
         // #region agent log
         rlog('audioEngine.ts:play', 'starting play', { id, state: this.context?.state }, 'C');
         // #endregion
+        if (this.shouldUseMediaElement() && this.sampleUrls.has(id)) {
+            this.playMediaElement(id, pitchShiftCents, timeOffset, gain);
+            return;
+        }
         if (!this.context) await this.init();
         const ctx = this.context!;
 
@@ -184,6 +190,13 @@ export class AudioEngine {
             try { s.stop(); s.disconnect(); } catch {} 
         });
         this.activeSources.clear();
+        this.activeMedia.forEach(media => {
+            try {
+                media.pause();
+                media.currentTime = 0;
+            } catch {}
+        });
+        this.activeMedia.clear();
         if (this.context && this.context.state === 'running') {
             this.context.suspend().then(() => {
                 if (this.context) this.context.resume();
@@ -193,6 +206,7 @@ export class AudioEngine {
 
     async loadSample(url: string, id: string): Promise<void> {
         const ctx = await this.init();
+        this.sampleUrls.set(id, url);
         if (this.samples.has(id)) return;
         const res = await fetch(url);
         const arrayBuffer = await res.arrayBuffer();
@@ -200,6 +214,47 @@ export class AudioEngine {
     }
 
     hasSample(id: string) { return this.samples.has(id); }
+
+    private shouldUseMediaElement(): boolean {
+        if (typeof navigator === 'undefined') return false;
+        const ua = navigator.userAgent || '';
+        const isIOS = /iPhone|iPad|iPod/i.test(ua);
+        return isIOS;
+    }
+
+    private playMediaElement(id: string, pitchShiftCents: number, timeOffset: number, gain: number) {
+        const url = this.sampleUrls.get(id);
+        if (!url) return;
+        const audio = new Audio(url);
+        audio.preload = 'auto';
+        audio.volume = Math.max(0, Math.min(1, gain));
+        if (pitchShiftCents !== 0) {
+            audio.playbackRate = Math.pow(2, pitchShiftCents / 1200);
+        }
+        audio.setAttribute('playsinline', 'true');
+        (audio as any).playsInline = true;
+
+        this.activeMedia.add(audio);
+        audio.onended = () => {
+            this.activeMedia.delete(audio);
+        };
+
+        const start = () => {
+            const playPromise = audio.play();
+            if (playPromise?.catch) {
+                playPromise.catch(error => {
+                    console.warn('AudioEngine: media playback failed', error);
+                    this.activeMedia.delete(audio);
+                });
+            }
+        };
+
+        if (timeOffset > 0) {
+            setTimeout(start, timeOffset * 1000);
+        } else {
+            start();
+        }
+    }
 }
 
 export const audioEngine = new AudioEngine();
