@@ -9,6 +9,7 @@ import { BrandLogo } from '../components/BrandLogo';
 import { Footer } from '../components/Footer';
 import { InstrumentSelector } from '../components/InstrumentSelector';
 import { AudioEnableBanner } from '../components/AudioEnableBanner';
+import { IOSSilentModeWarning } from '../components/IOSSilentModeWarning';
 import logoImage from '../assets/logo.png';
 
 export const Home: React.FC = () => {
@@ -66,6 +67,11 @@ export const Home: React.FC = () => {
                         <p className="text-lg lg:text-xl text-neutral-500 max-w-2xl mx-auto leading-relaxed font-normal">
                             The gamified path to perfect pitch. Identify intervals, chords, and progressions with instant feedback and AI-powered training.
                         </p>
+                    </div>
+
+                    {/* iOS Silent Mode Warning - Shows immediately for iOS users */}
+                    <div className="mb-4">
+                        <IOSSilentModeWarning />
                     </div>
 
                     {/* Audio Enable Banner */}

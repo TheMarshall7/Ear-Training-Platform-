@@ -35,6 +35,7 @@ import { updateChallengeProgress, getDailyChallenges } from '../logic/dailyChall
 import { BrandLogo } from '../components/BrandLogo';
 import { Footer } from '../components/Footer';
 import { AudioEnableBanner } from '../components/AudioEnableBanner';
+import { IOSSilentModeWarning } from '../components/IOSSilentModeWarning';
 
 // Calculate combo multiplier based on streak
 const getComboMultiplier = (streak: number): number => {
@@ -530,6 +531,11 @@ export const Train: React.FC = () => {
                     </div>
                     <div className="w-16"></div>
                 </div>
+
+            {/* iOS Silent Mode Warning - Shows immediately for iOS users */}
+            <div className="w-full max-w-4xl px-4 mb-4">
+                <IOSSilentModeWarning />
+            </div>
 
             {/* Audio Enable Banner - All Devices */}
             <div className="w-full max-w-4xl px-4 mb-4">
