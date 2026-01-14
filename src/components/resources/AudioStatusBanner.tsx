@@ -11,11 +11,19 @@ export const AudioStatusBanner: React.FC<AudioStatusBannerProps> = ({ isUnlocked
 
     const handleUnlock = async () => {
         try {
-            // Force recreate audio context on user interaction
-            await audioEngine.init(true);
+            // Unlock audio for mobile devices (especially older iOS)
+            await audioEngine.unlockAudio();
             onUnlock();
         } catch (error) {
             console.error('Failed to unlock audio:', error);
+            // Try fallback to just init
+            try {
+                await audioEngine.init(true);
+                onUnlock();
+            } catch (fallbackError) {
+                console.error('Fallback unlock also failed:', fallbackError);
+                alert('Unable to enable audio. Please try refreshing the page or using a different browser.');
+            }
         }
     };
 
@@ -39,12 +47,12 @@ export const AudioStatusBanner: React.FC<AudioStatusBannerProps> = ({ isUnlocked
                         <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
                     </svg>
                     <p className="text-sm text-orange-800">
-                        Tap to enable audio playback
+                        <span className="font-medium">Audio not enabled.</span> Tap the button to activate sound playback.
                     </p>
                 </div>
                 <button
                     onClick={handleUnlock}
-                    className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium"
+                    className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium shadow-sm hover:shadow"
                 >
                     Enable Audio
                 </button>
