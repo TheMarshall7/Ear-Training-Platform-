@@ -93,7 +93,7 @@ export const NumberSystemMode: React.FC<NumberSystemModeProps> = ({
 
         try {
             // Force recreate audio context on user interaction
-            await audioEngine.init(true);
+            await audioEngine.init();
             await loadInstrument(state.currentInstrument);
             await new Promise(resolve => setTimeout(resolve, 100));
             
@@ -141,7 +141,7 @@ export const NumberSystemMode: React.FC<NumberSystemModeProps> = ({
 
         try {
             // Force recreate audio context on user interaction
-            await audioEngine.init(true);
+            await audioEngine.init();
             await loadInstrument(state.currentInstrument);
             await new Promise(resolve => setTimeout(resolve, 100));
             

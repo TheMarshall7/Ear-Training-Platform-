@@ -80,7 +80,7 @@ export const KeyFinderMode: React.FC<KeyFinderModeProps> = ({
             }
             
             // Force recreate audio context on user interaction
-            await audioEngine.init(true);
+            await audioEngine.init();
             await loadInstrument(state.currentInstrument);
             await new Promise(resolve => setTimeout(resolve, 100));
             

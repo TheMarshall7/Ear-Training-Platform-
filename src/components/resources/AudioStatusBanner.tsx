@@ -9,21 +9,25 @@ interface AudioStatusBannerProps {
 export const AudioStatusBanner: React.FC<AudioStatusBannerProps> = ({ isUnlocked, onUnlock }) => {
     if (isUnlocked) return null;
 
-    const handleUnlock = async () => {
+    const handleUnlock = () => {
         try {
-            // Unlock audio for mobile devices (especially older iOS)
-            await audioEngine.unlockAudio();
-            onUnlock();
+            // Unlock audio synchronously inside user gesture
+            audioEngine.ensureUnlockedSync();
+            
+            // Wait a brief moment for state change
+            setTimeout(() => {
+                const ctx = audioEngine.getContext();
+                if (ctx?.state === 'running') {
+                    onUnlock();
+                } else {
+                    console.warn('AudioStatusBanner: Unlock triggered but state is not running:', ctx?.state);
+                    // Still call onUnlock to hide the banner if it was a user click
+                    onUnlock();
+                }
+            }, 100);
         } catch (error) {
             console.error('Failed to unlock audio:', error);
-            // Try fallback to just init
-            try {
-                await audioEngine.init(true);
-                onUnlock();
-            } catch (fallbackError) {
-                console.error('Fallback unlock also failed:', fallbackError);
-                alert('Unable to enable audio. Please try refreshing the page or using a different browser.');
-            }
+            alert('Unable to enable audio. Please try refreshing the page or using a different browser.');
         }
     };
 
