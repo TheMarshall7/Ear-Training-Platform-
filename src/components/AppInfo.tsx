@@ -6,6 +6,7 @@
  */
 
 import React, { useState } from 'react';
+import logoImage from '../assets/logo.png';
 
 export const AppInfo: React.FC = () => {
     const [isHovered, setIsHovered] = useState(false);
@@ -27,6 +28,15 @@ export const AppInfo: React.FC = () => {
                     
                     {/* Subtle gradient overlay for depth */}
                     <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-red-500/5 rounded-2xl pointer-events-none"></div>
+                    
+                    {/* Logo in top right corner */}
+                    <div className="absolute top-3 right-3 z-10">
+                        <img 
+                            src={logoImage} 
+                            alt="Logo" 
+                            className="w-10 h-10 object-contain opacity-90 drop-shadow-md"
+                        />
+                    </div>
                     
                     <div className="relative text-xs text-neutral-700 space-y-3">
                         <div className="mb-3 pb-3 border-b border-neutral-200/40">
