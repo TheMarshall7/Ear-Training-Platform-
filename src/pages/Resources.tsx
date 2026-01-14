@@ -4,7 +4,7 @@ import { ResourcesLayout } from '../components/resources/ResourcesLayout';
 import { ResourceCategoryCards } from '../components/resources/ResourceCategoryCards';
 import { ResourceList } from '../components/resources/ResourceList';
 import { AudioStatusBanner } from '../components/resources/AudioStatusBanner';
-import { InstrumentSelector } from '../components/InstrumentSelector';
+import { CompactInstrumentSelector } from '../components/CompactInstrumentSelector';
 import { getResourcesByCategory, getAllResources } from '../logic/resources';
 import type { ResourceCategory, IntervalDirection, Difficulty } from '../types/resources';
 import { audioEngine } from '../audio/audioEngine';
@@ -142,9 +142,9 @@ export const Resources: React.FC = () => {
                     onUnlock={() => setAudioUnlocked(true)}
                 />
                 
-                {/* Instrument Selection */}
-                <div className="mb-8">
-                    <InstrumentSelector
+                {/* Compact Instrument Selection */}
+                <div className="mb-8 flex justify-center">
+                    <CompactInstrumentSelector
                         currentInstrument={state.currentInstrument}
                         onSelectInstrument={handleInstrumentChange}
                     />
@@ -182,9 +182,9 @@ export const Resources: React.FC = () => {
                 onUnlock={() => setAudioUnlocked(true)}
             />
             
-            {/* Instrument Selection */}
-            <div className="mb-8">
-                <InstrumentSelector
+            {/* Compact Instrument Selection */}
+            <div className="mb-6 flex justify-center">
+                <CompactInstrumentSelector
                     currentInstrument={state.currentInstrument}
                     onSelectInstrument={handleInstrumentChange}
                 />
