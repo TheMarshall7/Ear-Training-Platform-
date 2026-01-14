@@ -257,27 +257,41 @@ const transposeRootIntoBassRange = (rootMidi: number, minMidi: number, maxMidi: 
     return root;
 };
 
-export const voiceBassChord = (midiNotes: number[], rootMidi?: number): number[] => {
+export const voiceBassChord = (
+    midiNotes: number[],
+    rootMidi?: number,
+    context: 'trainer' | 'resource' = 'trainer'
+): number[] => {
     const cleanNotes = midiNotes.filter(note => Number.isFinite(note));
     if (cleanNotes.length === 0) return [];
 
     const baseRoot = rootMidi ?? Math.min(...cleanNotes);
-    const minMidi = getBassMinMidi(baseRoot);
-    const bassRoot = transposeRootIntoBassRange(baseRoot, minMidi, 52); // keep within E2–E3
+    const minMidi = context === 'resource' ? 52 : getBassMinMidi(baseRoot);
+    const maxMidi = context === 'resource' ? 64 : 52;
+    const bassRoot = transposeRootIntoBassRange(baseRoot, minMidi, maxMidi);
 
     const intervals = getChordIntervals(cleanNotes, baseRoot);
     const thirdInterval = intervals.includes(3) ? 3 : intervals.includes(4) ? 4 : null;
     const fifthInterval = intervals.find(interval => [7, 6, 8].includes(interval)) ?? null;
+    const seventhInterval = intervals.find(interval => [10, 11, 9].includes(interval)) ?? null;
+    const extensionInterval = intervals.find(interval => [2, 14, 5, 17].includes(interval)) ?? null;
 
     const voiced: number[] = [bassRoot];
-    if (fifthInterval != null) {
-        voiced.push(bassRoot + fifthInterval);
-    } else if (thirdInterval != null) {
-        voiced.push(bassRoot + thirdInterval);
-    }
+    const upperRegister = context === 'resource' ? 24 : 12;
 
-    const octave = bassRoot + 12;
-    voiced.push(octave);
+    if (thirdInterval != null) {
+        voiced.push(bassRoot + thirdInterval + upperRegister);
+    }
+    if (seventhInterval != null) {
+        voiced.push(bassRoot + seventhInterval + upperRegister);
+    } else if (fifthInterval != null) {
+        voiced.push(bassRoot + fifthInterval + upperRegister);
+    }
+    if (extensionInterval != null) {
+        voiced.push(bassRoot + extensionInterval + upperRegister);
+    } else if (thirdInterval == null && fifthInterval != null) {
+        voiced.push(bassRoot + fifthInterval + upperRegister);
+    }
 
     const filtered = voiced.filter(note => note >= minMidi);
     return uniqueSorted(filtered);

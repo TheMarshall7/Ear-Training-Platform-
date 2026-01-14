@@ -56,10 +56,14 @@ export const generatePerfectPitchQuestion = (difficulty: Difficulty): PerfectPit
         id: note,
         name: note
     }));
+    const shuffledOptions = options
+        .map(value => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value);
 
     return {
         targetNote,
         allowedNotes,
-        options
+        options: shuffledOptions
     };
 };

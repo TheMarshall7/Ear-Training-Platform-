@@ -316,9 +316,10 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
 
             // Handle different playSpec types
             if (playSpec.type === 'noteSequence' && playSpec.notes) {
+                const baseOctave = state.currentInstrument === 'piano' ? 3 : 4;
                 // For scales, process notes based on selected direction
                 if (resource.category === 'scales') {
-                    const processedNotes = processScaleNotes(playSpec.notes, scaleDirection, 4);
+                    const processedNotes = processScaleNotes(playSpec.notes, scaleDirection, baseOctave);
                     // Play notes individually with their specific octaves
                     const baseDelay = 0.05;
                     const tempoSeconds = playSpec.tempoMs / 1000;
@@ -347,7 +348,7 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                         playSpec.tempoMs,
                         sampleId,
                         60,
-                        4
+                        baseOctave
                     );
                     // Estimate duration
                     const duration = playSpec.notes.length * playSpec.tempoMs;
@@ -361,6 +362,7 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                 setTimeout(() => setIsPlaying(false), playSpec.tempoMs * 2 + 200);
             } else if (playSpec.type === 'chord' && playSpec.notes) {
                 const sampleId = getInstrumentSampleId(state.currentInstrument);
+                const pianoTranspose = state.currentInstrument === 'piano' ? -12 : 0;
                 if (state.currentInstrument === 'guitar') {
                     const midiNotes = playSpec.notes
                         .map(note => {
@@ -383,13 +385,27 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                             return noteNameToMidi(noteName, parseInt(octaveStr, 10));
                         })
                         .filter((note): note is number => note !== null);
-                    const voiced = voiceBassChord(midiNotes);
+                    const voiced = voiceBassChord(midiNotes, undefined, 'resource');
                     audioEngine.playChordSequence([voiced], 900, sampleId, 60);
                 } else {
-                    audioEngine.playChord(playSpec.notes, sampleId, 60);
+                    if (pianoTranspose !== 0) {
+                        const midiNotes = playSpec.notes
+                            .map(note => {
+                                const match = note.match(/^([A-G])([#b]?)(\d+)$/);
+                                if (!match) return null;
+                                const [, baseNote, accidental, octaveStr] = match;
+                                const noteName = baseNote + accidental;
+                                return noteNameToMidi(noteName, parseInt(octaveStr, 10)) + pianoTranspose;
+                            })
+                            .filter((note): note is number => note !== null);
+                        audioEngine.playChordSequence([midiNotes], 900, sampleId, 60);
+                    } else {
+                        audioEngine.playChord(playSpec.notes, sampleId, 60);
+                    }
                 }
                 setTimeout(() => setIsPlaying(false), 1000);
             } else if (playSpec.type === 'chordSequence' && playSpec.chords) {
+                const pianoTranspose = state.currentInstrument === 'piano' ? -12 : 0;
                 // Convert chord notes to MIDI arrays
                 const midiChords = playSpec.chords.map(chord => {
                     return chord.notes
@@ -398,14 +414,14 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                             if (!match) return null;
                             const [, baseNote, accidental, octaveStr] = match;
                             const noteName = baseNote + accidental;
-                            return noteNameToMidi(noteName, parseInt(octaveStr, 10));
+                            return noteNameToMidi(noteName, parseInt(octaveStr, 10)) + pianoTranspose;
                         })
                         .filter((note): note is number => note !== null);
                 });
                 const voicedChords = state.currentInstrument === 'guitar'
                     ? midiChords.map(chord => voiceGuitarChord(chord, chord[0]))
                     : state.currentInstrument === 'bass'
-                        ? midiChords.map(chord => voiceBassChord(chord, chord[0]))
+                        ? midiChords.map(chord => voiceBassChord(chord, chord[0], 'resource'))
                         : midiChords;
                 const sampleId = getInstrumentSampleId(state.currentInstrument);
                 audioEngine.playChordSequence(voicedChords, playSpec.tempoMs, sampleId, 60);

@@ -96,6 +96,10 @@ export const generateNumberSystemQuestion = (difficulty: Difficulty): NumberSyst
         id: degree.toString(),
         name: degree.toString()
     }));
+    const shuffledOptions = options
+        .map(value => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value);
 
     return {
         progressionDegrees,
@@ -104,6 +108,6 @@ export const generateNumberSystemQuestion = (difficulty: Difficulty): NumberSyst
         targetDegree,
         targetMidi,
         allowedDegrees,
-        options
+        options: shuffledOptions
     };
 };
