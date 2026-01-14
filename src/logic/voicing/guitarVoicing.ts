@@ -122,12 +122,14 @@ const scoreShape = (
     return score;
 };
 
+type FretShape = Array<number | null>;
+
 const buildShapeForRootString = (
     rootStringIndex: number,
     rootPitchClass: number,
     intervals: number[],
     minMidi: number
-) => {
+): { midiNotes: number[]; rootMidi: number; score: number } | null => {
     const openMidi = STANDARD_TUNING_MIDI[rootStringIndex];
     const rootFret = getRootFretForString(rootPitchClass, openMidi, minMidi);
     if (rootFret == null) return null;
@@ -157,8 +159,8 @@ const buildShapeForRootString = (
         return choices;
     });
 
-    const frets: Array<number | null> = new Array(6).fill(null);
-    let best: Array<number | null> | null = null;
+    const frets: FretShape = new Array(6).fill(null);
+    let best: FretShape | null = null;
     let bestScore = -Infinity;
 
     const search = (stringIndex: number) => {
@@ -182,15 +184,19 @@ const buildShapeForRootString = (
     search(0);
     if (!best) return null;
 
-    const voiced = best
-        .map((fret, index) => (fret == null ? null : STANDARD_TUNING_MIDI[index] + fret))
-        .filter((note): note is number => note != null);
+    const bestShape: FretShape = best;
+    const voiced = bestShape
+        .map((fret: number | null, index: number) => (fret == null ? null : STANDARD_TUNING_MIDI[index] + fret))
+        .filter((note: number | null): note is number => note != null);
 
     if (voiced.length < 3) return null;
     return { midiNotes: uniqueSorted(voiced), rootMidi, score: bestScore };
 };
 
-const findBestGuitarShape = (intervals: number[], rootMidi: number) => {
+const findBestGuitarShape = (
+    intervals: number[],
+    rootMidi: number
+): { midiNotes: number[]; rootMidi: number; score: number } | null => {
     const rootPitchClass = normalizeInterval(rootMidi);
     const minMidi = getGuitarMinMidi(rootMidi);
     const rootStrings = [0, 1, 2]; // E, A, D strings
