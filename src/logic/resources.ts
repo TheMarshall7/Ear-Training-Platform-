@@ -5,6 +5,7 @@ import intervalsConfig from '../config/intervals.json';
 import chordsConfig from '../config/chords.json';
 import melodiesConfig from '../config/melodies.json';
 import numberSystemConfig from '../config/numberSystem.json';
+import vocalWarmupsConfig from '../config/vocalWarmups.json';
 
 /**
  * Convert scales config to ResourceItems
@@ -290,6 +291,21 @@ export function getMelodyResources(): ResourceItem[] {
 }
 
 /**
+ * Convert vocal warmups config to ResourceItems
+ */
+export function getVocalWarmupResources(): ResourceItem[] {
+    return vocalWarmupsConfig.vocalWarmups.map(warmup => ({
+        id: warmup.id,
+        category: 'vocalWarmups' as ResourceCategory,
+        title: warmup.name,
+        subtitle: warmup.description,
+        difficulty: warmup.difficulty as Difficulty,
+        playSpec: buildScalePlaySpec(warmup.notes, 500), // Slightly slower for vocal practice
+        metadata: {}
+    }));
+}
+
+/**
  * Get all resources for a category
  */
 export function getResourcesByCategory(category: ResourceCategory): ResourceItem[] {
@@ -304,6 +320,8 @@ export function getResourcesByCategory(category: ResourceCategory): ResourceItem
             return getProgressionResources();
         case 'melodies':
             return getMelodyResources();
+        case 'vocalWarmups':
+            return getVocalWarmupResources();
         default:
             return [];
     }
@@ -318,6 +336,7 @@ export function getAllResources(): ResourceItem[] {
         ...getIntervalResources(),
         ...getChordResources(),
         ...getProgressionResources(),
-        ...getMelodyResources()
+        ...getMelodyResources(),
+        ...getVocalWarmupResources()
     ];
 }

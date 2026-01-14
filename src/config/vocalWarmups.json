@@ -1,0 +1,200 @@
+{
+  "vocalWarmups": [
+    {
+      "id": "5_note_ascending",
+      "name": "5-Note Scale (Ascending)",
+      "difficulty": "easy",
+      "notes": ["C", "D", "E", "F", "G"],
+      "description": "Basic 5-note ascending scale warmup"
+    },
+    {
+      "id": "5_note_descending",
+      "name": "5-Note Scale (Descending)",
+      "difficulty": "easy",
+      "notes": ["G", "F", "E", "D", "C"],
+      "description": "Basic 5-note descending scale warmup"
+    },
+    {
+      "id": "octave_ascending",
+      "name": "Octave Ascent",
+      "difficulty": "easy",
+      "notes": ["C", "D", "E", "F", "G", "A", "B", "C"],
+      "description": "Full octave ascending warmup"
+    },
+    {
+      "id": "octave_descending",
+      "name": "Octave Descent",
+      "difficulty": "easy",
+      "notes": ["C", "B", "A", "G", "F", "E", "D", "C"],
+      "description": "Full octave descending warmup"
+    },
+    {
+      "id": "major_triad_arpeggio",
+      "name": "Major Triad Arpeggio",
+      "difficulty": "easy",
+      "notes": ["C", "E", "G", "E", "C"],
+      "description": "1-3-5-3-1 major arpeggio pattern"
+    },
+    {
+      "id": "major_arpeggio_octave",
+      "name": "Major Arpeggio (Octave)",
+      "difficulty": "medium",
+      "notes": ["C", "E", "G", "C", "G", "E", "C"],
+      "description": "1-3-5-8-5-3-1 extended arpeggio"
+    },
+    {
+      "id": "thirds_ascending",
+      "name": "Thirds (Ascending)",
+      "difficulty": "medium",
+      "notes": ["C", "E", "D", "F", "E", "G", "F", "A", "G"],
+      "description": "Ascending scale in thirds"
+    },
+    {
+      "id": "thirds_descending",
+      "name": "Thirds (Descending)",
+      "difficulty": "medium",
+      "notes": ["C", "A", "B", "G", "A", "F", "G", "E", "F", "D", "E", "C"],
+      "description": "Descending scale in thirds"
+    },
+    {
+      "id": "lip_trill_5note",
+      "name": "Lip Trill Pattern (5-note)",
+      "difficulty": "easy",
+      "notes": ["C", "D", "E", "D", "C"],
+      "description": "5-note pattern for lip trills"
+    },
+    {
+      "id": "siren_pattern",
+      "name": "Siren (Octave Glide)",
+      "difficulty": "medium",
+      "notes": ["C", "C"],
+      "description": "Low to high octave glide pattern"
+    },
+    {
+      "id": "staccato_5note",
+      "name": "Staccato 5-Note",
+      "difficulty": "easy",
+      "notes": ["C", "C", "C", "C", "C"],
+      "description": "Repeated note for staccato practice"
+    },
+    {
+      "id": "chromatic_5note",
+      "name": "Chromatic 5-Note",
+      "difficulty": "medium",
+      "notes": ["C", "C#", "D", "D#", "E"],
+      "description": "5-note chromatic ascent"
+    },
+    {
+      "id": "octave_jump",
+      "name": "Octave Jump",
+      "difficulty": "hard",
+      "notes": ["C", "C", "C"],
+      "description": "Large interval jump practice"
+    },
+    {
+      "id": "rolling_pattern",
+      "name": "Rolling Pattern (1-2-3-4-5-4-3-2-1)",
+      "difficulty": "medium",
+      "notes": ["C", "D", "E", "F", "G", "F", "E", "D", "C"],
+      "description": "Smooth rolling scale pattern"
+    },
+    {
+      "id": "triplet_pattern",
+      "name": "Triplet Pattern",
+      "difficulty": "medium",
+      "notes": ["C", "D", "E", "C", "D", "E", "C", "D", "E"],
+      "description": "Repeated triplet grouping"
+    },
+    {
+      "id": "minor_triad_arpeggio",
+      "name": "Minor Triad Arpeggio",
+      "difficulty": "medium",
+      "notes": ["A", "C", "E", "C", "A"],
+      "description": "1-♭3-5-♭3-1 minor arpeggio pattern"
+    },
+    {
+      "id": "five_tone_down",
+      "name": "Five-Tone Down (5-4-3-2-1)",
+      "difficulty": "easy",
+      "notes": ["G", "F", "E", "D", "C"],
+      "description": "Descending five-tone pattern"
+    },
+    {
+      "id": "vowel_variation_ah",
+      "name": "Vowel Exercise (Ah)",
+      "difficulty": "easy",
+      "notes": ["C", "E", "G", "C", "G", "E", "C"],
+      "description": "Arpeggio pattern for 'Ah' vowel"
+    },
+    {
+      "id": "vowel_variation_eh",
+      "name": "Vowel Exercise (Eh)",
+      "difficulty": "easy",
+      "notes": ["C", "D", "E", "F", "G", "F", "E", "D", "C"],
+      "description": "Scale pattern for 'Eh' vowel"
+    },
+    {
+      "id": "vowel_variation_oh",
+      "name": "Vowel Exercise (Oh)",
+      "difficulty": "medium",
+      "notes": ["C", "E", "G", "E", "C"],
+      "description": "Arpeggio pattern for 'Oh' vowel"
+    },
+    {
+      "id": "nine_tone_scale",
+      "name": "Nine-Tone Scale",
+      "difficulty": "hard",
+      "notes": ["C", "D", "E", "F", "G", "A", "B", "C", "B", "A", "G", "F", "E", "D", "C"],
+      "description": "Extended scale up and down"
+    },
+    {
+      "id": "pentatonic_warmup",
+      "name": "Pentatonic Warmup",
+      "difficulty": "easy",
+      "notes": ["C", "D", "E", "G", "A", "G", "E", "D", "C"],
+      "description": "Pentatonic scale pattern"
+    },
+    {
+      "id": "bubble_lips_pattern",
+      "name": "Bubble Lips (Siren)",
+      "difficulty": "easy",
+      "notes": ["C", "G", "C"],
+      "description": "5th jump for bubble lip exercise"
+    },
+    {
+      "id": "messa_di_voce",
+      "name": "Messa di Voce",
+      "difficulty": "hard",
+      "notes": ["C"],
+      "description": "Single sustained note (crescendo/decrescendo)"
+    },
+    {
+      "id": "seventh_arpeggio",
+      "name": "Dominant 7th Arpeggio",
+      "difficulty": "hard",
+      "notes": ["C", "E", "G", "Bb", "G", "E", "C"],
+      "description": "1-3-5-♭7-5-3-1 dominant seventh pattern"
+    },
+    {
+      "id": "quick_chromatic",
+      "name": "Quick Chromatic",
+      "difficulty": "hard",
+      "notes": ["C", "C#", "D", "D#", "E", "F", "F#", "G", "F#", "F", "E", "D#", "D", "C#", "C"],
+      "description": "Rapid chromatic up and down"
+    },
+    {
+      "id": "leaps_and_bounds",
+      "name": "Leaps and Bounds",
+      "difficulty": "hard",
+      "notes": ["C", "G", "C", "E", "C"],
+      "description": "Large interval jump practice"
+    },
+    {
+      "id": "humming_exercise",
+      "name": "Humming Exercise",
+      "difficulty": "easy",
+      "notes": ["C", "D", "E", "D", "C"],
+      "description": "Simple pattern for humming warmup"
+    }
+  ]
+}

@@ -5,7 +5,7 @@ import { ResourceFilters } from './ResourceFilters';
 
 interface ResourceListProps {
     resources: ResourceItem[];
-    category: 'scales' | 'intervals' | 'chords' | 'progressions' | 'melodies';
+    category: 'scales' | 'intervals' | 'chords' | 'progressions' | 'melodies' | 'vocalWarmups';
     intervalDirection: IntervalDirection;
     onIntervalDirectionChange: (direction: IntervalDirection) => void;
     difficultyFilter: Difficulty | 'all';
@@ -58,7 +58,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
 
     // Group by difficulty if applicable, or by length for progressions
     const groupedResources = useMemo(() => {
-        if (category === 'scales' || category === 'melodies' || category === 'chords') {
+        if (category === 'scales' || category === 'melodies' || category === 'chords' || category === 'vocalWarmups') {
             const groups: Record<string, ResourceItem[]> = {
                 easy: [],
                 medium: [],

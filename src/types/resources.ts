@@ -1,7 +1,7 @@
-export type ResourceCategory = 'scales' | 'intervals' | 'chords' | 'progressions' | 'melodies';
+export type ResourceCategory = 'scales' | 'intervals' | 'chords' | 'progressions' | 'melodies' | 'vocalWarmups';
 
 // Re-export as const for runtime use if needed
-export const ResourceCategoryValues = ['scales', 'intervals', 'chords', 'progressions', 'melodies'] as const;
+export const ResourceCategoryValues = ['scales', 'intervals', 'chords', 'progressions', 'melodies', 'vocalWarmups'] as const;
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
 

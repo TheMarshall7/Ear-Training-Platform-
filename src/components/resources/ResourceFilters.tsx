@@ -2,7 +2,7 @@ import React from 'react';
 import type { IntervalDirection, Difficulty } from '../../types/resources';
 
 interface ResourceFiltersProps {
-    category: 'scales' | 'intervals' | 'chords' | 'progressions' | 'melodies';
+    category: 'scales' | 'intervals' | 'chords' | 'progressions' | 'melodies' | 'vocalWarmups';
     intervalDirection: IntervalDirection;
     onIntervalDirectionChange: (direction: IntervalDirection) => void;
     difficultyFilter: Difficulty | 'all';
@@ -21,7 +21,7 @@ export const ResourceFilters: React.FC<ResourceFiltersProps> = ({
     onSearchChange
 }) => {
     const showIntervalToggle = category === 'intervals';
-    const showDifficultyFilter = category === 'scales' || category === 'melodies' || category === 'progressions';
+    const showDifficultyFilter = category === 'scales' || category === 'melodies' || category === 'progressions' || category === 'vocalWarmups';
     const showSearch = category !== 'intervals';
 
     return (

@@ -14,7 +14,8 @@ const categories: { id: ResourceCategory; label: string }[] = [
     { id: 'intervals', label: 'Intervals' },
     { id: 'chords', label: 'Chords' },
     { id: 'progressions', label: 'Progressions' },
-    { id: 'melodies', label: 'Melodies' }
+    { id: 'melodies', label: 'Melodies' },
+    { id: 'vocalWarmups', label: 'Vocal Warm-Ups' }
 ];
 
 export const ResourcesLayout: React.FC<ResourcesLayoutProps> = ({ children, category }) => {
