@@ -1,5 +1,6 @@
 import { noteNameToMidi } from '../config/harmonyRules';
-import { hardUnlock } from './unlockAudio';
+import { syncHardUnlock } from './unlockAudio';
+import { rlog } from '../utils/debugLogger';
 
 export class AudioEngine {
     private context: AudioContext | null = null;
@@ -12,51 +13,97 @@ export class AudioEngine {
      * Ensures ONE AudioContext exists and is initialized.
      */
     async init() {
+        // #region agent log
+        rlog('audioEngine.ts:init', 'init called', { contextExists: !!this.context, state: this.context?.state }, 'B');
+        // #endregion
         if (!this.context || this.context.state === 'closed') {
+            console.log('AudioEngine: Creating new context...');
             this.context = new (window.AudioContext || (window as any).webkitAudioContext)();
             this.masterGain = this.context.createGain();
-            this.masterGain.gain.value = 0.5; // 50% volume to prevent distortion
+            this.masterGain.gain.value = 0.5;
             this.masterGain.connect(this.context.destination);
-            console.log('AudioEngine: Context initialized');
+            console.log('AudioEngine: Context created. State:', this.context.state);
+            // #region agent log
+            rlog('audioEngine.ts:init', 'context created', { state: this.context.state }, 'B');
+            // #endregion
         }
         return this.context;
     }
 
     /**
-     * MUST be called at the start of every Play/Replay handler.
-     * This is the "hard unlock" that forces iOS to start the clock.
+     * Synchronously triggers unlock inside user gesture.
+     */
+    ensureUnlockedSync(): void {
+        // #region agent log
+        rlog('audioEngine.ts:ensureUnlockedSync', 'called', { contextExists: !!this.context, state: this.context?.state }, 'A');
+        // #endregion
+        if (!this.context) {
+            console.warn('AudioEngine: No context to unlock. Creating one...');
+            this.context = new (window.AudioContext || (window as any).webkitAudioContext)();
+            this.masterGain = this.context.createGain();
+            this.masterGain.gain.value = 0.5;
+            this.masterGain.connect(this.context.destination);
+        }
+        
+        console.log('AudioEngine: ensureUnlockedSync. State:', this.context.state);
+        syncHardUnlock(this.context);
+        this.unlocked = true;
+        // #region agent log
+        rlog('audioEngine.ts:ensureUnlockedSync', 'triggered', { state: this.context.state }, 'A');
+        // #endregion
+    }
+
+    /**
+     * Async ensureUnlocked for internal use
      */
     async ensureUnlocked(): Promise<void> {
+        // #region agent log
+        rlog('audioEngine.ts:ensureUnlocked', 'async fallback called', { unlocked: this.unlocked }, 'A');
+        // #endregion
         const ctx = await this.init();
-        
-        // If already unlocked and running, we're good
         if (this.unlocked && ctx.state === 'running') return;
-
-        // Perform hard unlock (resume -> silent buffer -> resume)
-        const success = await hardUnlock(ctx);
-        if (success) {
-            this.unlocked = true;
-            console.log('AudioEngine: Confirming state === "running":', ctx.state === 'running');
-        }
+        
+        console.log('AudioEngine: ensureUnlocked (async fallback). State:', ctx.state);
+        syncHardUnlock(ctx);
+        this.unlocked = true;
+        // #region agent log
+        rlog('audioEngine.ts:ensureUnlocked', 'triggered', { state: ctx.state }, 'A');
+        // #endregion
     }
 
     getContext() { return this.context; }
 
     async play(id: string, pitchShiftCents: number = 0, timeOffset: number = 0, gain: number = 1.0) {
-        // Ensure audio is unlocked before any playback
-        await this.ensureUnlocked();
+        // #region agent log
+        rlog('audioEngine.ts:play', 'starting play', { id, state: this.context?.state }, 'C');
+        // #endregion
+        if (!this.context) await this.init();
+        const ctx = this.context!;
+
+        console.log(`AudioEngine: play(${id}). State:`, ctx.state);
         
-        if (!this.context || !this.samples.has(id)) return;
+        if (ctx.state !== 'running') {
+            console.warn('AudioEngine: context not running during play. Attempting sync unlock.');
+            syncHardUnlock(ctx);
+        }
+
+        if (!this.samples.has(id)) {
+            console.error(`AudioEngine: sample not loaded: ${id}`);
+            // #region agent log
+            rlog('audioEngine.ts:play', 'sample not loaded', { id }, 'C');
+            // #endregion
+            return;
+        }
 
         const sample = this.samples.get(id)!;
-        const source = this.context.createBufferSource();
+        const source = ctx.createBufferSource();
         source.buffer = sample;
 
         if (pitchShiftCents !== 0) {
             source.playbackRate.value = Math.pow(2, pitchShiftCents / 1200);
         }
 
-        const sourceGain = this.context.createGain();
+        const sourceGain = ctx.createGain();
         sourceGain.gain.value = gain;
         source.connect(sourceGain);
         sourceGain.connect(this.masterGain!);
@@ -67,7 +114,10 @@ export class AudioEngine {
             source.disconnect();
         };
         
-        const startTime = Math.max(this.context.currentTime, this.context.currentTime + timeOffset);
+        const startTime = Math.max(ctx.currentTime, ctx.currentTime + timeOffset);
+        // #region agent log
+        rlog('audioEngine.ts:play', 'source.start', { id, startTime, currentTime: ctx.currentTime }, 'C');
+        // #endregion
         source.start(startTime);
     }
 

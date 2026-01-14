@@ -35,21 +35,29 @@ export const AudioEnableBanner: React.FC = () => {
         return () => { clearTimeout(timer); clearInterval(poll); };
     }, []);
 
-    const handleEnableAudio = async () => {
+    const handleEnableAudio = () => {
         setIsLoading(true);
+        console.log('AudioEnableBanner: handleEnableAudio click');
+        
         try {
-            // CRITICAL: hardUnlock runs directly inside this onClick handler
-            await audioEngine.ensureUnlocked();
+            // CRITICAL: hardUnlock runs SYNCHRONOUSLY directly inside this onClick handler
+            audioEngine.ensureUnlockedSync();
+            
             const ctx = audioEngine.getContext();
-            if (ctx?.state === 'running') {
-                setIsUnlocked(true);
-                setShowBanner(false);
-                localStorage.setItem('audioUnlocked', 'true');
-                sessionStorage.setItem('audioUnlocked', 'true');
-            }
+            console.log('AudioEnableBanner: after sync unlock. State:', ctx?.state);
+
+            // Give iOS a few ms to update state
+            setTimeout(() => {
+                if (ctx?.state === 'running') {
+                    setIsUnlocked(true);
+                    setShowBanner(false);
+                    localStorage.setItem('audioUnlocked', 'true');
+                    sessionStorage.setItem('audioUnlocked', 'true');
+                }
+                setIsLoading(false);
+            }, 100);
         } catch (error) {
             console.error('Failed to enable audio:', error);
-        } finally {
             setIsLoading(false);
         }
     };

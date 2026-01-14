@@ -157,8 +157,8 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
     const playProgressionRef = useRef<(() => Promise<void>) | null>(null);
     
     const playProgression = useCallback(async () => {
-        // CRITICAL: Unlock audio FIRST, inside user gesture
-        await audioEngine.ensureUnlocked();
+        // CRITICAL: Unlock audio SYNCHRONOUSLY FIRST
+        audioEngine.ensureUnlockedSync();
         
         const currentState = roundStateRef.current;
         const currentStatus = roundStatusRef.current;

@@ -136,21 +136,22 @@ export const Train: React.FC = () => {
     };
 
     const playQuestion = useCallback(async () => {
-        // CRITICAL: Unlock audio FIRST, inside user gesture, before ANY async work
-        await audioEngine.ensureUnlocked();
+        // CRITICAL: Unlock audio SYNCHRONOUSLY FIRST, inside user gesture, before ANY await/async work
+        audioEngine.ensureUnlockedSync();
         
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:playQuestion:entry',message:'playQuestion called',data:{hasQuestion:!!question,isPlaying,questionType:'intervalId' in (question||{}) ? 'interval' : 'chord'},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
+        console.log('Train: playQuestion called. State:', audioEngine.getContext()?.state);
         
         if (!question || isPlaying) return;
         setIsPlaying(true);
 
         try {
-            // Initialize audio context and load sample (force recreate on user interaction)
-            await audioEngine.init(true);
+            // Now safe to do async work (init, loading)
+            await audioEngine.init();
             await loadInstrument(state.currentInstrument);
-            await new Promise(resolve => setTimeout(resolve, 100)); // Small delay to ensure sample is ready
+            // wait a tiny bit for loader
+            if (!audioEngine.hasSample(getInstrumentSampleId(state.currentInstrument))) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
 
             // Get the current instrument's sample ID
             const sampleId = getInstrumentSampleId(state.currentInstrument);

@@ -20,6 +20,7 @@ import { Resources } from './pages/Resources';
 import { PlatinumGift } from './pages/PlatinumGift';
 import { audioEngine } from './audio/audioEngine';
 import { attachGlobalAudioUnlock, setupVisibilityResumeHandler } from './audio/unlockAudio';
+import { DebugConsole } from './components/DebugConsole';
 
 function App() {
   useEffect(() => {
@@ -60,6 +61,7 @@ function App() {
           <Route path="/platinum-gift" element={<PlatinumGift />} />
           <Route path="/%2Fplatinum-gift" element={<PlatinumGift />} />
         </Routes>
+        <DebugConsole />
       </GameProvider>
     </Router>
   );

@@ -1,35 +1,46 @@
+import { rlog } from '../utils/debugLogger';
+
 /**
- * Hard Unlock for iOS Safari
- * Performs: resume -> silent buffer -> resume again
- * This is the most reliable way to force iOS audio to start inside a gesture.
+ * Synchronous Hard Unlock for iOS Safari
+ * Requirement: Call resume() without awaiting, then immediately play a silent buffer.
+ */
+export function syncHardUnlock(ctx: AudioContext): void {
+    console.log('🔄 syncHardUnlock start. State:', ctx.state);
+    // #region agent log
+    rlog('unlockAudio.ts:syncHardUnlock', 'sync unlock start', { state: ctx.state }, 'A', 'post-fix');
+    // #endregion
+
+    // 1. Synchronously trigger resume (don't await)
+    if (ctx.state !== 'running') {
+        void ctx.resume();
+    }
+
+    // 2. Immediately play silent buffer (also synchronous trigger)
+    const buffer = ctx.createBuffer(1, 1, 22050);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    source.start(0);
+    source.stop(ctx.currentTime + 0.001);
+    source.onended = () => {
+        source.disconnect();
+        console.log('✅ silent buffer ended. State:', ctx.state);
+        // #region agent log
+        rlog('unlockAudio.ts:syncHardUnlock', 'silent buffer ended', { state: ctx.state }, 'A', 'post-fix');
+        // #endregion
+    };
+
+    console.log('✅ syncHardUnlock triggered. State:', ctx.state);
+}
+
+/**
+ * Legacy hardUnlock - now uses synchronous triggers for iOS safety
  */
 export async function hardUnlock(ctx: AudioContext): Promise<boolean> {
-    try {
-        console.log('🔄 Attempting hard unlock... Current state:', ctx.state);
-        
-        // 1. Resume first
-        if (ctx.state !== 'running') {
-            await ctx.resume();
-        }
-
-        // 2. Play silent buffer (required for some iOS versions)
-        const buffer = ctx.createBuffer(1, 1, 22050);
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(ctx.destination);
-        source.start(0);
-        source.stop(ctx.currentTime + 0.001);
-        source.onended = () => source.disconnect();
-
-        // 3. Resume again (ensures state flips to "running")
-        await ctx.resume();
-
-        console.log('✅ Hard unlock finished. Final state:', ctx.state);
-        return ctx.state === 'running';
-    } catch (error) {
-        console.error('❌ Hard unlock failed:', error);
-        return false;
-    }
+    syncHardUnlock(ctx);
+    // Wait a brief moment for state to potentially flip
+    await new Promise(resolve => setTimeout(resolve, 50));
+    return ctx.state === 'running';
 }
 
 export interface GlobalUnlockOptions {
@@ -40,6 +51,9 @@ export interface GlobalUnlockOptions {
 let isGlobalUnlockAttached = false;
 let globalUnlockListeners: Array<() => void> = [];
 
+/**
+ * Attach global one-time listeners to unlock audio on first user interaction
+ */
 export function attachGlobalAudioUnlock(opts: GlobalUnlockOptions): void {
     if (isGlobalUnlockAttached) return;
 
@@ -50,12 +64,23 @@ export function attachGlobalAudioUnlock(opts: GlobalUnlockOptions): void {
         if (unlocked) return;
         unlocked = true;
 
-        const success = await hardUnlock(audioContext);
-        if (success) {
+        console.log('🎵 Global Interaction:', event.type);
+        // #region agent log
+        rlog('unlockAudio.ts:attachGlobalAudioUnlock', 'global interact', { type: event.type, state: audioContext.state }, 'A', 'post-fix');
+        // #endregion
+        
+        syncHardUnlock(audioContext);
+        
+        // Wait for potential state change
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        if (audioContext.state === 'running') {
+            console.log('✅ Global audio unlocked successfully');
             sessionStorage.setItem('audioUnlocked', 'true');
             onUnlock?.();
             detachGlobalAudioUnlock();
         } else {
+            console.warn('⚠️ Global audio unlock failed, allowing retry');
             unlocked = false; // Allow retry on next tap
         }
     };
@@ -65,19 +90,30 @@ export function attachGlobalAudioUnlock(opts: GlobalUnlockOptions): void {
 
     globalUnlockListeners = events.map(type => () => document.removeEventListener(type, handleUnlock, { capture: true }));
     isGlobalUnlockAttached = true;
+    console.log('🎧 Audio unlock listeners ready');
 }
 
+/**
+ * Detach global audio unlock listeners
+ */
 export function detachGlobalAudioUnlock(): void {
     globalUnlockListeners.forEach(cleanup => cleanup());
     globalUnlockListeners = [];
     isGlobalUnlockAttached = false;
 }
 
+/**
+ * Setup visibility change handler for tab switching
+ */
 export function setupVisibilityResumeHandler(ctx: AudioContext): () => void {
-    const handleVisibility = async () => {
+    const handleVisibility = () => {
+        console.log('Tab visibility changed:', document.visibilityState);
+        // #region agent log
+        rlog('unlockAudio.ts:handleVisibility', 'visibilitychange', { state: ctx.state, visibility: document.visibilityState }, 'D', 'post-fix');
+        // #endregion
         if (document.visibilityState === 'visible' && ctx.state === 'suspended') {
-            await ctx.resume();
-            console.log('Tab visible: context resumed. State:', ctx.state);
+            void ctx.resume();
+            console.log('Tab visible: resume() called.');
         }
     };
     document.addEventListener('visibilitychange', handleVisibility);

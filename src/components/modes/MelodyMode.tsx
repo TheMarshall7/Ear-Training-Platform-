@@ -71,8 +71,8 @@ export const MelodyMode: React.FC<MelodyModeProps> = ({
     }, [difficulty]);
 
     const playMelody = useCallback(async () => {
-        // CRITICAL: Unlock audio FIRST, inside user gesture
-        await audioEngine.ensureUnlocked();
+        // CRITICAL: Unlock audio SYNCHRONOUSLY FIRST
+        audioEngine.ensureUnlockedSync();
         
         if (!question || isPlaying) return;
         
