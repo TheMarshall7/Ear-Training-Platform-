@@ -158,16 +158,108 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
     const [isPlaying, setIsPlaying] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [scaleDirection, setScaleDirection] = useState<ScaleDirection>('ascending');
+    const [vocalWarmupIndex, setVocalWarmupIndex] = useState(0);
+    const [isVocalWarmupActive, setIsVocalWarmupActive] = useState(false);
 
     useEffect(() => {
         // Reset error when resource changes
         setError(null);
         // Reset scale direction when resource changes
         setScaleDirection('ascending');
+        // Stop vocal warmup if active
+        if (isVocalWarmupActive) {
+            setIsVocalWarmupActive(false);
+            setVocalWarmupIndex(0);
+            audioEngine.stopAll();
+        }
     }, [resource.id]);
+    
+    // Stop vocal warmup on unmount
+    useEffect(() => {
+        return () => {
+            if (isVocalWarmupActive) {
+                audioEngine.stopAll();
+            }
+        };
+    }, [isVocalWarmupActive]);
+
+    const stopVocalWarmup = () => {
+        setIsVocalWarmupActive(false);
+        setVocalWarmupIndex(0);
+        setIsPlaying(false);
+        audioEngine.stopAll();
+    };
+
+    const playVocalWarmupSequence = async () => {
+        if (isVocalWarmupActive) {
+            // Stop if already playing
+            stopVocalWarmup();
+            return;
+        }
+
+        try {
+            setIsVocalWarmupActive(true);
+            setVocalWarmupIndex(0);
+            setError(null);
+
+            // Initialize audio
+            await audioEngine.init();
+            await loadInstrument(state.currentInstrument);
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            const playSpec = resource.playSpec;
+            const notes = playSpec.notes || [];
+            
+            // Go up 2 octaves (24 semitones) starting from the base notes
+            const totalSteps = 25; // Will go up 24 semitones (2 octaves)
+            const pauseBetweenSteps = 1200; // 1.2 seconds pause between each key
+            
+            const sampleId = getInstrumentSampleId(state.currentInstrument);
+            
+            for (let step = 0; step < totalSteps; step++) {
+                if (!isVocalWarmupActive) break; // Check if stopped
+                
+                setVocalWarmupIndex(step);
+                
+                const transpositionSemitones = step;
+                const baseDelay = 0.05;
+                const tempoSeconds = playSpec.tempoMs / 1000;
+                
+                // Play each note in the pattern, transposed
+                notes.forEach((noteName, index) => {
+                    const baseMidi = noteNameToMidi(noteName, 4); // Base octave
+                    const transposedMidi = baseMidi + transpositionSemitones;
+                    const noteDelay = baseDelay + (index * tempoSeconds);
+                    audioEngine.playNote(sampleId, transposedMidi, 60, noteDelay);
+                });
+                
+                // Wait for pattern to finish plus pause before next key
+                const patternDuration = notes.length * playSpec.tempoMs;
+                await new Promise(resolve => setTimeout(resolve, patternDuration + pauseBetweenSteps));
+            }
+            
+            // Finished the sequence
+            setIsVocalWarmupActive(false);
+            setVocalWarmupIndex(0);
+            setIsPlaying(false);
+            
+        } catch (error) {
+            console.error('Error in vocal warmup sequence:', error);
+            setError('Failed to play vocal warmup sequence');
+            if (onError) onError('Failed to play vocal warmup sequence');
+            setIsVocalWarmupActive(false);
+            setVocalWarmupIndex(0);
+            setIsPlaying(false);
+        }
+    };
 
     const playResource = async () => {
         if (isPlaying) return;
+        
+        // If it's a vocal warmup, use the special sequence player
+        if (resource.category === 'vocalWarmups') {
+            return playVocalWarmupSequence();
+        }
 
         try {
             setIsPlaying(true);
@@ -265,6 +357,7 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
     };
 
     const isScale = resource.category === 'scales';
+    const isVocalWarmup = resource.category === 'vocalWarmups';
 
     return (
         <div className="p-4 bg-white/50 backdrop-blur-sm rounded-xl border border-neutral-200/50 hover:border-orange-300/50 transition-all">
@@ -285,6 +378,19 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                             {resource.subtitle}
                         </p>
                     )}
+                    {isVocalWarmupActive && (
+                        <div className="mt-2 flex items-center gap-2">
+                            <div className="flex-1 h-2 bg-neutral-200 rounded-full overflow-hidden">
+                                <div 
+                                    className="h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-300"
+                                    style={{ width: `${(vocalWarmupIndex / 24) * 100}%` }}
+                                />
+                            </div>
+                            <span className="text-xs text-neutral-500 font-medium whitespace-nowrap">
+                                {vocalWarmupIndex + 1}/25
+                            </span>
+                        </div>
+                    )}
                     {error && (
                         <p className="text-xs text-red-600 mt-1">
                             {error}
@@ -293,14 +399,15 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                 </div>
                 <button
                     onClick={playResource}
-                    disabled={isPlaying}
                     className={`ml-4 px-6 py-2 rounded-lg font-medium transition-all flex-shrink-0 ${
-                        isPlaying
+                        isVocalWarmupActive
+                            ? 'bg-red-500 hover:bg-red-600 text-white shadow-md hover:shadow-lg'
+                            : isPlaying
                             ? 'bg-orange-300 text-white cursor-not-allowed'
                             : 'bg-orange-500 hover:bg-orange-600 text-white shadow-md hover:shadow-lg'
                     }`}
                 >
-                    {isPlaying ? 'Playing...' : 'Play'}
+                    {isVocalWarmupActive ? 'Stop' : isPlaying ? 'Playing...' : isVocalWarmup ? 'Start Warmup' : 'Play'}
                 </button>
             </div>
             
