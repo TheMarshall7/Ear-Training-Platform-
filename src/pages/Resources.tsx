@@ -4,6 +4,7 @@ import { ResourcesLayout } from '../components/resources/ResourcesLayout';
 import { ResourceCategoryCards } from '../components/resources/ResourceCategoryCards';
 import { ResourceList } from '../components/resources/ResourceList';
 import { AudioStatusBanner } from '../components/resources/AudioStatusBanner';
+import { InstrumentSelector } from '../components/InstrumentSelector';
 import { getResourcesByCategory, getAllResources } from '../logic/resources';
 import type { ResourceCategory, IntervalDirection, Difficulty } from '../types/resources';
 import { audioEngine } from '../audio/audioEngine';
@@ -12,14 +13,20 @@ import { useGame } from '../context/GameContext';
 
 export const Resources: React.FC = () => {
     const { category } = useParams<{ category?: string }>();
-    const { state } = useGame();
+    const { state, dispatch } = useGame();
     
     const [audioUnlocked, setAudioUnlocked] = useState(false);
     const [intervalDirection, setIntervalDirection] = useState<IntervalDirection>('asc');
     const [difficultyFilter, setDifficultyFilter] = useState<Difficulty | 'all'>('all');
     const [searchQuery, setSearchQuery] = useState('');
 
-    // Check audio context state
+    const handleInstrumentChange = async (instrumentId: string) => {
+        dispatch({ type: 'SET_INSTRUMENT', payload: instrumentId });
+        // Preload the new instrument
+        await loadInstrument(instrumentId);
+    };
+
+    // Check audio context state and reload instrument when changed
     useEffect(() => {
         const checkAudioState = async () => {
             try {
@@ -33,7 +40,7 @@ export const Resources: React.FC = () => {
             }
         };
         checkAudioState();
-    }, []);
+    }, [state.currentInstrument]); // Reload when instrument changes
 
     // Validate category
     const validCategory = category && ['scales', 'intervals', 'chords', 'progressions', 'melodies'].includes(category)
@@ -121,6 +128,15 @@ export const Resources: React.FC = () => {
                     isUnlocked={audioUnlocked}
                     onUnlock={() => setAudioUnlocked(true)}
                 />
+                
+                {/* Instrument Selection */}
+                <div className="mb-8">
+                    <InstrumentSelector
+                        currentInstrument={state.currentInstrument}
+                        onSelectInstrument={handleInstrumentChange}
+                    />
+                </div>
+                
                 <ResourceCategoryCards categories={categoryCards} />
                 
                 {/* Quick Tips */}
@@ -152,6 +168,15 @@ export const Resources: React.FC = () => {
                 isUnlocked={audioUnlocked}
                 onUnlock={() => setAudioUnlocked(true)}
             />
+            
+            {/* Instrument Selection */}
+            <div className="mb-8">
+                <InstrumentSelector
+                    currentInstrument={state.currentInstrument}
+                    onSelectInstrument={handleInstrumentChange}
+                />
+            </div>
+            
             <ResourceList
                 resources={resources}
                 category={validCategory}
