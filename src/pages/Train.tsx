@@ -13,7 +13,7 @@ import { getLevelFromXP } from '../context/GameContext';
 import { generateIntervalQuestion, type IntervalQuestion } from '../logic/trainers/intervalTrainer';
 import { generateChordQuestion, type ChordQuestion } from '../logic/trainers/chordTrainer';
 import { audioEngine } from '../audio/audioEngine';
-import { loadInstrument } from '../audio/sampleLoader';
+import { loadInstrument, getInstrumentSampleId } from '../audio/sampleLoader';
 import { Player } from '../components/Player';
 import { AnswerGrid } from '../components/AnswerGrid';
 import { Feedback } from '../components/Feedback';
@@ -185,8 +185,11 @@ export const Train: React.FC = () => {
         try {
             // Initialize audio context and load sample (force recreate on user interaction)
             await audioEngine.init(true);
-            await loadInstrument('piano');
+            await loadInstrument(state.currentInstrument);
             await new Promise(resolve => setTimeout(resolve, 100)); // Small delay to ensure sample is ready
+
+            // Get the current instrument's sample ID
+            const sampleId = getInstrumentSampleId(state.currentInstrument);
 
             if ('intervalId' in question) {
                 // Play interval
@@ -194,8 +197,8 @@ export const Train: React.FC = () => {
                 // #region agent log
                 fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:playQuestion:playingInterval',message:'Playing interval',data:{intervalId:q.intervalId,rootMidi:q.rootMidi,targetMidi:q.targetMidi},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
                 // #endregion
-                audioEngine.playNote('piano_C4', q.rootMidi, 60, 0);
-                audioEngine.playNote('piano_C4', q.targetMidi, 60, 0.8);
+                audioEngine.playNote(sampleId, q.rootMidi, 60, 0);
+                audioEngine.playNote(sampleId, q.targetMidi, 60, 0.8);
             } else {
                 // Play chord
                 const q = question as ChordQuestion;
@@ -206,7 +209,7 @@ export const Train: React.FC = () => {
                 const gainPerNote = Math.min(1.0, 1.0 / q.notes.length);
                 q.notes.forEach((note, i) => {
                     // Arpeggiate slightly or verify strum
-                    audioEngine.playNote('piano_C4', note, 60, 0 + (i * 0.05), gainPerNote);
+                    audioEngine.playNote(sampleId, note, 60, 0 + (i * 0.05), gainPerNote);
                 });
             }
         } catch (e) {

@@ -67,6 +67,9 @@ export interface GameState {
   
   /** Best streak achieved across all sessions */
   bestStreak: number;
+  
+  /** Current selected instrument for audio playback */
+  currentInstrument: string;
 }
 
 /**
@@ -76,6 +79,7 @@ export interface GameState {
 export type GameAction = 
   | { type: 'SET_MODE'; payload: GameMode }
   | { type: 'SET_DIFFICULTY'; payload: Difficulty }
+  | { type: 'SET_INSTRUMENT'; payload: string }
   | { type: 'CORRECT_ANSWER'; payload: number }
   | { type: 'WRONG_ANSWER' }
   | { type: 'INCREMENT_SESSION' }

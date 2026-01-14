@@ -13,19 +13,28 @@ export interface InstrumentConfig {
 
 export const instruments: InstrumentConfig[] = [
     {
-        id: 'piano',
-        name: 'Piano',
+        id: 'bell',
+        name: 'Bell',
         sampleUrl: '/samples/piano/C4.wav',
-        description: 'Classic piano sound'
+        description: 'Clear bell tone (default)'
     },
     {
-        id: 'grandPiano',
-        name: 'Grand Piano',
-        // Option 1: Use a CDN-hosted sample (uncomment and replace URL)
-        // sampleUrl: 'https://your-cdn.com/piano-c4.wav',
-        // Option 2: Add your own sample to /public/samples/grandPiano/C4.wav
-        sampleUrl: '/samples/grandPiano/C4.wav',
-        description: 'Rich grand piano sound'
+        id: 'piano',
+        name: 'Piano',
+        sampleUrl: '/samples/SC_PM_piano_clean_soft_mid_C.wav',
+        description: 'Clean piano sound'
+    },
+    {
+        id: 'guitar',
+        name: 'Guitar',
+        sampleUrl: '/samples/hhos_guitar_single_note_05_c.wav',
+        description: 'Acoustic guitar pluck'
+    },
+    {
+        id: 'bass',
+        name: 'Bass',
+        sampleUrl: '/samples/CO_FC_bass_guitar_note_C.wav',
+        description: 'Bass guitar tone'
     }
 ];
 

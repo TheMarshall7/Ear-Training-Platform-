@@ -92,6 +92,7 @@ const initialState: GameState = {
   totalQuestions: 0,
   totalCorrect: 0,
   bestStreak: 0,
+  currentInstrument: localStorage.getItem('ear_trainer_instrument') || 'bell',
   ...loadStats()
 };
 
@@ -113,6 +114,11 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     // Change difficulty level and reset run progress
     case 'SET_DIFFICULTY':
       return { ...state, difficulty: action.payload, streak: 0, runProgress: 0 };
+    
+    // Change instrument and persist to localStorage
+    case 'SET_INSTRUMENT':
+      localStorage.setItem('ear_trainer_instrument', action.payload);
+      return { ...state, currentInstrument: action.payload };
     
     // Handle correct answer: update streak, score, XP, and stats
     case 'CORRECT_ANSWER': {

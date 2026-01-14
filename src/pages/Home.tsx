@@ -7,6 +7,7 @@ import { DailyChallenges } from '../components/DailyChallenge';
 import { getDailyChallenges } from '../logic/dailyChallenges';
 import { BrandLogo } from '../components/BrandLogo';
 import { Footer } from '../components/Footer';
+import { InstrumentSelector } from '../components/InstrumentSelector';
 import logoImage from '../assets/logo.png';
 
 export const Home: React.FC = () => {
@@ -15,9 +16,15 @@ export const Home: React.FC = () => {
     const [dailyChallenges, setDailyChallenges] = useState(getDailyChallenges());
 
     useEffect(() => {
-        // Preload audio
-        loadInstrument('piano');
-    }, []);
+        // Preload current instrument
+        loadInstrument(state.currentInstrument);
+    }, [state.currentInstrument]);
+    
+    const handleInstrumentChange = async (instrumentId: string) => {
+        dispatch({ type: 'SET_INSTRUMENT', payload: instrumentId });
+        // Preload the new instrument
+        await loadInstrument(instrumentId);
+    };
 
     // Refresh daily challenges when component mounts or state changes
     useEffect(() => {
@@ -73,6 +80,14 @@ export const Home: React.FC = () => {
                             onSelectMode={(mode) => dispatch({ type: 'SET_MODE', payload: mode })}
                             onSelectDifficulty={(diff) => dispatch({ type: 'SET_DIFFICULTY', payload: diff })}
                             onStart={handleStart}
+                        />
+                    </div>
+
+                    {/* Instrument Selector */}
+                    <div className="mb-8">
+                        <InstrumentSelector
+                            currentInstrument={state.currentInstrument}
+                            onSelectInstrument={handleInstrumentChange}
                         />
                     </div>
 
