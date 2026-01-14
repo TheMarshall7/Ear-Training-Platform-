@@ -160,6 +160,7 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
     const [scaleDirection, setScaleDirection] = useState<ScaleDirection>('ascending');
     const [vocalWarmupIndex, setVocalWarmupIndex] = useState(0);
     const [isVocalWarmupActive, setIsVocalWarmupActive] = useState(false);
+    const vocalWarmupActiveRef = React.useRef(false);
 
     useEffect(() => {
         // Reset error when resource changes
@@ -167,23 +168,23 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
         // Reset scale direction when resource changes
         setScaleDirection('ascending');
         // Stop vocal warmup if active
-        if (isVocalWarmupActive) {
-            setIsVocalWarmupActive(false);
-            setVocalWarmupIndex(0);
-            audioEngine.stopAll();
+        if (vocalWarmupActiveRef.current) {
+            stopVocalWarmup();
         }
     }, [resource.id]);
     
     // Stop vocal warmup on unmount
     useEffect(() => {
         return () => {
-            if (isVocalWarmupActive) {
+            if (vocalWarmupActiveRef.current) {
+                vocalWarmupActiveRef.current = false;
                 audioEngine.stopAll();
             }
         };
-    }, [isVocalWarmupActive]);
+    }, []);
 
     const stopVocalWarmup = () => {
+        vocalWarmupActiveRef.current = false;
         setIsVocalWarmupActive(false);
         setVocalWarmupIndex(0);
         setIsPlaying(false);
@@ -191,14 +192,16 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
     };
 
     const playVocalWarmupSequence = async () => {
-        if (isVocalWarmupActive) {
+        if (vocalWarmupActiveRef.current) {
             // Stop if already playing
             stopVocalWarmup();
             return;
         }
 
         try {
+            vocalWarmupActiveRef.current = true;
             setIsVocalWarmupActive(true);
+            setIsPlaying(true);
             setVocalWarmupIndex(0);
             setError(null);
 
@@ -210,6 +213,10 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
             const playSpec = resource.playSpec;
             const notes = playSpec.notes || [];
             
+            if (!notes || notes.length === 0) {
+                throw new Error('No notes in warmup pattern');
+            }
+            
             // Go up 2 octaves (24 semitones) starting from the base notes
             const totalSteps = 25; // Will go up 24 semitones (2 octaves)
             const pauseBetweenSteps = 1200; // 1.2 seconds pause between each key
@@ -217,7 +224,7 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
             const sampleId = getInstrumentSampleId(state.currentInstrument);
             
             for (let step = 0; step < totalSteps; step++) {
-                if (!isVocalWarmupActive) break; // Check if stopped
+                if (!vocalWarmupActiveRef.current) break; // Check if stopped
                 
                 setVocalWarmupIndex(step);
                 
@@ -239,6 +246,7 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
             }
             
             // Finished the sequence
+            vocalWarmupActiveRef.current = false;
             setIsVocalWarmupActive(false);
             setVocalWarmupIndex(0);
             setIsPlaying(false);
@@ -247,6 +255,7 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
             console.error('Error in vocal warmup sequence:', error);
             setError('Failed to play vocal warmup sequence');
             if (onError) onError('Failed to play vocal warmup sequence');
+            vocalWarmupActiveRef.current = false;
             setIsVocalWarmupActive(false);
             setVocalWarmupIndex(0);
             setIsPlaying(false);
