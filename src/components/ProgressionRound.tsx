@@ -69,6 +69,8 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
     const roundStatusRef = useRef(roundStatus);
     const isPlayingRef = useRef(isPlaying);
     const hasAutoPlayedRef = useRef<string | null>(null);
+    const hasInitializedRef = useRef(false);
+    const lastDifficultyRef = useRef<string>('');
     
     // Memoize the onShowParticles callback to prevent infinite loops
     const particlesTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -105,34 +107,48 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
 
     // Initialize question
     useEffect(() => {
-        setIsInitializing(true);
-        setError(null);
-        try {
-            const question = generateProgressionQuestion(difficulty, roundState.sessionState);
-            if (!question || !question.targetDegrees || question.targetDegrees.length === 0) {
-                console.error('Failed to generate valid progression question');
-                setError('Failed to generate progression. Please try again.');
-                setIsInitializing(false);
-                return;
-            }
+        // Only load question if difficulty actually changed or first init
+        if (!hasInitializedRef.current || lastDifficultyRef.current !== difficulty) {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProgressionRound.tsx:initEffect:willLoad',message:'Difficulty changed, will load question',data:{difficulty,wasInitialized:hasInitializedRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
             
-            // Validate chord specs
-            const hasValidChords = question.chordSpecs.every(spec => spec.midiNotes && spec.midiNotes.length > 0);
-            if (!hasValidChords) {
-                console.error('Invalid chord specs in question');
-                setError('Invalid chord data. Please try again.');
-                setIsInitializing(false);
-                return;
-            }
+            hasInitializedRef.current = true;
+            lastDifficultyRef.current = difficulty;
             
-            setRoundState(prev => ({ ...prev, question, userDegrees: [], resolvedOutcome: null, wrongAtStep: null, pointsEarned: 0 }));
-            setRoundStatus('idle');
-            setIsPlaying(false);
-            setIsInitializing(false);
-        } catch (error) {
-            console.error('Error initializing progression question:', error);
-            setError(error instanceof Error ? error.message : 'An error occurred while loading the progression.');
-            setIsInitializing(false);
+            setIsInitializing(true);
+            setError(null);
+            try {
+                const question = generateProgressionQuestion(difficulty, roundState.sessionState);
+                if (!question || !question.targetDegrees || question.targetDegrees.length === 0) {
+                    console.error('Failed to generate valid progression question');
+                    setError('Failed to generate progression. Please try again.');
+                    setIsInitializing(false);
+                    return;
+                }
+                
+                // Validate chord specs
+                const hasValidChords = question.chordSpecs.every(spec => spec.midiNotes && spec.midiNotes.length > 0);
+                if (!hasValidChords) {
+                    console.error('Invalid chord specs in question');
+                    setError('Invalid chord data. Please try again.');
+                    setIsInitializing(false);
+                    return;
+                }
+                
+                setRoundState(prev => ({ ...prev, question, userDegrees: [], resolvedOutcome: null, wrongAtStep: null, pointsEarned: 0 }));
+                setRoundStatus('idle');
+                setIsPlaying(false);
+                setIsInitializing(false);
+            } catch (error) {
+                console.error('Error initializing progression question:', error);
+                setError(error instanceof Error ? error.message : 'An error occurred while loading the progression.');
+                setIsInitializing(false);
+            }
+        } else {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProgressionRound.tsx:initEffect:skipped',message:'Skipped duplicate init effect',data:{difficulty},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
         }
     }, [difficulty]);
 

@@ -45,15 +45,29 @@ export const MelodyMode: React.FC<MelodyModeProps> = ({
     const [dailyChallenges, setDailyChallenges] = useState(getDailyChallenges());
     const [melodyPercentage, setMelodyPercentage] = useState<number | null>(null);
     const hasAutoPlayedRef = useRef(false);
+    const hasInitializedRef = useRef(false);
+    const lastDifficultyRef = useRef<string>('');
 
     useEffect(() => {
-        // Only load instrument once, not on every difficulty change
-        // It will be loaded when needed in play functions
-        const newQuestion = generateMelodyQuestion(difficulty);
-        setQuestion(newQuestion);
-        setUserDegrees([]);
-        setWrongAtStep(null);
-        hasAutoPlayedRef.current = false; // Reset for new question
+        // Only load question if difficulty actually changed or first init
+        if (!hasInitializedRef.current || lastDifficultyRef.current !== difficulty) {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MelodyMode.tsx:initEffect:willLoad',message:'Difficulty changed, will load question',data:{difficulty,wasInitialized:hasInitializedRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+            
+            hasInitializedRef.current = true;
+            lastDifficultyRef.current = difficulty;
+            
+            const newQuestion = generateMelodyQuestion(difficulty);
+            setQuestion(newQuestion);
+            setUserDegrees([]);
+            setWrongAtStep(null);
+            hasAutoPlayedRef.current = false; // Reset for new question
+        } else {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MelodyMode.tsx:initEffect:skipped',message:'Skipped duplicate init effect',data:{difficulty},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+        }
     }, [difficulty]);
 
     const playMelody = useCallback(async () => {

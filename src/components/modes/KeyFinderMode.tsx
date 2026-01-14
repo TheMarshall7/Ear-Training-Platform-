@@ -43,11 +43,27 @@ export const KeyFinderMode: React.FC<KeyFinderModeProps> = ({
     const [showParticles, setShowParticles] = useState(false);
     const [dailyChallenges, setDailyChallenges] = useState(getDailyChallenges());
     const hasAutoPlayedRef = useRef(false);
+    const hasInitializedRef = useRef(false);
+    const lastDifficultyRef = useRef<string>('');
 
     useEffect(() => {
-        const newQuestion = generateKeyFinderQuestion(difficulty);
-        setQuestion(newQuestion);
-        hasAutoPlayedRef.current = false;
+        // Only load question if difficulty actually changed or first init
+        if (!hasInitializedRef.current || lastDifficultyRef.current !== difficulty) {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'KeyFinderMode.tsx:initEffect:willLoad',message:'Difficulty changed, will load question',data:{difficulty,wasInitialized:hasInitializedRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+            
+            hasInitializedRef.current = true;
+            lastDifficultyRef.current = difficulty;
+            
+            const newQuestion = generateKeyFinderQuestion(difficulty);
+            setQuestion(newQuestion);
+            hasAutoPlayedRef.current = false;
+        } else {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'KeyFinderMode.tsx:initEffect:skipped',message:'Skipped duplicate init effect',data:{difficulty},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+        }
     }, [difficulty]);
 
     const playProgression = useCallback(async () => {

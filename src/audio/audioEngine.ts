@@ -268,19 +268,24 @@ export class AudioEngine {
 
     // Play a note defined by midi number (assuming Middle C = 60 is the sample 'root')
     playNote(rootSampleId: string, midiNote: number, rootMidi: number = 60, timeOffset: number = 0, gain: number = 1.0) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'audioEngine.ts:playNote',message:'playNote called',data:{rootSampleId,midiNote,rootMidi,timeOffset,gain},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         const semitoneDiff = midiNote - rootMidi;
         const cents = semitoneDiff * 100;
         this.play(rootSampleId, cents, timeOffset, gain);
     }
 
     stopAll() {
-        // In a real engine, we'd track active sources. 
-        // For now, this is a placeholder if we needed to cut sound.
-        // Ideally we suspend context or disconnect.
-        if (this.context) {
-            this.context.suspend();
-            setTimeout(() => this.context?.resume(), 50);
-        }
+        // Stop all currently playing sources
+        this.activeSources.forEach(source => {
+            try {
+                source.stop();
+            } catch (e) {
+                // Source may already be stopped, ignore error
+            }
+        });
+        this.activeSources.clear();
     }
 
     /**

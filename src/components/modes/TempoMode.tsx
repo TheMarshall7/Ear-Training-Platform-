@@ -41,12 +41,29 @@ export const TempoMode: React.FC<TempoModeProps> = ({
     const [showParticles, setShowParticles] = useState(false);
     const [dailyChallenges, setDailyChallenges] = useState(getDailyChallenges());
     const hasAutoPlayedRef = useRef(false);
+    const hasInitializedRef = useRef(false);
+    const lastDifficultyRef = useRef<string>('');
+    const playTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
-        const newQuestion = generateTempoQuestion(difficulty);
-        setQuestion(newQuestion);
-        setUserBPM(Math.floor((newQuestion.minBPM + newQuestion.maxBPM) / 2));
-        hasAutoPlayedRef.current = false;
+        // Only load question if difficulty actually changed or first init
+        if (!hasInitializedRef.current || lastDifficultyRef.current !== difficulty) {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TempoMode.tsx:initEffect:willLoad',message:'Difficulty changed, will load question',data:{difficulty,wasInitialized:hasInitializedRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+            
+            hasInitializedRef.current = true;
+            lastDifficultyRef.current = difficulty;
+            
+            const newQuestion = generateTempoQuestion(difficulty);
+            setQuestion(newQuestion);
+            setUserBPM(Math.floor((newQuestion.minBPM + newQuestion.maxBPM) / 2));
+            hasAutoPlayedRef.current = false;
+        } else {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TempoMode.tsx:initEffect:skipped',message:'Skipped duplicate init effect',data:{difficulty},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+        }
     }, [difficulty]);
 
     const playMetronome = useCallback(async () => {
@@ -82,8 +99,14 @@ export const TempoMode: React.FC<TempoModeProps> = ({
             // Calculate total duration
             const totalDuration = question.beatsToPlay * question.beatInterval + 200;
             
-            setTimeout(() => {
+            // Clear any existing timeout
+            if (playTimeoutRef.current) {
+                clearTimeout(playTimeoutRef.current);
+            }
+            
+            playTimeoutRef.current = setTimeout(() => {
                 setIsPlaying(false);
+                playTimeoutRef.current = null;
             }, totalDuration);
         } catch (error) {
             console.error('Error playing metronome:', error);
@@ -125,7 +148,15 @@ export const TempoMode: React.FC<TempoModeProps> = ({
     }, [question, isPlaying, checking, playMetronome]);
 
     const handleSubmit = () => {
-        if (checking || !question || isPlaying) return;
+        if (checking || !question) return;
+
+        // Stop any playing audio immediately
+        audioEngine.stopAll();
+        if (playTimeoutRef.current) {
+            clearTimeout(playTimeoutRef.current);
+            playTimeoutRef.current = null;
+        }
+        setIsPlaying(false);
 
         setChecking(true);
 
@@ -172,6 +203,14 @@ export const TempoMode: React.FC<TempoModeProps> = ({
     };
 
     const handleNext = () => {
+        // Stop any playing audio
+        audioEngine.stopAll();
+        if (playTimeoutRef.current) {
+            clearTimeout(playTimeoutRef.current);
+            playTimeoutRef.current = null;
+        }
+        setIsPlaying(false);
+        
         setChecking(false);
         setResult(null);
         hasAutoPlayedRef.current = false;
@@ -266,7 +305,7 @@ export const TempoMode: React.FC<TempoModeProps> = ({
                                 step={difficulty === 'easy' ? 10 : difficulty === 'medium' ? 5 : 1}
                                 value={userBPM}
                                 onChange={(e) => setUserBPM(parseInt(e.target.value))}
-                                disabled={checking || isPlaying}
+                                disabled={checking}
                                 className="w-full h-3 bg-neutral-200 rounded-lg appearance-none cursor-pointer slider-thumb"
                                 style={{
                                     background: `linear-gradient(to right, #f97316 0%, #f97316 ${((userBPM - question.minBPM) / (question.maxBPM - question.minBPM)) * 100}%, #e5e5e5 ${((userBPM - question.minBPM) / (question.maxBPM - question.minBPM)) * 100}%, #e5e5e5 100%)`
@@ -294,7 +333,7 @@ export const TempoMode: React.FC<TempoModeProps> = ({
                                         setUserBPM(val);
                                     }
                                 }}
-                                disabled={checking || isPlaying}
+                                disabled={checking}
                                 className="w-full px-4 py-3 rounded-lg border-2 border-neutral-200 focus:border-orange-500 focus:outline-none text-center text-xl font-semibold"
                             />
                         </div>
@@ -303,7 +342,6 @@ export const TempoMode: React.FC<TempoModeProps> = ({
                         {!checking && (
                             <button
                                 onClick={handleSubmit}
-                                disabled={isPlaying}
                                 className="btn-primary w-full text-lg"
                             >
                                 Submit Answer

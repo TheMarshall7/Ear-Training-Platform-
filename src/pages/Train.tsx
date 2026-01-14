@@ -62,12 +62,40 @@ export const Train: React.FC = () => {
     // Detect mobile device
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-    // Init
+    // Init - only for interval and chord modes (other modes have their own components)
     useEffect(() => {
-        if (state.isLocked) {
-            // Show locked state immediately
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:initEffect',message:'Init effect triggered',data:{isLocked:state.isLocked,currentMode:state.currentMode,difficulty:state.difficulty,hasInitialized:hasInitializedRef.current,lastMode:lastModeRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        
+        // Only run for interval and chord modes - other modes use their own components
+        if (state.currentMode !== 'interval' && state.currentMode !== 'chord') {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:initEffect:skippedOtherMode',message:'Skipped init for non-interval/chord mode',data:{currentMode:state.currentMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+            return;
+        }
+        
+        const modeKey = `${state.currentMode}-${state.difficulty}`;
+        
+        // Only load question if mode/difficulty actually changed or first init
+        if (!hasInitializedRef.current || lastModeRef.current !== modeKey) {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:initEffect:willLoad',message:'Mode changed, will load question',data:{isLocked:state.isLocked,modeKey,wasInitialized:hasInitializedRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+            
+            hasInitializedRef.current = true;
+            lastModeRef.current = modeKey;
+            
+            if (state.isLocked) {
+                // Show locked state immediately
+            } else {
+                loadNextQuestion();
+            }
         } else {
-            loadNextQuestion();
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:initEffect:skipped',message:'Skipped duplicate init effect',data:{modeKey,lastMode:lastModeRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
         }
     }, [state.currentMode, state.difficulty]);
 
@@ -118,6 +146,10 @@ export const Train: React.FC = () => {
     }, []);
 
     const loadNextQuestion = () => {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:loadNextQuestion:entry',message:'loadNextQuestion called',data:{currentMode:state.currentMode,difficulty:state.difficulty,runProgress:state.runProgress},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        
         setSelectedId(null);
         setCorrectId(null);
         setChecking(false);
@@ -128,13 +160,25 @@ export const Train: React.FC = () => {
         }
 
         if (state.currentMode === 'interval') {
-            setQuestion(generateIntervalQuestion(state.difficulty));
+            const newQuestion = generateIntervalQuestion(state.difficulty);
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:loadNextQuestion:intervalGenerated',message:'Interval question generated',data:{intervalId:newQuestion.intervalId},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+            setQuestion(newQuestion);
         } else {
-            setQuestion(generateChordQuestion(state.difficulty));
+            const newQuestion = generateChordQuestion(state.difficulty);
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:loadNextQuestion:chordGenerated',message:'Chord question generated',data:{chordId:newQuestion.chordId,notesCount:newQuestion.notes.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'E'})}).catch(()=>{});
+            // #endregion
+            setQuestion(newQuestion);
         }
     };
 
     const playQuestion = useCallback(async () => {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:playQuestion:entry',message:'playQuestion called',data:{hasQuestion:!!question,isPlaying,questionType:'intervalId' in (question||{}) ? 'interval' : 'chord'},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        
         if (!question || isPlaying) return;
         setIsPlaying(true);
 
@@ -147,11 +191,17 @@ export const Train: React.FC = () => {
             if ('intervalId' in question) {
                 // Play interval
                 const q = question as IntervalQuestion;
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:playQuestion:playingInterval',message:'Playing interval',data:{intervalId:q.intervalId,rootMidi:q.rootMidi,targetMidi:q.targetMidi},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion
                 audioEngine.playNote('piano_C4', q.rootMidi, 60, 0);
                 audioEngine.playNote('piano_C4', q.targetMidi, 60, 0.8);
             } else {
                 // Play chord
                 const q = question as ChordQuestion;
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:playQuestion:playingChord',message:'Playing chord',data:{chordId:q.chordId,notesCount:q.notes.length,notes:q.notes},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'E'})}).catch(()=>{});
+                // #endregion
                 // Reduce gain per note to prevent clipping when multiple notes play together
                 const gainPerNote = Math.min(1.0, 1.0 / q.notes.length);
                 q.notes.forEach((note, i) => {
@@ -170,13 +220,26 @@ export const Train: React.FC = () => {
 
     // Auto-play once when question loads
     const hasAutoPlayedRef = useRef(false);
+    const hasInitializedRef = useRef(false);
+    const lastModeRef = useRef<string>('');
+    
     useEffect(() => {
         // Reset flag when question changes
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:autoPlayReset',message:'Resetting hasAutoPlayedRef',data:{previousValue:hasAutoPlayedRef.current,questionType:question?('intervalId' in question?'interval':'chord'):'null'},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         hasAutoPlayedRef.current = false;
     }, [question]);
 
     useEffect(() => {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:autoPlayEffect',message:'Auto-play effect triggered',data:{hasQuestion:!!question,hasAutoPlayed:hasAutoPlayedRef.current,hasSelectedId:!!selectedId,willAutoPlay:!!(question && !hasAutoPlayedRef.current && !selectedId)},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        
         if (question && !hasAutoPlayedRef.current && !selectedId) {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:autoPlayTriggered',message:'Auto-play will trigger in 500ms',data:{questionType:'intervalId' in question?'interval':'chord'},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
+            // #endregion
             hasAutoPlayedRef.current = true;
             const timer = setTimeout(() => playQuestion(), 500);
             return () => clearTimeout(timer);
