@@ -68,7 +68,7 @@ export const Stats: React.FC = () => {
                 <BrandLogo showText={false} />
             </div>
 
-            <div className="relative z-10 py-8 lg:py-12 px-4 flex-1">
+            <div className="relative z-10 pt-20 pb-8 lg:py-12 px-4 flex-1">
                 <div className="max-w-5xl mx-auto">
                     {/* Header */}
                     <div className="flex items-center justify-between mb-8 lg:mb-12">
