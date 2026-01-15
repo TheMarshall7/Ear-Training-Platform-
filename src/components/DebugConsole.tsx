@@ -6,8 +6,16 @@ import React, { useState, useEffect } from 'react';
 export const DebugConsole: React.FC = () => {
     const [logs, setLogs] = useState<string[]>([]);
     const [visible, setVisible] = useState(false);
+    const [enabled, setEnabled] = useState(false);
 
     useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const flag = params.get('debugConsole') === '1' || localStorage.getItem('debug_console') === '1';
+        setEnabled(flag);
+        if (!flag) {
+            return;
+        }
+
         const originalLog = console.log;
         const originalWarn = console.warn;
         const originalError = console.error;
@@ -38,6 +46,10 @@ export const DebugConsole: React.FC = () => {
             console.error = originalError;
         };
     }, []);
+
+    if (!enabled) {
+        return null;
+    }
 
     if (!visible) {
         return (

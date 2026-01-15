@@ -59,7 +59,7 @@ export const generateChordQuestion = (difficulty: string): ChordQuestion => {
 
     // Generate root note between C3 (48) and C4 (60)
     // This range provides good chord voicing
-    const rootMidi = 48 + Math.floor(Math.random() * 12);
+    const rootMidi = 36 + Math.floor(Math.random() * 12);
 
     // Build chord by adding interval offsets to root note
     // Each chord config defines intervals relative to root

@@ -82,15 +82,15 @@ export const harmonyRules: HarmonyConfig = {
     }
 };
 
-// C Major scale degrees in MIDI (C4 = 60)
+// C Major scale degrees in MIDI (C3 = 48)
 const SCALE_DEGREES: Record<number, number> = {
-    1: 60, // C4
-    2: 62, // D4
-    3: 64, // E4
-    4: 65, // F4
-    5: 67, // G4
-    6: 69, // A4
-    7: 71  // B4
+    1: 48, // C3
+    2: 50, // D3
+    3: 52, // E3
+    4: 53, // F3
+    5: 55, // G3
+    6: 57, // A3
+    7: 59  // B3
 };
 
 // Chord interval patterns (semitones from root)

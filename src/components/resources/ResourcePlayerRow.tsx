@@ -6,6 +6,23 @@ import { noteNameToMidi } from '../../config/harmonyRules';
 import { voiceBassChord, voiceGuitarChord } from '../../logic/voicing/guitarVoicing';
 import { useGame } from '../../context/GameContext';
 
+const getGuitarChordGains = (voiced: number[], baseRoot: number) => {
+    const rootPc = ((baseRoot % 12) + 12) % 12;
+    return voiced.map(note => {
+        const interval = ((note - baseRoot) % 12 + 12) % 12;
+        if (interval === 10 || interval === 11 || interval === 2 || interval === 3 || interval === 5 || interval === 9) {
+            return 1.25;
+        }
+        if (interval === 0) return 0.9;
+        return 1.0;
+    });
+};
+
+const getBassChordGains = (voiced: number[]) => {
+    const lowest = Math.min(...voiced);
+    return voiced.map(note => (note === lowest ? 1.25 : 1.0));
+};
+
 interface ResourcePlayerRowProps {
     resource: ResourceItem;
     intervalDirection?: IntervalDirection;
@@ -373,8 +390,10 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                             return noteNameToMidi(noteName, parseInt(octaveStr, 10));
                         })
                         .filter((note): note is number => note !== null);
-                    const voiced = voiceGuitarChord(midiNotes);
-                    audioEngine.playChordSequence([voiced], 900, sampleId, 60);
+                    const baseRoot = midiNotes.length ? Math.min(...midiNotes) : 60;
+                    const voiced = voiceGuitarChord(midiNotes, baseRoot, 'resource').map(note => note + 12);
+                    const gains = [getGuitarChordGains(voiced, baseRoot)];
+                    audioEngine.playChordSequence([voiced], 900, sampleId, 60, gains);
                 } else if (state.currentInstrument === 'bass') {
                     const midiNotes = playSpec.notes
                         .map(note => {
@@ -386,7 +405,8 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                         })
                         .filter((note): note is number => note !== null);
                     const voiced = voiceBassChord(midiNotes, undefined, 'resource');
-                    audioEngine.playChordSequence([voiced], 900, sampleId, 60);
+                    const gains = [getBassChordGains(voiced)];
+                    audioEngine.playChordSequence([voiced], 900, sampleId, 60, gains);
                 } else {
                     if (pianoTranspose !== 0) {
                         const midiNotes = playSpec.notes
@@ -419,12 +439,20 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                         .filter((note): note is number => note !== null);
                 });
                 const voicedChords = state.currentInstrument === 'guitar'
-                    ? midiChords.map(chord => voiceGuitarChord(chord, chord[0]))
+                    ? midiChords.map(chord => voiceGuitarChord(chord, chord[0], 'resource').map(note => note + 12))
                     : state.currentInstrument === 'bass'
                         ? midiChords.map(chord => voiceBassChord(chord, chord[0], 'resource'))
                         : midiChords;
+                const chordGains = state.currentInstrument === 'guitar'
+                    ? voicedChords.map((chord, index) => {
+                        const root = midiChords[index]?.[0] ?? 60;
+                        return getGuitarChordGains(chord, root);
+                    })
+                    : state.currentInstrument === 'bass'
+                        ? voicedChords.map(chord => getBassChordGains(chord))
+                    : undefined;
                 const sampleId = getInstrumentSampleId(state.currentInstrument);
-                audioEngine.playChordSequence(voicedChords, playSpec.tempoMs, sampleId, 60);
+                audioEngine.playChordSequence(voicedChords, playSpec.tempoMs, sampleId, 60, chordGains);
                 const duration = playSpec.chords.length * playSpec.tempoMs;
                 setTimeout(() => setIsPlaying(false), duration + 200);
             } else {

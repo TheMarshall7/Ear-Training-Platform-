@@ -73,7 +73,13 @@ export class AudioEngine {
 
     getContext() { return this.context; }
 
-    async play(id: string, pitchShiftCents: number = 0, timeOffset: number = 0, gain: number = 1.0) {
+    async play(
+        id: string,
+        pitchShiftCents: number = 0,
+        timeOffset: number = 0,
+        gain: number = 1.0,
+        durationSeconds?: number
+    ) {
         // #region agent log
         rlog('audioEngine.ts:play', 'starting play', { id, state: this.context?.state }, 'C');
         // #endregion
@@ -119,14 +125,30 @@ export class AudioEngine {
         rlog('audioEngine.ts:play', 'source.start', { id, startTime, currentTime: ctx.currentTime }, 'C');
         // #endregion
         source.start(startTime);
+        if (durationSeconds && durationSeconds > 0) {
+            source.stop(startTime + durationSeconds);
+        }
     }
 
-    async playNote(rootSampleId: string, midiNote: number, rootMidi: number = 60, timeOffset: number = 0, gain: number = 1.0) {
+    async playNote(
+        rootSampleId: string,
+        midiNote: number,
+        rootMidi: number = 60,
+        timeOffset: number = 0,
+        gain: number = 1.0,
+        durationSeconds?: number
+    ) {
         const semitoneDiff = midiNote - rootMidi;
-        await this.play(rootSampleId, semitoneDiff * 100, timeOffset, gain);
+        await this.play(rootSampleId, semitoneDiff * 100, timeOffset, gain, durationSeconds);
     }
 
-    async playChordSequence(chords: number[][], tempoMs: number = 900, rootSampleId: string = 'piano_C4', rootMidi: number = 60) {
+    async playChordSequence(
+        chords: number[][],
+        tempoMs: number = 900,
+        rootSampleId: string = 'piano_C4',
+        rootMidi: number = 60,
+        gainOverrides?: number[][]
+    ) {
         await this.ensureUnlocked();
         if (!this.context) return;
 
@@ -134,28 +156,59 @@ export class AudioEngine {
         chords.forEach((chord, chordIndex) => {
             const chordDelay = 0.05 + (chordIndex * tempoSeconds);
             const gainPerNote = Math.min(1.0, 1.0 / chord.length);
+            const chordGains = gainOverrides?.[chordIndex];
             chord.forEach((midiNote, noteIndex) => {
                 const noteDelay = chordDelay + (noteIndex * 0.05);
-                this.playNote(rootSampleId, midiNote, rootMidi, noteDelay, gainPerNote);
+                const gain = chordGains?.[noteIndex] ?? gainPerNote;
+                this.playNote(rootSampleId, midiNote, rootMidi, noteDelay, gain);
             });
         });
     }
 
-    async playScale(notes: string[], tempoMs: number = 400, rootSampleId: string = 'piano_C4', rootMidi: number = 60, octave: number = 4) {
+    async playScale(
+        notes: string[],
+        tempoMs: number = 400,
+        rootSampleId: string = 'piano_C4',
+        rootMidi: number = 60,
+        octave: number = 4,
+        noteDurationMs?: number
+    ) {
         await this.ensureUnlocked();
         const tempoSeconds = tempoMs / 1000;
+        const durationSeconds = noteDurationMs ? noteDurationMs / 1000 : undefined;
         notes.forEach((note, index) => {
             const midiNote = noteNameToMidi(note, octave);
-            this.playNote(rootSampleId, midiNote, rootMidi, 0.05 + (index * tempoSeconds));
+            this.playNote(
+                rootSampleId,
+                midiNote,
+                rootMidi,
+                0.05 + (index * tempoSeconds),
+                1.0,
+                durationSeconds
+            );
         });
     }
 
-    async playMelody(notes: string[], tempoMs: number = 400, rootSampleId: string = 'piano_C4', rootMidi: number = 60, octave: number = 4) {
-        await this.playScale(notes, tempoMs, rootSampleId, rootMidi, octave);
+    async playMelody(
+        notes: string[],
+        tempoMs: number = 400,
+        rootSampleId: string = 'piano_C4',
+        rootMidi: number = 60,
+        octave: number = 4,
+        noteDurationMs?: number
+    ) {
+        await this.playScale(notes, tempoMs, rootSampleId, rootMidi, octave, noteDurationMs);
     }
 
-    async playNoteSequence(notes: string[], tempoMs: number = 400, rootSampleId: string = 'piano_C4', rootMidi: number = 60, octave: number = 4) {
-        await this.playScale(notes, tempoMs, rootSampleId, rootMidi, octave);
+    async playNoteSequence(
+        notes: string[],
+        tempoMs: number = 400,
+        rootSampleId: string = 'piano_C4',
+        rootMidi: number = 60,
+        octave: number = 4,
+        noteDurationMs?: number
+    ) {
+        await this.playScale(notes, tempoMs, rootSampleId, rootMidi, octave, noteDurationMs);
     }
 
     async playChord(notes: string[], rootSampleId: string = 'piano_C4', rootMidi: number = 60) {

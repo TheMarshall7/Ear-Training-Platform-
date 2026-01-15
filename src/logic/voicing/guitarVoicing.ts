@@ -80,7 +80,8 @@ const scoreShape = (
     frets: Array<number | null>,
     rootMidi: number,
     intervals: number[],
-    allowOpen: boolean
+    allowOpen: boolean,
+    requiredIntervals: number[]
 ) => {
     const played: number[] = [];
     frets.forEach((fret, index) => {
@@ -105,6 +106,11 @@ const scoreShape = (
     const span = maxFret - minFret;
 
     let score = coverage.size * 10 + usedFrets.length;
+    requiredIntervals.forEach(required => {
+        if (!coverage.has(normalizeInterval(required))) {
+            score -= 20;
+        }
+    });
     if (rootInBass) score += 6;
     if (hasThird && (coverage.has(3) || coverage.has(4))) score += 4;
     if (hasThird && !(coverage.has(3) || coverage.has(4))) score -= 12;
@@ -124,23 +130,31 @@ const scoreShape = (
 
 type FretShape = Array<number | null>;
 
+type GuitarVoicingContext = 'trainer' | 'resource';
+
 const buildShapeForRootString = (
     rootStringIndex: number,
     rootPitchClass: number,
     intervals: number[],
-    minMidi: number
+    minMidi: number,
+    context: GuitarVoicingContext,
+    requiredIntervals: number[]
 ): { midiNotes: number[]; rootMidi: number; score: number } | null => {
     const openMidi = STANDARD_TUNING_MIDI[rootStringIndex];
     const rootFret = getRootFretForString(rootPitchClass, openMidi, minMidi);
     if (rootFret == null) return null;
 
     const rootMidi = openMidi + rootFret;
-    const allowOpen = rootFret <= 2;
+    const allowOpen = context === 'resource' ? false : rootFret <= 2;
+    const maxSpan = context === 'resource' ? 3 : 4;
     const rangeStart = allowOpen ? 0 : rootFret;
-    const rangeEnd = rootFret + 4;
+    const rangeEnd = rootFret + maxSpan;
     const intervalSet = new Set(intervals.map(normalizeInterval));
 
     const candidates: Array<Array<number | null>> = STANDARD_TUNING_MIDI.map((stringMidi, index) => {
+        if (context === 'resource' && index < rootStringIndex) {
+            return [null];
+        }
         const choices: Array<number | null> = [];
         for (let fret = rangeStart; fret <= rangeEnd; fret += 1) {
             const midi = stringMidi + fret;
@@ -165,7 +179,7 @@ const buildShapeForRootString = (
 
     const search = (stringIndex: number) => {
         if (stringIndex >= 6) {
-            const score = scoreShape(frets, rootMidi, intervals, allowOpen);
+            const score = scoreShape(frets, rootMidi, intervals, allowOpen, requiredIntervals);
             if (score > bestScore) {
                 bestScore = score;
                 best = [...frets];
@@ -195,16 +209,25 @@ const buildShapeForRootString = (
 
 const findBestGuitarShape = (
     intervals: number[],
-    rootMidi: number
+    rootMidi: number,
+    context: GuitarVoicingContext,
+    requiredIntervals: number[]
 ): { midiNotes: number[]; rootMidi: number; score: number } | null => {
     const rootPitchClass = normalizeInterval(rootMidi);
     const minMidi = getGuitarMinMidi(rootMidi);
-    const rootStrings = [0, 1, 2]; // E, A, D strings
+    const rootStrings = context === 'resource' ? [1, 2] : [0, 1, 2]; // A, D (resource), otherwise E/A/D
     let bestShape: { midiNotes: number[]; rootMidi: number; score: number } | null = null;
     let bestScore = -Infinity;
 
     rootStrings.forEach(rootStringIndex => {
-        const shape = buildShapeForRootString(rootStringIndex, rootPitchClass, intervals, minMidi);
+        const shape = buildShapeForRootString(
+            rootStringIndex,
+            rootPitchClass,
+            intervals,
+            minMidi,
+            context,
+            requiredIntervals
+        );
         if (!shape) return;
         if (shape.score > bestScore) {
             bestScore = shape.score;
@@ -215,16 +238,35 @@ const findBestGuitarShape = (
     return bestShape;
 };
 
-export const voiceGuitarChord = (midiNotes: number[], rootMidi?: number): number[] => {
+export const voiceGuitarChord = (
+    midiNotes: number[],
+    rootMidi?: number,
+    context: GuitarVoicingContext = 'trainer'
+): number[] => {
     const cleanNotes = midiNotes.filter(note => Number.isFinite(note));
     if (cleanNotes.length === 0) return [];
 
     const baseRoot = rootMidi ?? Math.min(...cleanNotes);
     const intervals = getChordIntervals(cleanNotes, baseRoot);
-    const shape = findBestGuitarShape(intervals, baseRoot);
+    const requiredIntervals = context === 'resource'
+        ? intervals.filter(interval => [2, 5, 9, 10, 11].includes(normalizeInterval(interval)))
+        : [];
+    const shape = findBestGuitarShape(intervals, baseRoot, context, requiredIntervals);
 
     if (shape) {
-        return shape.midiNotes;
+        if (context !== 'resource') {
+            return shape.midiNotes;
+        }
+        const targetMin = 55; // G3
+        const targetMax = 70; // A4
+        let voiced = [...shape.midiNotes];
+        while (Math.min(...voiced) < targetMin) {
+            voiced = voiced.map(note => note + 12);
+        }
+        while (Math.max(...voiced) > targetMax) {
+            voiced = voiced.map(note => note - 12);
+        }
+        return uniqueSorted(voiced);
     }
 
     const minMidi = getGuitarMinMidi(baseRoot);
@@ -235,7 +277,20 @@ export const voiceGuitarChord = (midiNotes: number[], rootMidi?: number): number
         }
     }
     const fallbackIntervals = getChordIntervals(transposed, baseRoot);
-    return buildOpenVoicingFallback(fallbackIntervals, Math.max(baseRoot, minMidi));
+    const fallback = buildOpenVoicingFallback(fallbackIntervals, Math.max(baseRoot, minMidi));
+    if (context !== 'resource') {
+        return fallback;
+    }
+    const targetMin = 55; // G3
+    const targetMax = 70; // A4
+    let voiced = [...fallback];
+    while (Math.min(...voiced) < targetMin) {
+        voiced = voiced.map(note => note + 12);
+    }
+    while (Math.max(...voiced) > targetMax) {
+        voiced = voiced.map(note => note - 12);
+    }
+    return uniqueSorted(voiced);
 };
 
 export const midiToNoteName = (midi: number): string => {
