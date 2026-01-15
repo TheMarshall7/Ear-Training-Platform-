@@ -176,8 +176,21 @@ export class AudioEngine {
         await this.ensureUnlocked();
         const tempoSeconds = tempoMs / 1000;
         const durationSeconds = noteDurationMs ? noteDurationMs / 1000 : undefined;
+        
+        // Track octave adjustments to prevent register jumps
+        let currentOctave = octave;
+        let previousMidiNote: number | null = null;
+        
         notes.forEach((note, index) => {
-            const midiNote = noteNameToMidi(note, octave);
+            const baseMidiNote = noteNameToMidi(note, currentOctave);
+            
+            // If this note is lower than the previous note, we've wrapped around the octave
+            // Increment octave to keep ascending
+            if (previousMidiNote !== null && baseMidiNote < previousMidiNote) {
+                currentOctave++;
+            }
+            
+            const midiNote = noteNameToMidi(note, currentOctave);
             this.playNote(
                 rootSampleId,
                 midiNote,
@@ -186,6 +199,8 @@ export class AudioEngine {
                 1.0,
                 durationSeconds
             );
+            
+            previousMidiNote = midiNote;
         });
     }
 
