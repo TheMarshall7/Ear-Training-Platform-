@@ -188,7 +188,7 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
         if (vocalWarmupActiveRef.current) {
             stopVocalWarmup();
         }
-    }, [resource.id]);
+    }, [resource.id, state.currentInstrument]);
     
     // Stop vocal warmup on unmount
     useEffect(() => {
@@ -206,12 +206,8 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
         setIsVocalWarmupActive(false);
         setIsPlaying(false);
         audioEngine.stopAll();
-        // Don't reset index immediately so user can see where they stopped
-        setTimeout(() => {
-            if (!vocalWarmupActiveRef.current) {
-                setVocalWarmupIndex(0);
-            }
-        }, 500);
+        // Reset index immediately to prevent overlap when restarting
+        setVocalWarmupIndex(0);
     };
     
     const jumpToStep = (step: number) => {
@@ -374,7 +370,8 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                 const direction = intervalDirection || playSpec.direction || 'asc';
                 const root = playSpec.root || 'C4';
                 const semitones = playSpec.semitones || 0;
-                audioEngine.playInterval(root, semitones, direction, playSpec.tempoMs);
+                const sampleId = getInstrumentSampleId(state.currentInstrument);
+                audioEngine.playInterval(root, semitones, direction, playSpec.tempoMs, sampleId);
                 setTimeout(() => setIsPlaying(false), playSpec.tempoMs * 2 + 200);
             } else if (playSpec.type === 'chord' && playSpec.notes) {
                 const sampleId = getInstrumentSampleId(state.currentInstrument);
