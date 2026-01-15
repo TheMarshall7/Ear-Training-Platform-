@@ -23,7 +23,7 @@ export const Home: React.FC = () => {
     }, [state.currentInstrument]);
 
     useEffect(() => {
-        document.title = 'Areo - Master Your Musical Ear | Interactive Ear Training';
+        document.title = 'NextStage Studios - Master Your Musical Ear | Interactive Ear Training';
     }, []);
     
     const handleInstrumentChange = async (instrumentId: string) => {

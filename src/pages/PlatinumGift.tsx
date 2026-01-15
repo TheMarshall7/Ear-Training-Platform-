@@ -43,7 +43,7 @@ export const PlatinumGift: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        document.title = 'Platinum Gift - Areo';
+        document.title = 'Platinum Gift - NextStage Studios';
     }, []);
 
     const handleRedeem = () => {

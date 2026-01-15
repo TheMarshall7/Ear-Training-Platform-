@@ -106,7 +106,7 @@ export const Train: React.FC = () => {
 
     // Update page title
     useEffect(() => {
-        document.title = 'Training - Areo';
+        document.title = 'Training - NextStage Studios';
     }, []);
 
     // Audio initialization is now handled globally in App.tsx

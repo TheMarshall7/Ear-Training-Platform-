@@ -43,7 +43,7 @@ export const Resources: React.FC = () => {
     }, [state.currentInstrument]); // Reload when instrument changes
 
     useEffect(() => {
-        document.title = 'Resources - Areo';
+        document.title = 'Resources - NextStage Studios';
     }, []);
 
     // Validate category

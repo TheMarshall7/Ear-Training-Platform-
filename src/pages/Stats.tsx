@@ -36,7 +36,7 @@ export const Stats: React.FC = () => {
     }, [state]);
 
     useEffect(() => {
-        document.title = 'Achievements - Areo';
+        document.title = 'Achievements - NextStage Studios';
     }, []);
 
     const accuracy = getAccuracy(stats);

@@ -5,7 +5,7 @@ export const Locked: React.FC = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        document.title = 'Locked - Areo';
+        document.title = 'Locked - NextStage Studios';
     }, []);
 
     return (

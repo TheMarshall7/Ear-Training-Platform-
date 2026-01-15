@@ -5,7 +5,7 @@ export const Success: React.FC = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        document.title = 'Success - Areo';
+        document.title = 'Success - NextStage Studios';
     }, []);
 
     return (
