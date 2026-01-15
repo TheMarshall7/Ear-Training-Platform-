@@ -7,7 +7,6 @@ import { voiceBassChord, voiceGuitarChord } from '../../logic/voicing/guitarVoic
 import { useGame } from '../../context/GameContext';
 
 const getGuitarChordGains = (voiced: number[], baseRoot: number) => {
-    const rootPc = ((baseRoot % 12) + 12) % 12;
     return voiced.map(note => {
         const interval = ((note - baseRoot) % 12 + 12) % 12;
         if (interval === 10 || interval === 11 || interval === 2 || interval === 3 || interval === 5 || interval === 9) {
