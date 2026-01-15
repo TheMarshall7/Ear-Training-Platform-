@@ -68,13 +68,27 @@ export const Stats: React.FC = () => {
                 <BrandLogo showText={false} />
             </div>
 
+            {/* Top Right Home Button */}
+            <div className="absolute top-6 right-4 lg:hidden z-50">
+                <button 
+                    onClick={() => navigate('/')} 
+                    className="group flex items-center gap-2 text-neutral-400 hover:text-neutral-600 font-medium text-sm transition-all duration-300 hover:gap-3"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-x-1 transition-transform duration-300">
+                        <path d="m12 19-7-7 7-7"></path>
+                        <path d="M19 12H5"></path>
+                    </svg>
+                    <span>Home</span>
+                </button>
+            </div>
+
             <div className="relative z-10 pt-20 pb-8 lg:py-12 px-4 flex-1">
                 <div className="max-w-5xl mx-auto">
                     {/* Header */}
-                    <div className="flex items-center justify-between mb-8 lg:mb-12">
+                    <div className="flex items-center justify-center lg:justify-between mb-8 lg:mb-12">
                         <button 
                             onClick={() => navigate('/')} 
-                            className="group flex items-center gap-2 text-neutral-400 hover:text-neutral-600 font-medium text-sm transition-all duration-300 hover:gap-3"
+                            className="hidden lg:flex group items-center gap-2 text-neutral-400 hover:text-neutral-600 font-medium text-sm transition-all duration-300 hover:gap-3"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-x-1 transition-transform duration-300">
                                 <path d="m12 19-7-7 7-7"></path>
@@ -85,7 +99,7 @@ export const Stats: React.FC = () => {
                         <h1 className="text-4xl lg:text-5xl font-bold text-neutral-900 tracking-tight">
                             Achievements
                         </h1>
-                        <div className="w-16"></div>
+                        <div className="hidden lg:block w-16"></div>
                     </div>
 
                     {/* Overview Stats */}
