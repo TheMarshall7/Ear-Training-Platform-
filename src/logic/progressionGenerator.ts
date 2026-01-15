@@ -20,6 +20,19 @@
 import { harmonyRules, type ChordFunction } from '../config/harmonyRules';
 import type { Difficulty } from '../types/game';
 
+const EASY_COMMON_PROGRESSIONS: number[][] = [
+    [1, 4],
+    [1, 5],
+    [1, 4, 5],
+    [1, 5, 1],
+    [1, 4, 1],
+    [5, 1],
+    [4, 1],
+    [1, 5, 4],
+    [1, 2, 1],
+    [1, 6, 4]
+];
+
 /**
  * Session state tracks progression history and degree usage.
  * Used to prevent repetition and ensure variety.
@@ -40,7 +53,8 @@ const DEFAULT_SESSION_STATE: SessionState = {
  */
 export function generateProgression(
     difficulty: Difficulty,
-    sessionState: SessionState = DEFAULT_SESSION_STATE
+    sessionState: SessionState = DEFAULT_SESSION_STATE,
+    options?: { streak?: number }
 ): number[] {
     const config = harmonyRules;
     const template = config.difficultyTemplates[difficulty];
@@ -48,6 +62,29 @@ export function generateProgression(
 
     let attempts = 0;
     let progression: number[] = [];
+
+    if (difficulty === 'easy') {
+        const streak = options?.streak ?? 0;
+        const allowFourChord = streak >= 5;
+        const easyPool = allowFourChord
+            ? EASY_COMMON_PROGRESSIONS
+            : EASY_COMMON_PROGRESSIONS.filter(seq => seq.length <= 3);
+        while (attempts < maxAttempts) {
+            const candidate = easyPool[Math.floor(Math.random() * easyPool.length)];
+            const sequenceKey = candidate.join('-');
+            if (!sessionState.history.includes(sequenceKey)) {
+                candidate.forEach(deg => {
+                    sessionState.degreeUsageCount[deg] = (sessionState.degreeUsageCount[deg] || 0) + 1;
+                });
+                sessionState.history.push(sequenceKey);
+                if (sessionState.history.length > historySize) {
+                    sessionState.history.shift();
+                }
+                return candidate;
+            }
+            attempts++;
+        }
+    }
 
     while (attempts < maxAttempts) {
         progression = buildProgressionFromTemplate(template, difficulty);

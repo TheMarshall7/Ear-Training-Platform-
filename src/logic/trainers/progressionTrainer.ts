@@ -73,11 +73,12 @@ export interface ProgressionRoundState {
  */
 export function generateProgressionQuestion(
     difficulty: Difficulty,
-    sessionState: SessionState
+    sessionState: SessionState,
+    options?: { streak?: number }
 ): ProgressionQuestion {
     try {
         // Generate progression using harmony rules
-        const degrees = generateProgression(difficulty, sessionState);
+        const degrees = generateProgression(difficulty, sessionState, options);
         
         // Validate degrees exist and are non-empty
         if (!degrees || degrees.length === 0) {

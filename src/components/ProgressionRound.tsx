@@ -122,7 +122,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
             setIsInitializing(true);
             setError(null);
             try {
-                const question = generateProgressionQuestion(difficulty, roundState.sessionState);
+                const question = generateProgressionQuestion(difficulty, roundState.sessionState, { streak });
                 if (!question || !question.targetDegrees || question.targetDegrees.length === 0) {
                     console.error('Failed to generate valid progression question');
                     setError('Failed to generate progression. Please try again.');
@@ -476,7 +476,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
     const handleNext = () => {
         if (roundStatus !== 'resolved') return;
         // Reset for next round
-        const newQuestion = generateProgressionQuestion(difficulty, roundState.sessionState);
+        const newQuestion = generateProgressionQuestion(difficulty, roundState.sessionState, { streak });
         setRoundState(prev => ({
             ...prev,
             question: newQuestion,
@@ -519,7 +519,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                             setError(null);
                             setIsInitializing(true);
                             try {
-                                const newQuestion = generateProgressionQuestion(difficulty, roundState.sessionState);
+                                const newQuestion = generateProgressionQuestion(difficulty, roundState.sessionState, { streak });
                                 if (newQuestion && newQuestion.targetDegrees && newQuestion.targetDegrees.length > 0) {
                                     const hasValidChords = newQuestion.chordSpecs.every(spec => spec.midiNotes && spec.midiNotes.length > 0);
                                     if (hasValidChords) {
@@ -561,7 +561,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                             setError(null);
                             setIsInitializing(true);
                             try {
-                                const newQuestion = generateProgressionQuestion(difficulty, roundState.sessionState);
+                                const newQuestion = generateProgressionQuestion(difficulty, roundState.sessionState, { streak });
                                 if (newQuestion && newQuestion.targetDegrees && newQuestion.targetDegrees.length > 0) {
                                     const hasValidChords = newQuestion.chordSpecs.every(spec => spec.midiNotes && spec.midiNotes.length > 0);
                                     if (hasValidChords) {
