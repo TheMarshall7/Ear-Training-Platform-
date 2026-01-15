@@ -42,6 +42,10 @@ export const PlatinumGift: React.FC = () => {
         return () => clearTimeout(timer);
     }, []);
 
+    useEffect(() => {
+        document.title = 'Platinum Gift - Areo';
+    }, []);
+
     const handleRedeem = () => {
         window.open('https://nextstage-music.com/', '_blank');
     };

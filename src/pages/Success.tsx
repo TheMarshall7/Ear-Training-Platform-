@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export const Success: React.FC = () => {
     const navigate = useNavigate();
+
+    useEffect(() => {
+        document.title = 'Success - Areo';
+    }, []);
 
     return (
         <div className="min-h-screen bg-green-50 flex flex-col items-center justify-center p-8 text-center">

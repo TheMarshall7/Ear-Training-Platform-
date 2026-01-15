@@ -21,6 +21,10 @@ export const Home: React.FC = () => {
         // Preload current instrument
         loadInstrument(state.currentInstrument);
     }, [state.currentInstrument]);
+
+    useEffect(() => {
+        document.title = 'Areo - Master Your Musical Ear | Interactive Ear Training';
+    }, []);
     
     const handleInstrumentChange = async (instrumentId: string) => {
         dispatch({ type: 'SET_INSTRUMENT', payload: instrumentId });

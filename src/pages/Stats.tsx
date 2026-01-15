@@ -35,6 +35,10 @@ export const Stats: React.FC = () => {
         setAchievements(currentAchievements);
     }, [state]);
 
+    useEffect(() => {
+        document.title = 'Achievements - Areo';
+    }, []);
+
     const accuracy = getAccuracy(stats);
     const unlockedCount = Object.values(achievements).filter(a => a.unlocked).length;
     const totalAchievements = Object.keys(achievements).length;

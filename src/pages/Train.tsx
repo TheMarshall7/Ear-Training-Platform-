@@ -104,6 +104,11 @@ export const Train: React.FC = () => {
         });
     }, [state.currentMode, state.currentInstrument]);
 
+    // Update page title
+    useEffect(() => {
+        document.title = 'Training - Areo';
+    }, []);
+
     // Audio initialization is now handled globally in App.tsx
     // No need for per-page audio state management
 

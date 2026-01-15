@@ -42,6 +42,10 @@ export const Resources: React.FC = () => {
         checkAudioState();
     }, [state.currentInstrument]); // Reload when instrument changes
 
+    useEffect(() => {
+        document.title = 'Resources - Areo';
+    }, []);
+
     // Validate category
     const validCategory = category && ['scales', 'intervals', 'chords', 'progressions', 'melodies', 'vocalWarmups'].includes(category)
         ? category as ResourceCategory
