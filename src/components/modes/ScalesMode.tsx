@@ -80,6 +80,9 @@ export const ScalesMode: React.FC<ScalesModeProps> = ({
         setIsPlaying(true);
 
         try {
+            // Stop any previously playing audio to prevent doubling
+            audioEngine.stopAll();
+            
             // Force recreate audio context on user interaction
             await audioEngine.init();
             await loadInstrument(state.currentInstrument);
