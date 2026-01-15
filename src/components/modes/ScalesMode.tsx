@@ -196,6 +196,7 @@ export const ScalesMode: React.FC<ScalesModeProps> = ({
         setSelectedId(null);
         setCorrectId(null);
         setChecking(false);
+        hasAutoPlayedRef.current = false; // Reset auto-play flag for new question
         const newQuestion = generateScaleQuestion(difficulty);
         setQuestion(newQuestion);
         onNext();
