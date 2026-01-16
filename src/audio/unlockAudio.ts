@@ -1,4 +1,4 @@
-import { rlog } from '../utils/debugLogger';
+
 
 /**
  * Synchronous Hard Unlock for iOS Safari
@@ -6,9 +6,6 @@ import { rlog } from '../utils/debugLogger';
  */
 export function syncHardUnlock(ctx: AudioContext): void {
     console.log('🔄 syncHardUnlock start. State:', ctx.state);
-    // #region agent log
-    rlog('unlockAudio.ts:syncHardUnlock', 'sync unlock start', { state: ctx.state }, 'A', 'post-fix');
-    // #endregion
 
     // 1. Synchronously trigger resume (don't await)
     if (ctx.state !== 'running') {
@@ -25,9 +22,6 @@ export function syncHardUnlock(ctx: AudioContext): void {
     source.onended = () => {
         source.disconnect();
         console.log('✅ silent buffer ended. State:', ctx.state);
-        // #region agent log
-        rlog('unlockAudio.ts:syncHardUnlock', 'silent buffer ended', { state: ctx.state }, 'A', 'post-fix');
-        // #endregion
     };
 
     console.log('✅ syncHardUnlock triggered. State:', ctx.state);
@@ -65,15 +59,12 @@ export function attachGlobalAudioUnlock(opts: GlobalUnlockOptions): void {
         unlocked = true;
 
         console.log('🎵 Global Interaction:', event.type);
-        // #region agent log
-        rlog('unlockAudio.ts:attachGlobalAudioUnlock', 'global interact', { type: event.type, state: audioContext.state }, 'A', 'post-fix');
-        // #endregion
-        
+
         syncHardUnlock(audioContext);
-        
+
         // Wait for potential state change
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
         if (audioContext.state === 'running') {
             console.log('✅ Global audio unlocked successfully');
             sessionStorage.setItem('audioUnlocked', 'true');
@@ -108,9 +99,6 @@ export function detachGlobalAudioUnlock(): void {
 export function setupVisibilityResumeHandler(ctx: AudioContext): () => void {
     const handleVisibility = () => {
         console.log('Tab visibility changed:', document.visibilityState);
-        // #region agent log
-        rlog('unlockAudio.ts:handleVisibility', 'visibilitychange', { state: ctx.state, visibility: document.visibilityState }, 'D', 'post-fix');
-        // #endregion
         if (document.visibilityState === 'visible' && ctx.state === 'suspended') {
             void ctx.resume();
             console.log('Tab visible: resume() called.');

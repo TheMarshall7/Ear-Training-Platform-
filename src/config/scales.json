@@ -2,58 +2,126 @@
   "scales": [
     {
       "id": "c_major",
-      "name": "C Major",
+      "name": "Major",
       "difficulty": "easy",
-      "notes": ["C", "D", "E", "F", "G", "A", "B", "C"],
+      "notes": [
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "A",
+        "B",
+        "C"
+      ],
       "description": "Major scale"
     },
     {
       "id": "a_natural_minor",
-      "name": "A Natural Minor",
+      "name": "Natural Minor",
       "difficulty": "easy",
-      "notes": ["A", "B", "C", "D", "E", "F", "G", "A"],
+      "notes": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "A"
+      ],
       "description": "Aeolian mode (relative minor of C Major)"
     },
     {
       "id": "c_major_pentatonic",
-      "name": "C Major Pentatonic",
+      "name": "Major Pentatonic",
       "difficulty": "easy",
-      "notes": ["C", "D", "E", "G", "A", "C"],
+      "notes": [
+        "C",
+        "D",
+        "E",
+        "G",
+        "A",
+        "C"
+      ],
       "description": "Major pentatonic scale"
     },
     {
       "id": "a_minor_pentatonic",
-      "name": "A Minor Pentatonic",
+      "name": "Minor Pentatonic",
       "difficulty": "medium",
-      "notes": ["A", "C", "D", "E", "G", "A"],
+      "notes": [
+        "A",
+        "C",
+        "D",
+        "E",
+        "G",
+        "A"
+      ],
       "description": "Minor pentatonic scale"
     },
     {
       "id": "d_dorian",
-      "name": "D Dorian",
+      "name": "Dorian",
       "difficulty": "medium",
-      "notes": ["D", "E", "F", "G", "A", "B", "C", "D"],
+      "notes": [
+        "D",
+        "E",
+        "F",
+        "G",
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
       "description": "Dorian mode"
     },
     {
       "id": "g_mixolydian",
-      "name": "G Mixolydian",
+      "name": "Mixolydian",
       "difficulty": "medium",
-      "notes": ["G", "A", "B", "C", "D", "E", "F", "G"],
+      "notes": [
+        "G",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G"
+      ],
       "description": "Mixolydian mode"
     },
     {
       "id": "e_phrygian",
-      "name": "E Phrygian",
+      "name": "Phrygian",
       "difficulty": "hard",
-      "notes": ["E", "F", "G", "A", "B", "C", "D", "E"],
+      "notes": [
+        "E",
+        "F",
+        "G",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
       "description": "Phrygian mode"
     },
     {
       "id": "f_lydian",
-      "name": "F Lydian",
+      "name": "Lydian",
       "difficulty": "hard",
-      "notes": ["F", "G", "A", "B", "C", "D", "E", "F"],
+      "notes": [
+        "F",
+        "G",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F"
+      ],
       "description": "Lydian mode"
     }
   ]

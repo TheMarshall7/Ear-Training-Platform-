@@ -26,7 +26,7 @@ export const Home: React.FC = () => {
     useEffect(() => {
         document.title = 'NextStage Studios - Master Your Musical Ear | Interactive Ear Training';
     }, []);
-    
+
     const handleInstrumentChange = async (instrumentId: string) => {
         dispatch({ type: 'SET_INSTRUMENT', payload: instrumentId });
         // Preload the new instrument
@@ -39,22 +39,26 @@ export const Home: React.FC = () => {
     }, [state.xp, state.level]);
 
     const handleStart = () => {
-        // Auto-switch from bass to piano if entering chord/progression mode
-        if ((state.currentMode === 'chord' || state.currentMode === 'progression') && state.currentInstrument === 'bass') {
-            dispatch({ type: 'SET_INSTRUMENT', payload: 'piano' });
+        // Auto-switch from bass to guitar if entering chord-based modes
+        // Bass is disabled for: chord, progression, keyFinder, numberSystem (all use chords)
+        const chordBasedModes = ['chord', 'progression', 'keyFinder', 'numberSystem'];
+        if (chordBasedModes.includes(state.currentMode) && state.currentInstrument === 'bass') {
+            dispatch({ type: 'SET_INSTRUMENT', payload: 'guitar' });
         }
         dispatch({ type: 'RESET_RUN' });
         navigate('/train');
     };
 
     // Determine which instruments should be disabled based on current mode
-    const disabledInstruments = (state.currentMode === 'chord' || state.currentMode === 'progression') ? ['bass'] : [];
+    // Bass is disabled for chord-based modes: chord, progression, keyFinder, numberSystem
+    const chordBasedModes = ['chord', 'progression', 'keyFinder', 'numberSystem'];
+    const disabledInstruments = chordBasedModes.includes(state.currentMode) ? ['bass'] : [];
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 relative overflow-hidden flex flex-col">
             {/* Instrument Selection Onboarding Modal */}
             <InstrumentOnboarding onSelectInstrument={handleInstrumentChange} />
-            
+
             {/* Background gradient sphere */}
             <div className="absolute -translate-x-1/2 -translate-y-1/2 animate-pulse-glow bg-gradient-to-br from-orange-400/30 via-red-500/20 to-rose-600/20 opacity-80 mix-blend-multiply w-[600px] h-[600px] rounded-full top-1/4 left-1/4 blur-3xl pointer-events-none"></div>
             <div className="absolute translate-x-1/2 translate-y-1/2 animate-pulse-glow bg-gradient-to-br from-orange-400/30 via-red-500/20 to-rose-600/20 opacity-80 mix-blend-multiply w-[600px] h-[600px] rounded-full bottom-1/4 right-1/4 blur-3xl pointer-events-none"></div>
@@ -69,9 +73,9 @@ export const Home: React.FC = () => {
                     {/* Hero Section */}
                     <div className="text-center mb-12 lg:mb-16 animate-fade-in-up">
                         <div className="inline-flex items-center justify-center mb-8 group">
-                            <img 
-                                src={logoImage} 
-                                alt="Logo" 
+                            <img
+                                src={logoImage}
+                                alt="Logo"
                                 className="w-20 h-20 lg:w-24 lg:h-24 object-contain transition-all duration-300 group-hover:scale-105 group-hover:drop-shadow-lg drop-shadow-md"
                             />
                         </div>

@@ -37,6 +37,7 @@ import { BrandLogo } from '../components/BrandLogo';
 import { Footer } from '../components/Footer';
 import { AudioEnableBanner } from '../components/AudioEnableBanner';
 import { IOSSilentModeWarning } from '../components/IOSSilentModeWarning';
+import { ModeHeader } from '../components/ModeHeader';
 
 // Calculate combo multiplier based on streak
 const getComboMultiplier = (streak: number): number => {
@@ -61,40 +62,24 @@ export const Train: React.FC = () => {
     const [dailyChallenges, setDailyChallenges] = useState(getDailyChallenges());
 
     // Init - only for interval and chord modes (other modes have their own components)
-    useEffect(() => {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:initEffect',message:'Init effect triggered',data:{isLocked:state.isLocked,currentMode:state.currentMode,difficulty:state.difficulty,hasInitialized:hasInitializedRef.current,lastMode:lastModeRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
-        
-        // Only run for interval and chord modes - other modes use their own components
+    useEffect(() => {        // Only run for interval and chord modes - other modes use their own components
         if (state.currentMode !== 'interval' && state.currentMode !== 'chord') {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:initEffect:skippedOtherMode',message:'Skipped init for non-interval/chord mode',data:{currentMode:state.currentMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
-            // #endregion
             return;
         }
-        
+
         const modeKey = `${state.currentMode}-${state.difficulty}`;
-        
+
         // Only load question if mode/difficulty actually changed or first init
         if (!hasInitializedRef.current || lastModeRef.current !== modeKey) {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:initEffect:willLoad',message:'Mode changed, will load question',data:{isLocked:state.isLocked,modeKey,wasInitialized:hasInitializedRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
-            // #endregion
-            
             hasInitializedRef.current = true;
             lastModeRef.current = modeKey;
-            
+
             if (state.isLocked) {
                 // Show locked state immediately
             } else {
                 loadNextQuestion();
             }
-        } else {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:initEffect:skipped',message:'Skipped duplicate init effect',data:{modeKey,lastMode:lastModeRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
-            // #endregion
-        }
+        } else { }
     }, [state.currentMode, state.difficulty]);
 
     // Preload instrument when component mounts or mode/instrument changes
@@ -113,10 +98,6 @@ export const Train: React.FC = () => {
     // No need for per-page audio state management
 
     const loadNextQuestion = () => {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:loadNextQuestion:entry',message:'loadNextQuestion called',data:{currentMode:state.currentMode,difficulty:state.difficulty,runProgress:state.runProgress},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
-        
         setSelectedId(null);
         setCorrectId(null);
         setChecking(false);
@@ -127,26 +108,18 @@ export const Train: React.FC = () => {
         }
 
         if (state.currentMode === 'interval') {
-            const newQuestion = generateIntervalQuestion(state.difficulty);
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:loadNextQuestion:intervalGenerated',message:'Interval question generated',data:{intervalId:newQuestion.intervalId},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'D'})}).catch(()=>{});
-            // #endregion
-            setQuestion(newQuestion);
+            const newQuestion = generateIntervalQuestion(state.difficulty); setQuestion(newQuestion);
         } else {
-            const newQuestion = generateChordQuestion(state.difficulty, state.isDiatonicMode);
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:loadNextQuestion:chordGenerated',message:'Chord question generated',data:{chordId:newQuestion.chordId,notesCount:newQuestion.notes.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'E'})}).catch(()=>{});
-            // #endregion
-            setQuestion(newQuestion);
+            const newQuestion = generateChordQuestion(state.difficulty, state.isDiatonicMode); setQuestion(newQuestion);
         }
     };
 
     const playQuestion = useCallback(async () => {
         // CRITICAL: Unlock audio SYNCHRONOUSLY FIRST, inside user gesture, before ANY await/async work
         audioEngine.ensureUnlockedSync();
-        
+
         console.log('Train: playQuestion called. State:', audioEngine.getContext()?.state);
-        
+
         if (!question || isPlaying) return;
         setIsPlaying(true);
 
@@ -164,21 +137,13 @@ export const Train: React.FC = () => {
 
             if ('intervalId' in question) {
                 // Play interval
-                const q = question as IntervalQuestion;
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:playQuestion:playingInterval',message:'Playing interval',data:{intervalId:q.intervalId,rootMidi:q.rootMidi,targetMidi:q.targetMidi},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
-                // #endregion
-                // For bass, reduce note duration to prevent muddy low-register intervals
+                const q = question as IntervalQuestion;                // For bass, reduce note duration to prevent muddy low-register intervals
                 const noteDuration = state.currentInstrument === 'bass' ? 0.5 : undefined;
                 audioEngine.playNote(sampleId, q.rootMidi, 60, 0, 1.0, noteDuration);
                 audioEngine.playNote(sampleId, q.targetMidi, 60, 0.8, 1.0, noteDuration);
             } else {
                 // Play chord
-                const q = question as ChordQuestion;
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:playQuestion:playingChord',message:'Playing chord',data:{chordId:q.chordId,notesCount:q.notes.length,notes:q.notes},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'E'})}).catch(()=>{});
-                // #endregion
-                const chordNotes = state.currentInstrument === 'guitar'
+                const q = question as ChordQuestion; const chordNotes = state.currentInstrument === 'guitar'
                     ? getRandomGuitarVoicing(q.notes, q.rootMidi)
                     : state.currentInstrument === 'bass'
                         ? getRandomBassVoicing(q.notes, q.rootMidi)
@@ -203,24 +168,13 @@ export const Train: React.FC = () => {
     const hasAutoPlayedRef = useRef(false);
     const hasInitializedRef = useRef(false);
     const lastModeRef = useRef<string>('');
-    
+
     useEffect(() => {
-        // Reset flag when question changes
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:autoPlayReset',message:'Resetting hasAutoPlayedRef',data:{previousValue:hasAutoPlayedRef.current,questionType:question?('intervalId' in question?'interval':'chord'):'null'},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
-        hasAutoPlayedRef.current = false;
+        // Reset flag when question changes        hasAutoPlayedRef.current = false;
     }, [question]);
 
     useEffect(() => {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:autoPlayEffect',message:'Auto-play effect triggered',data:{hasQuestion:!!question,hasAutoPlayed:hasAutoPlayedRef.current,hasSelectedId:!!selectedId,willAutoPlay:!!(question && !hasAutoPlayedRef.current && !selectedId)},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-        
         if (question && !hasAutoPlayedRef.current && !selectedId) {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:autoPlayTriggered',message:'Auto-play will trigger in 500ms',data:{questionType:'intervalId' in question?'interval':'chord'},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
-            // #endregion
             hasAutoPlayedRef.current = true;
             const timer = setTimeout(() => playQuestion(), 500);
             return () => clearTimeout(timer);
@@ -241,19 +195,19 @@ export const Train: React.FC = () => {
             setCorrectId(id);
             setShowParticles(true);
             setTimeout(() => setShowParticles(false), 100);
-            
+
             const newStreak = state.streak + 1;
             const newRunProgress = state.runProgress + 1;
-            
+
             // Check for perfect run
             const isPerfectRun = newRunProgress === 10 && isCorrect;
-            
+
             // Update stats
             let stats = loadStats();
             stats = recordAnswer(stats, true, state.currentMode, isPerfectRun);
             stats = updateBestStreak(stats, newStreak);
             saveStats(stats);
-            
+
             // Check achievements
             const achievements = loadAchievements();
             const newlyUnlocked = checkAchievements(achievements, {
@@ -266,10 +220,10 @@ export const Train: React.FC = () => {
                 level: state.level,
                 currentSessionQuestions: state.runProgress
             });
-            
+
             if (newlyUnlocked.length > 0) {
                 setNewAchievement(newlyUnlocked[0]);
-                
+
                 // Automatically navigate to platinum gift page if Mystery Platinum Gift is unlocked
                 const platinumGift = newlyUnlocked.find(ach => ach.id === 'mystery_platinum_gift');
                 if (platinumGift) {
@@ -279,14 +233,14 @@ export const Train: React.FC = () => {
                     }, 2000);
                 }
             }
-            
+
             // Update daily challenges
             let updatedChallenges = dailyChallenges;
-            
+
             // Update questions challenge
             const challengeUpdate1 = updateChallengeProgress(updatedChallenges, 'questions', 1);
             updatedChallenges = challengeUpdate1.challenges;
-            
+
             // Check streak challenges - if streak meets threshold, mark as complete
             updatedChallenges = updatedChallenges.map(challenge => {
                 if (challenge.completed || challenge.type !== 'streak') return challenge;
@@ -295,25 +249,25 @@ export const Train: React.FC = () => {
                 }
                 return challenge;
             });
-            
+
             // Save streak challenge updates
             if (updatedChallenges.some(c => c.type === 'streak' && !c.completed)) {
                 localStorage.setItem('ear_trainer_daily_challenges', JSON.stringify(updatedChallenges));
             }
-            
+
             if (isPerfectRun) {
                 const challengeUpdate3 = updateChallengeProgress(updatedChallenges, 'perfect', 1);
                 updatedChallenges = challengeUpdate3.challenges;
             }
-            
+
             setDailyChallenges(updatedChallenges);
-            
+
             // Check for level up
             const currentXP = state.xp;
             const xpGained = Math.floor(30 * (1 + state.streak * 0.1));
             const newXP = currentXP + xpGained;
             const newLevel = getLevelFromXP(newXP);
-            
+
             if (newLevel > state.level) {
                 setCelebration({
                     type: 'level-up',
@@ -321,7 +275,7 @@ export const Train: React.FC = () => {
                     subtitle: 'Keep it up!'
                 });
             }
-            
+
             // Check for perfect run celebration
             if (isPerfectRun) {
                 setCelebration({
@@ -330,26 +284,26 @@ export const Train: React.FC = () => {
                     subtitle: '10/10 Correct!'
                 });
             }
-            
+
             // Apply combo multiplier to points
             const basePoints = 30;
             const multiplier = getComboMultiplier(state.streak);
             const finalPoints = basePoints * multiplier;
-            
+
             dispatch({ type: 'CORRECT_ANSWER', payload: finalPoints });
         } else {
             setCorrectId('intervalId' in question ? (question as IntervalQuestion).intervalId : (question as ChordQuestion).chordId);
-            
+
             // Reset easy mode key if in chord mode easy difficulty or diatonic mode (for key consistency learning)
             if (state.currentMode === 'chord' && (state.difficulty === 'easy' || state.isDiatonicMode)) {
                 resetEasyModeKey();
             }
-            
+
             // Update stats
             let stats = loadStats();
             stats = recordAnswer(stats, false, state.currentMode);
             saveStats(stats);
-            
+
             dispatch({ type: 'WRONG_ANSWER' });
         }
     };
@@ -531,12 +485,12 @@ export const Train: React.FC = () => {
             <div className="relative z-10 flex flex-col items-center pt-6 lg:pt-8 pb-32 flex-1">
                 {/* Header / Nav */}
                 <div className="w-full max-w-4xl px-4 flex justify-between items-center mb-8 relative z-50 pl-20 lg:pl-24">
-                    <button 
+                    <button
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             navigate('/');
-                        }} 
+                        }}
                         className="group flex items-center gap-2 text-neutral-400 hover:text-neutral-600 font-medium text-sm relative z-50 cursor-pointer transition-all duration-300 hover:gap-3"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-x-1 transition-transform duration-300">
@@ -551,87 +505,103 @@ export const Train: React.FC = () => {
                     <div className="w-16"></div>
                 </div>
 
-            {/* iOS Silent Mode Warning - Shows immediately for iOS users */}
-            <div className="w-full max-w-4xl px-4 mb-4">
-                <IOSSilentModeWarning />
-            </div>
+                {/* iOS Silent Mode Warning - Shows immediately for iOS users */}
+                <div className="w-full max-w-4xl px-4 mb-4">
+                    <IOSSilentModeWarning />
+                </div>
 
-            {/* Audio Enable Banner - All Devices */}
-            <div className="w-full max-w-4xl px-4 mb-4">
-                <AudioEnableBanner />
-            </div>
+                {/* Audio Enable Banner - All Devices */}
+                <div className="w-full max-w-4xl px-4 mb-4">
+                    <AudioEnableBanner />
+                </div>
 
-            <ProgressMeter 
-                current={state.runProgress + 1} 
-                total={10} 
-                streak={state.streak}
-                level={state.level}
-                xp={state.xp}
-            />
-
-            <StreakCelebration streak={state.streak} />
-
-            <ParticleEffect trigger={showParticles} />
-
-            {celebration && (
-                <CelebrationOverlay
-                    type={celebration.type}
-                    message={celebration.message}
-                    subtitle={celebration.subtitle}
-                    onComplete={() => setCelebration(null)}
+                <ProgressMeter
+                    current={state.runProgress + 1}
+                    total={10}
+                    streak={state.streak}
+                    level={state.level}
+                    xp={state.xp}
                 />
-            )}
 
-            <AchievementToast
-                achievement={newAchievement}
-                onClose={() => setNewAchievement(null)}
-            />
+                <StreakCelebration streak={state.streak} />
 
-            <div className="flex-1 w-full max-w-2xl flex flex-col items-center justify-center">
-                <div className="card w-full max-w-xl mx-auto mb-8 bg-white/50 backdrop-blur-sm">
-                    <h2 className="text-center text-xl font-semibold text-stone-700 mb-2">
-                        Listen and Identify
-                    </h2>
-                    <Player
-                        onPlay={playQuestion}
-                        isPlaying={isPlaying}
-                        autoPlay={false} // Handled by effect
+                <ParticleEffect trigger={showParticles} />
+
+                {celebration && (
+                    <CelebrationOverlay
+                        type={celebration.type}
+                        message={celebration.message}
+                        subtitle={celebration.subtitle}
+                        onComplete={() => setCelebration(null)}
+                    />
+                )}
+
+                <AchievementToast
+                    achievement={newAchievement}
+                    onClose={() => setNewAchievement(null)}
+                />
+
+                {/* Mode Header with Diatonic Toggle for Chord Mode */}
+                {state.currentMode === 'chord' && (
+                    <ModeHeader
+                        title="Chord Identification"
+                        difficulty={state.difficulty}
+                        streak={state.streak}
+                        runProgress={state.runProgress}
+                        currentMode={state.currentMode}
+                        isDiatonicMode={state.isDiatonicMode}
+                        onToggleDiatonicMode={() => dispatch({ type: 'TOGGLE_DIATONIC_MODE' })}
+                        tip={state.isDiatonicMode
+                            ? "Same key mode: Perfect for learning diatonic chord relationships"
+                            : "Random keys: Great for developing absolute chord recognition"}
+                    />
+                )}
+
+                <div className="flex-1 w-full max-w-2xl flex flex-col items-center justify-center">
+                    <div className="card w-full max-w-xl mx-auto mb-8 bg-white/50 backdrop-blur-sm">
+                        <h2 className="text-center text-xl font-semibold text-stone-700 mb-2">
+                            Listen and Identify
+                        </h2>
+                        <Player
+                            onPlay={playQuestion}
+                            isPlaying={isPlaying}
+                            autoPlay={false} // Handled by effect
+                        />
+                    </div>
+
+                    <AnswerGrid
+                        options={question.options}
+                        onSelect={handleAnswer}
+                        disabled={checking || isPlaying}
+                        selectedId={selectedId}
+                        correctId={correctId}
                     />
                 </div>
 
-                <AnswerGrid
-                    options={question.options}
-                    onSelect={handleAnswer}
-                    disabled={checking || isPlaying}
-                    selectedId={selectedId}
-                    correctId={correctId}
+                {checking && (
+                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 p-6 flex flex-col items-center animate-slide-up pb-8">
+                        <Feedback
+                            correct={correctId === selectedId}
+                            points={30}
+                            multiplier={getComboMultiplier(state.streak)}
+                            onShowParticles={() => setShowParticles(true)}
+                        />
+                        <button
+                            onClick={handleNext}
+                            className={`mt-4 btn-primary w-full max-w-md text-lg ${state.isLocked ? 'opacity-50 pointer-events-none' : ''}`}
+                        >
+                            Next Question
+                        </button>
+                    </div>
+                )}
+
+                <Paywall
+                    visible={state.isLocked}
+                    onUnlock={() => {
+                        dispatch({ type: 'UNLOCK_FEATURE' });
+                        // Ideally navigate to success or just close
+                    }}
                 />
-            </div>
-
-            {checking && (
-                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 p-6 flex flex-col items-center animate-slide-up pb-8">
-                    <Feedback 
-                        correct={correctId === selectedId} 
-                        points={30}
-                        multiplier={getComboMultiplier(state.streak)}
-                        onShowParticles={() => setShowParticles(true)}
-                    />
-                    <button
-                        onClick={handleNext}
-                        className={`mt-4 btn-primary w-full max-w-md text-lg ${state.isLocked ? 'opacity-50 pointer-events-none' : ''}`}
-                    >
-                        Next Question
-                    </button>
-                </div>
-            )}
-
-            <Paywall
-                visible={state.isLocked}
-                onUnlock={() => {
-                    dispatch({ type: 'UNLOCK_FEATURE' });
-                    // Ideally navigate to success or just close
-                }}
-            />
             </div>
 
             {/* Footer */}
@@ -639,3 +609,4 @@ export const Train: React.FC = () => {
         </div>
     );
 };
+

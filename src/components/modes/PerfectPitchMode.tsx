@@ -274,3 +274,4 @@ export const PerfectPitchMode: React.FC<PerfectPitchModeProps> = ({
         </div>
     );
 };
+

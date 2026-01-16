@@ -47,23 +47,14 @@ export const TempoMode: React.FC<TempoModeProps> = ({
 
     useEffect(() => {
         // Only load question if difficulty actually changed or first init
-        if (!hasInitializedRef.current || lastDifficultyRef.current !== difficulty) {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TempoMode.tsx:initEffect:willLoad',message:'Difficulty changed, will load question',data:{difficulty,wasInitialized:hasInitializedRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
-            // #endregion
-            
-            hasInitializedRef.current = true;
+        if (!hasInitializedRef.current || lastDifficultyRef.current !== difficulty) {            hasInitializedRef.current = true;
             lastDifficultyRef.current = difficulty;
             
             const newQuestion = generateTempoQuestion(difficulty);
             setQuestion(newQuestion);
             setUserBPM(Math.floor((newQuestion.minBPM + newQuestion.maxBPM) / 2));
             hasAutoPlayedRef.current = false;
-        } else {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TempoMode.tsx:initEffect:skipped',message:'Skipped duplicate init effect',data:{difficulty},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
-            // #endregion
-        }
+        } else {        }
     }, [difficulty]);
 
     const playMetronome = useCallback(async () => {
@@ -457,3 +448,4 @@ export const TempoMode: React.FC<TempoModeProps> = ({
         </div>
     );
 };
+

@@ -74,7 +74,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
     const hasAutoPlayedRef = useRef<string | null>(null);
     const hasInitializedRef = useRef(false);
     const lastDifficultyRef = useRef<string>('');
-    
+
     // Memoize the onShowParticles callback to prevent infinite loops
     const particlesTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const handleShowParticles = useCallback(() => {
@@ -82,7 +82,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
         if (particlesTimeoutRef.current) {
             clearTimeout(particlesTimeoutRef.current);
         }
-        
+
         setShowParticles(true);
         particlesTimeoutRef.current = setTimeout(() => {
             setShowParticles(false);
@@ -112,13 +112,9 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
     useEffect(() => {
         // Only load question if difficulty actually changed or first init
         if (!hasInitializedRef.current || lastDifficultyRef.current !== difficulty) {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProgressionRound.tsx:initEffect:willLoad',message:'Difficulty changed, will load question',data:{difficulty,wasInitialized:hasInitializedRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
-            // #endregion
-            
             hasInitializedRef.current = true;
             lastDifficultyRef.current = difficulty;
-            
+
             setIsInitializing(true);
             setError(null);
             try {
@@ -129,7 +125,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                     setIsInitializing(false);
                     return;
                 }
-                
+
                 // Validate chord specs
                 const hasValidChords = question.chordSpecs.every(spec => spec.midiNotes && spec.midiNotes.length > 0);
                 if (!hasValidChords) {
@@ -138,7 +134,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                     setIsInitializing(false);
                     return;
                 }
-                
+
                 setRoundState(prev => ({ ...prev, question, userDegrees: [], resolvedOutcome: null, wrongAtStep: null, pointsEarned: 0 }));
                 setRoundStatus('idle');
                 setIsPlaying(false);
@@ -148,29 +144,25 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                 setError(error instanceof Error ? error.message : 'An error occurred while loading the progression.');
                 setIsInitializing(false);
             }
-        } else {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ProgressionRound.tsx:initEffect:skipped',message:'Skipped duplicate init effect',data:{difficulty},timestamp:Date.now(),sessionId:'debug-session',runId:'run3',hypothesisId:'D'})}).catch(()=>{});
-            // #endregion
-        }
+        } else { }
     }, [difficulty]);
 
     const playProgressionRef = useRef<(() => Promise<void>) | null>(null);
-    
+
     const playProgression = useCallback(async () => {
         // CRITICAL: Unlock audio SYNCHRONOUSLY FIRST
         audioEngine.ensureUnlockedSync();
-        
+
         const currentState = roundStateRef.current;
         const currentStatus = roundStatusRef.current;
         const currentlyPlaying = isPlayingRef.current;
-        
-        console.log('playProgression called', { 
-            hasQuestion: !!currentState.question, 
-            isPlaying: currentlyPlaying, 
-            roundStatus: currentStatus 
+
+        console.log('playProgression called', {
+            hasQuestion: !!currentState.question,
+            isPlaying: currentlyPlaying,
+            roundStatus: currentStatus
         });
-        
+
         if (!currentState.question || currentlyPlaying || currentStatus === 'playing') {
             console.log('Early return from playProgression', {
                 hasQuestion: !!currentState.question,
@@ -188,16 +180,16 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
             // Ensure audio context is initialized and sample is loaded
             await audioEngine.init();
             console.log('Audio context initialized');
-            
+
             // Wait a bit to ensure context is ready
             await new Promise(resolve => setTimeout(resolve, 100));
-            
+
             await loadInstrument(state.currentInstrument);
             console.log('Piano sample loaded');
-            
+
             // Wait a bit more to ensure sample is fully loaded
             await new Promise(resolve => setTimeout(resolve, 100));
-            
+
             const chordSpecs = currentState.question.chordSpecs;
             const midiChords = chordSpecs.map(spec => {
                 if (state.currentInstrument === 'guitar') {
@@ -208,7 +200,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                 }
                 return spec.midiNotes;
             });
-            
+
             // Debug logging
             console.log('Playing progression:', {
                 degrees: currentState.question.targetDegrees,
@@ -216,7 +208,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                 chords: midiChords,
                 chordSpecs: chordSpecs
             });
-            
+
             // Verify we have chords to play
             if (midiChords.length === 0) {
                 console.error('No chords to play!');
@@ -224,7 +216,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                 setRoundStatus('awaitingInput');
                 return;
             }
-            
+
             // Verify each chord has notes
             midiChords.forEach((chord, idx) => {
                 if (!chord || chord.length === 0) {
@@ -233,29 +225,38 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                     console.log(`Chord ${idx}:`, chord);
                 }
             });
-            
+
             console.log('Calling playChordSequence with', midiChords.length, 'chords');
             const sampleId = getInstrumentSampleId(state.currentInstrument);
             audioEngine.playChordSequence(midiChords, 900, sampleId, 60);
             console.log('playChordSequence called');
-            
-            // Wait for playback to finish
-            // Each chord plays for ~2 seconds (sample duration) + spacing between chords
-            const chordDuration = 2000; // Sample is ~2 seconds
-            const totalDuration = (midiChords.length * 900) + chordDuration + 500; // Last chord needs time to finish
-            console.log(`Setting timeout for ${totalDuration}ms (${midiChords.length} chords)`);
+
+            // Enable input as soon as the LAST chord starts playing
+            // This allows users to answer immediately without waiting for reverb tail
+            // Each chord starts at: index * 900ms
+            const lastChordStartTime = (midiChords.length - 1) * 900;
+            const inputEnableDelay = lastChordStartTime + 100; // Small buffer after last chord starts
+
+            console.log(`Enabling input after ${inputEnableDelay}ms (last chord starts at ${lastChordStartTime}ms)`);
             setTimeout(() => {
-                console.log('Playback finished, enabling input');
-                setIsPlaying(false);
+                console.log('Input enabled - last chord is playing');
                 setRoundStatus('awaitingInput');
-            }, totalDuration);
+            }, inputEnableDelay);
+
+            // Keep playing state active a bit longer so replay button doesn't flash
+            // But this doesn't block user input anymore
+            const playingStateDuration = lastChordStartTime + 1500;
+            setTimeout(() => {
+                console.log('Playback animation finished');
+                setIsPlaying(false);
+            }, playingStateDuration);
         } catch (error) {
             console.error('Error playing progression:', error);
             setIsPlaying(false);
             setRoundStatus('awaitingInput');
         }
     }, []);
-    
+
     // Store the callback in a ref so it's always available
     playProgressionRef.current = playProgression;
 
@@ -265,30 +266,30 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
         if (isInitializing || !roundState.question || roundState.question.targetDegrees.length === 0) {
             return;
         }
-        
+
         // Ensure we have valid chord specs before auto-playing
-        const hasValidChords = roundState.question.chordSpecs && 
-                              roundState.question.chordSpecs.length > 0 &&
-                              roundState.question.chordSpecs.every(spec => spec.midiNotes && spec.midiNotes.length > 0);
-        
+        const hasValidChords = roundState.question.chordSpecs &&
+            roundState.question.chordSpecs.length > 0 &&
+            roundState.question.chordSpecs.every(spec => spec.midiNotes && spec.midiNotes.length > 0);
+
         if (!hasValidChords) {
             return; // Don't auto-play if chords aren't ready
         }
-        
+
         const questionKey = roundState.question.targetDegrees.join('-');
-        const shouldAutoPlay = roundStatus === 'idle' && 
-                              !isPlaying && 
-                              roundState.userDegrees.length === 0 &&
-                              hasAutoPlayedRef.current !== questionKey;
-        
+        const shouldAutoPlay = roundStatus === 'idle' &&
+            !isPlaying &&
+            roundState.userDegrees.length === 0 &&
+            hasAutoPlayedRef.current !== questionKey;
+
         if (shouldAutoPlay) {
             hasAutoPlayedRef.current = questionKey;
             let isCancelled = false;
-            
+
             // Longer delay to ensure audio is ready and UI is stable
             const timer = setTimeout(async () => {
                 if (isCancelled) return;
-                
+
                 try {
                     // Double-check question is still valid
                     const currentState = roundStateRef.current;
@@ -296,13 +297,13 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                         hasAutoPlayedRef.current = null;
                         return;
                     }
-                    
+
                     // Check if we're still in idle state and not playing
                     if (roundStatusRef.current !== 'idle' || isPlayingRef.current) {
                         hasAutoPlayedRef.current = null;
                         return;
                     }
-                    
+
                     console.log('Auto-playing progression for new question:', currentState.question.targetDegrees);
                     // Ensure audio is initialized before playing
                     await audioEngine.init();
@@ -311,14 +312,14 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                     // Small additional delay to ensure sample is loaded
                     setTimeout(() => {
                         if (isCancelled) return;
-                        
+
                         const state = roundStateRef.current;
                         const status = roundStatusRef.current;
                         const playing = isPlayingRef.current;
-                        
+
                         // Final validation before playing
-                        if (playProgressionRef.current && 
-                            state.question && 
+                        if (playProgressionRef.current &&
+                            state.question &&
                             state.question.chordSpecs.length > 0 &&
                             status === 'idle' &&
                             !playing) {
@@ -343,9 +344,9 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
     const handleDegreeSelect = (degree: number) => {
         const currentState = roundStateRef.current;
         const currentStatus = roundStatusRef.current;
-        
+
         console.log('handleDegreeSelect called', { degree, status: currentStatus, hasQuestion: !!currentState.question });
-        
+
         if (currentStatus !== 'awaitingInput' || !currentState.question) {
             console.log('Early return from handleDegreeSelect', { status: currentStatus, hasQuestion: !!currentState.question });
             return;
@@ -368,12 +369,12 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                 pointsEarned: 0
             }));
             setRoundStatus('resolved');
-            
+
             // Update stats
             let stats = loadStats();
             stats = recordAnswer(stats, false, 'progression');
             saveStats(stats);
-            
+
             onWrong();
         } else if (validation.isComplete) {
             // Correct and complete
@@ -384,20 +385,20 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                 pointsEarned: points
             }));
             setRoundStatus('resolved');
-            
+
             setShowParticles(true);
             setTimeout(() => setShowParticles(false), 100);
-            
+
             // Update stats
             let stats = loadStats();
             const newStreak = streak + 1;
             const newRunProgress = runProgress + 1;
             const isPerfectRun = newRunProgress === 10;
-            
+
             stats = recordAnswer(stats, true, 'progression', isPerfectRun);
             stats = updateBestStreak(stats, newStreak);
             saveStats(stats);
-            
+
             // Check achievements
             const achievements = loadAchievements();
             const newlyUnlocked = checkAchievements(achievements, {
@@ -410,10 +411,10 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                 level: level,
                 currentSessionQuestions: runProgress
             });
-            
+
             if (newlyUnlocked.length > 0) {
                 setNewAchievement(newlyUnlocked[0]);
-                
+
                 // Automatically navigate to platinum gift page if Mystery Platinum Gift is unlocked
                 const platinumGift = newlyUnlocked.find(ach => ach.id === 'mystery_platinum_gift');
                 if (platinumGift) {
@@ -423,12 +424,12 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                     }, 2000);
                 }
             }
-            
+
             // Update daily challenges
             let updatedChallenges = dailyChallenges;
             const challengeUpdate1 = updateChallengeProgress(updatedChallenges, 'questions', 1);
             updatedChallenges = challengeUpdate1.challenges;
-            
+
             // Check streak challenges
             updatedChallenges = updatedChallenges.map(challenge => {
                 if (challenge.completed || challenge.type !== 'streak') return challenge;
@@ -437,19 +438,19 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                 }
                 return challenge;
             });
-            
+
             // Save streak challenge updates
             if (updatedChallenges.some(c => c.type === 'streak' && !c.completed)) {
                 localStorage.setItem('ear_trainer_daily_challenges', JSON.stringify(updatedChallenges));
             }
-            
+
             if (isPerfectRun) {
                 const challengeUpdate3 = updateChallengeProgress(updatedChallenges, 'perfect', 1);
                 updatedChallenges = challengeUpdate3.challenges;
             }
-            
+
             setDailyChallenges(updatedChallenges);
-            
+
             // Check for perfect run celebration
             if (isPerfectRun) {
                 setCelebration({
@@ -458,11 +459,11 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                     subtitle: '10/10 Correct!'
                 });
             }
-            
+
             // Apply combo multiplier to points
             const multiplier = getComboMultiplier(streak);
             const finalPoints = points * multiplier;
-            
+
             onCorrect(finalPoints);
         }
         // Otherwise, continue input
@@ -514,7 +515,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                 <div className="text-center max-w-md mx-auto px-4">
                     <div className="text-lg text-red-600 mb-2">Error loading progression</div>
                     <div className="text-sm text-neutral-500 mb-4">{error || 'Failed to load progression'}</div>
-                    <button 
+                    <button
                         onClick={() => {
                             setError(null);
                             setIsInitializing(true);
@@ -556,7 +557,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
             <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 flex items-center justify-center">
                 <div className="text-center max-w-md mx-auto px-4">
                     <div className="text-lg text-red-600 mb-2">Invalid progression data</div>
-                    <button 
+                    <button
                         onClick={() => {
                             setError(null);
                             setIsInitializing(true);
@@ -603,12 +604,12 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
 
             <div className="relative z-10 flex flex-col items-center pt-6 lg:pt-8 pb-32">
                 <div className="w-full max-w-4xl px-4 flex justify-between items-center mb-8 relative z-50">
-                    <button 
+                    <button
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             navigate('/');
-                        }} 
+                        }}
                         className="group flex items-center gap-2 text-neutral-400 hover:text-neutral-600 font-medium text-sm relative z-50 cursor-pointer transition-all duration-300 hover:gap-3"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-x-1 transition-transform duration-300">
@@ -622,90 +623,90 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                     </div>
                     <div className="w-16"></div>
                 </div>
-                
+
                 <div className="w-full max-w-4xl px-4 mb-6">
                     <h2 className="text-center text-3xl lg:text-4xl font-bold text-neutral-900 tracking-tight">
                         Chord Progressions
                     </h2>
                 </div>
 
-            <ProgressMeter 
-                current={runProgress + 1} 
-                total={10} 
-                streak={streak}
-                level={level}
-                xp={xp}
-            />
-
-            <StreakCelebration streak={streak} />
-
-            <ParticleEffect trigger={showParticles} />
-
-            {celebration && (
-                <CelebrationOverlay
-                    type={celebration.type}
-                    message={celebration.message}
-                    subtitle={celebration.subtitle}
-                    onComplete={() => setCelebration(null)}
+                <ProgressMeter
+                    current={runProgress + 1}
+                    total={10}
+                    streak={streak}
+                    level={level}
+                    xp={xp}
                 />
-            )}
 
-            <AchievementToast
-                achievement={newAchievement}
-                onClose={() => setNewAchievement(null)}
-            />
+                <StreakCelebration streak={streak} />
 
-            <div className="flex-1 w-full max-w-2xl flex flex-col items-center justify-center">
-                <div className="card w-full max-w-xl mx-auto mb-8 bg-white/50 backdrop-blur-sm">
-                    <Player
-                        onPlay={roundStatus === 'idle' ? playProgression : handleReplay}
-                        isPlaying={isPlaying}
-                        label={roundStatus === 'idle' ? 'Play' : 'Replay'}
-                        autoPlay={false}
+                <ParticleEffect trigger={showParticles} />
+
+                {celebration && (
+                    <CelebrationOverlay
+                        type={celebration.type}
+                        message={celebration.message}
+                        subtitle={celebration.subtitle}
+                        onComplete={() => setCelebration(null)}
                     />
+                )}
+
+                <AchievementToast
+                    achievement={newAchievement}
+                    onClose={() => setNewAchievement(null)}
+                />
+
+                <div className="flex-1 w-full max-w-2xl flex flex-col items-center justify-center">
+                    <div className="card w-full max-w-xl mx-auto mb-8 bg-white/50 backdrop-blur-sm">
+                        <Player
+                            onPlay={roundStatus === 'idle' ? playProgression : handleReplay}
+                            isPlaying={isPlaying}
+                            label={roundStatus === 'idle' ? 'Play' : 'Replay'}
+                            autoPlay={false}
+                        />
+                    </div>
+
+                    <InputChain
+                        degrees={roundState.userDegrees}
+                        onClear={handleClear}
+                        disabled={!canInteract}
+                    />
+
+                    <DegreeGrid
+                        onSelect={handleDegreeSelect}
+                        disabled={!canInteract}
+                        selectedDegrees={roundState.userDegrees}
+                        correctDegrees={roundStatus === 'resolved' ? roundState.question.targetDegrees : null}
+                        wrongAtStep={roundState.wrongAtStep}
+                    />
+
+                    {showFeedback && (
+                        <div className="mt-6 text-center">
+                            <Feedback
+                                correct={roundState.resolvedOutcome === 'success'}
+                                points={roundState.pointsEarned}
+                                multiplier={getComboMultiplier(streak)}
+                                onShowParticles={handleShowParticles}
+                            />
+                            {roundState.resolvedOutcome === 'fail' && (
+                                <div className="text-stone-600 text-sm mt-2">
+                                    Correct: {roundState.question.targetDegrees.join(' → ')}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
-
-                <InputChain
-                    degrees={roundState.userDegrees}
-                    onClear={handleClear}
-                    disabled={!canInteract}
-                />
-
-                <DegreeGrid
-                    onSelect={handleDegreeSelect}
-                    disabled={!canInteract}
-                    selectedDegrees={roundState.userDegrees}
-                    correctDegrees={roundStatus === 'resolved' ? roundState.question.targetDegrees : null}
-                    wrongAtStep={roundState.wrongAtStep}
-                />
 
                 {showFeedback && (
-                    <div className="mt-6 text-center">
-                        <Feedback
-                            correct={roundState.resolvedOutcome === 'success'}
-                            points={roundState.pointsEarned}
-                            multiplier={getComboMultiplier(streak)}
-                            onShowParticles={handleShowParticles}
-                        />
-                        {roundState.resolvedOutcome === 'fail' && (
-                            <div className="text-stone-600 text-sm mt-2">
-                                Correct: {roundState.question.targetDegrees.join(' → ')}
-                            </div>
-                        )}
+                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 p-6 flex flex-col items-center animate-slide-up pb-8">
+                        <button
+                            onClick={handleNext}
+                            className="btn-primary w-full max-w-md text-lg"
+                        >
+                            Next Progression
+                        </button>
                     </div>
                 )}
-            </div>
-
-            {showFeedback && (
-                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 p-6 flex flex-col items-center animate-slide-up pb-8">
-                    <button
-                        onClick={handleNext}
-                        className="btn-primary w-full max-w-md text-lg"
-                    >
-                        Next Progression
-                    </button>
-                </div>
-            )}
             </div>
 
             {/* Footer */}
@@ -713,3 +714,4 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
         </div>
     );
 };
+
