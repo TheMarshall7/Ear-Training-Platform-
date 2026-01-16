@@ -70,6 +70,9 @@ export interface GameState {
   
   /** Current selected instrument for audio playback */
   currentInstrument: string;
+  
+  /** Whether diatonic mode is enabled (stays in same key until wrong answer) */
+  isDiatonicMode: boolean;
 }
 
 /**
@@ -86,4 +89,5 @@ export type GameAction =
   | { type: 'UNLOCK_FEATURE' }
   | { type: 'RESET_RUN' }
   | { type: 'ADD_XP'; payload: number }
-  | { type: 'LOAD_STATS' };
+  | { type: 'LOAD_STATS' }
+  | { type: 'TOGGLE_DIATONIC_MODE' };

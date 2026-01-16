@@ -95,7 +95,9 @@ export const ScalesMode: React.FC<ScalesModeProps> = ({
             }
             
             const sampleId = getInstrumentSampleId(state.currentInstrument);
-            audioEngine.playScale(question.notes, 400, sampleId, 60, 4);
+            // For bass, reduce note duration to prevent muddy sound
+            const noteDurationMs = state.currentInstrument === 'bass' ? 240 : undefined; // 60% of 400ms
+            audioEngine.playScale(question.notes, 400, sampleId, 60, 4, noteDurationMs);
             
             // Wait for scale to finish (approximate: notes.length * 400ms + buffer)
             const duration = question.notes.length * 400 + 500;

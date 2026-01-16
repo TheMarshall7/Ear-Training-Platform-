@@ -93,6 +93,7 @@ const initialState: GameState = {
   totalCorrect: 0,
   bestStreak: 0,
   currentInstrument: localStorage.getItem('ear_trainer_instrument') || 'bell',
+  isDiatonicMode: localStorage.getItem('ear_trainer_diatonic_mode') === 'true',
   ...loadStats()
 };
 
@@ -181,6 +182,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     // Reload stats from localStorage
     case 'LOAD_STATS':
       return { ...state, ...loadStats() };
+    
+    // Toggle diatonic mode (stays in same key until wrong answer)
+    case 'TOGGLE_DIATONIC_MODE': {
+      const newDiatonicMode = !state.isDiatonicMode;
+      localStorage.setItem('ear_trainer_diatonic_mode', newDiatonicMode.toString());
+      return { ...state, isDiatonicMode: newDiatonicMode };
+    }
     
     default:
       return state;

@@ -336,6 +336,9 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                     const baseDelay = 0.05;
                     const tempoSeconds = playSpec.tempoMs / 1000;
                     
+                    // For bass, reduce note duration to prevent muddy sound
+                    const noteDuration = state.currentInstrument === 'bass' ? tempoSeconds * 0.6 : undefined;
+                    
                     processedNotes.forEach((noteWithOctave, index) => {
                         // Parse note with octave (e.g., "C4" or "C#4")
                         const match = noteWithOctave.match(/^([A-G])([#b]?)(\d+)$/);
@@ -346,7 +349,7 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                             const midiNote = noteNameToMidi(noteName, octave);
                             const noteDelay = baseDelay + (index * tempoSeconds);
                             const sampleId = getInstrumentSampleId(state.currentInstrument);
-                            audioEngine.playNote(sampleId, midiNote, 60, noteDelay);
+                            audioEngine.playNote(sampleId, midiNote, 60, noteDelay, 1.0, noteDuration);
                         }
                     });
                     

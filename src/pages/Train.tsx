@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { getLevelFromXP } from '../context/GameContext';
 import { generateIntervalQuestion, type IntervalQuestion } from '../logic/trainers/intervalTrainer';
-import { generateChordQuestion, type ChordQuestion } from '../logic/trainers/chordTrainer';
+import { generateChordQuestion, resetEasyModeKey, type ChordQuestion } from '../logic/trainers/chordTrainer';
 import { getRandomBassVoicing, getRandomGuitarVoicing } from '../logic/voicing/guitarVoicing';
 import { audioEngine } from '../audio/audioEngine';
 import { loadInstrument, getInstrumentSampleId } from '../audio/sampleLoader';
@@ -133,7 +133,7 @@ export const Train: React.FC = () => {
             // #endregion
             setQuestion(newQuestion);
         } else {
-            const newQuestion = generateChordQuestion(state.difficulty);
+            const newQuestion = generateChordQuestion(state.difficulty, state.isDiatonicMode);
             // #region agent log
             fetch('http://127.0.0.1:7242/ingest/f5df97dd-5c11-4203-9fc6-7cdc14ae8fb5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Train.tsx:loadNextQuestion:chordGenerated',message:'Chord question generated',data:{chordId:newQuestion.chordId,notesCount:newQuestion.notes.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'E'})}).catch(()=>{});
             // #endregion
@@ -339,6 +339,11 @@ export const Train: React.FC = () => {
             dispatch({ type: 'CORRECT_ANSWER', payload: finalPoints });
         } else {
             setCorrectId('intervalId' in question ? (question as IntervalQuestion).intervalId : (question as ChordQuestion).chordId);
+            
+            // Reset easy mode key if in chord mode easy difficulty or diatonic mode (for key consistency learning)
+            if (state.currentMode === 'chord' && (state.difficulty === 'easy' || state.isDiatonicMode)) {
+                resetEasyModeKey();
+            }
             
             // Update stats
             let stats = loadStats();

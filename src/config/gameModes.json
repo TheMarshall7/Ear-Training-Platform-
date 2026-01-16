@@ -52,7 +52,8 @@
                 "maj",
                 "min",
                 "dim",
-                "aug"
+                "aug",
+                "power5"
             ]
         },
         {

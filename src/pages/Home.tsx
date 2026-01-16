@@ -8,6 +8,7 @@ import { getDailyChallenges } from '../logic/dailyChallenges';
 import { BrandLogo } from '../components/BrandLogo';
 import { Footer } from '../components/Footer';
 import { InstrumentSelector } from '../components/InstrumentSelector';
+import { InstrumentOnboarding } from '../components/InstrumentOnboarding';
 import { AudioEnableBanner } from '../components/AudioEnableBanner';
 import { IOSSilentModeWarning } from '../components/IOSSilentModeWarning';
 import logoImage from '../assets/logo.png';
@@ -51,6 +52,9 @@ export const Home: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 relative overflow-hidden flex flex-col">
+            {/* Instrument Selection Onboarding Modal */}
+            <InstrumentOnboarding onSelectInstrument={handleInstrumentChange} />
+            
             {/* Background gradient sphere */}
             <div className="absolute -translate-x-1/2 -translate-y-1/2 animate-pulse-glow bg-gradient-to-br from-orange-400/30 via-red-500/20 to-rose-600/20 opacity-80 mix-blend-multiply w-[600px] h-[600px] rounded-full top-1/4 left-1/4 blur-3xl pointer-events-none"></div>
             <div className="absolute translate-x-1/2 translate-y-1/2 animate-pulse-glow bg-gradient-to-br from-orange-400/30 via-red-500/20 to-rose-600/20 opacity-80 mix-blend-multiply w-[600px] h-[600px] rounded-full bottom-1/4 right-1/4 blur-3xl pointer-events-none"></div>

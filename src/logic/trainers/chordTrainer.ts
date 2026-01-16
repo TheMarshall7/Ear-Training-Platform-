@@ -36,6 +36,35 @@ export interface ChordQuestion {
 }
 
 /**
+ * Get or set the consistent key for easy mode (maintains key across questions)
+ */
+function getEasyModeKey(): number {
+    if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') {
+        return 36 + Math.floor(Math.random() * 12);
+    }
+    
+    const stored = sessionStorage.getItem('easy_mode_key');
+    if (stored) {
+        return parseInt(stored, 10);
+    }
+    
+    // Initialize with C (48), G (43), or F (41) - common keys for learning
+    const commonKeys = [48, 43, 41]; // C, G, F
+    const newKey = commonKeys[Math.floor(Math.random() * commonKeys.length)];
+    sessionStorage.setItem('easy_mode_key', newKey.toString());
+    return newKey;
+}
+
+/**
+ * Reset the easy mode key (call when user gets answer wrong)
+ */
+export function resetEasyModeKey(): void {
+    if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem('easy_mode_key');
+    }
+}
+
+/**
  * Generate a random chord identification question.
  * 
  * The question includes:
@@ -44,9 +73,10 @@ export interface ChordQuestion {
  * - 4 multiple choice options (correct answer + 3 distractors)
  * 
  * @param difficulty - Difficulty level ('easy', 'medium', 'hard')
+ * @param isDiatonicMode - Whether diatonic mode is enabled (maintains key consistency)
  * @returns Complete chord question with options
  */
-export const generateChordQuestion = (difficulty: string): ChordQuestion => {
+export const generateChordQuestion = (difficulty: string, isDiatonicMode: boolean = false): ChordQuestion => {
     // Get allowed chord types for the specified difficulty
     const modeConfig = gameModesConfig.chord.find(m => m.id === difficulty) || gameModesConfig.chord[0];
     const allowedIds = modeConfig.chords;
@@ -57,9 +87,16 @@ export const generateChordQuestion = (difficulty: string): ChordQuestion => {
     // Randomly select the target chord to identify
     const target = possibleChords[Math.floor(Math.random() * possibleChords.length)];
 
-    // Generate root note between C3 (48) and C4 (60)
-    // This range provides good chord voicing
-    const rootMidi = 36 + Math.floor(Math.random() * 12);
+    // Generate root note
+    // In easy mode OR diatonic mode, maintain key consistency to help internalize diatonic relationships
+    // In other modes, randomize for variety
+    let rootMidi: number;
+    if (difficulty === 'easy' || isDiatonicMode) {
+        rootMidi = getEasyModeKey();
+    } else {
+        // Generate root note between C3 (48) and C4 (60)
+        rootMidi = 36 + Math.floor(Math.random() * 12);
+    }
 
     // Build chord by adding interval offsets to root note
     // Each chord config defines intervals relative to root
