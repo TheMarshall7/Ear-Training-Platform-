@@ -21,16 +21,16 @@ import gameModesConfig from '../../config/gameModes.json';
 export interface ChordQuestion {
     /** Unique identifier for the chord type (e.g., "maj", "min", "dim") */
     chordId: string;
-
+    
     /** Human-readable chord name (e.g., "Major", "Minor", "Diminished") */
     chordName: string;
-
+    
     /** MIDI note number for the root note of the chord */
     rootMidi: number;
-
+    
     /** Array of MIDI note numbers forming the complete chord */
     notes: number[];
-
+    
     /** Array of multiple choice options (includes correct answer) */
     options: { id: string; name: string }[];
 }
@@ -42,12 +42,12 @@ function getEasyModeKey(): number {
     if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') {
         return 36 + Math.floor(Math.random() * 12);
     }
-
+    
     const stored = sessionStorage.getItem('easy_mode_key');
     if (stored) {
         return parseInt(stored, 10);
     }
-
+    
     // Initialize with C (48), G (43), or F (41) - common keys for learning
     const commonKeys = [48, 43, 41]; // C, G, F
     const newKey = commonKeys[Math.floor(Math.random() * commonKeys.length)];
@@ -83,7 +83,7 @@ export const generateChordQuestion = (difficulty: string, isDiatonicMode: boolea
 
     // Filter available chords to only those allowed at this difficulty
     const possibleChords = chordsConfig.filter(c => allowedIds.includes(c.id));
-
+    
     // Randomly select the target chord to identify
     const target = possibleChords[Math.floor(Math.random() * possibleChords.length)];
 
@@ -94,8 +94,8 @@ export const generateChordQuestion = (difficulty: string, isDiatonicMode: boolea
     if (difficulty === 'easy' || isDiatonicMode) {
         rootMidi = getEasyModeKey();
     } else {
-        // Generate root note between C4 (60) and B4 (71) - one octave higher for clarity
-        rootMidi = 60 + Math.floor(Math.random() * 12);
+        // Generate root note between C3 (48) and C4 (60)
+        rootMidi = 36 + Math.floor(Math.random() * 12);
     }
 
     // Build chord by adding interval offsets to root note
