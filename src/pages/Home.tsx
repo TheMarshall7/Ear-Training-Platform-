@@ -38,9 +38,16 @@ export const Home: React.FC = () => {
     }, [state.xp, state.level]);
 
     const handleStart = () => {
+        // Auto-switch from bass to piano if entering chord/progression mode
+        if ((state.currentMode === 'chord' || state.currentMode === 'progression') && state.currentInstrument === 'bass') {
+            dispatch({ type: 'SET_INSTRUMENT', payload: 'piano' });
+        }
         dispatch({ type: 'RESET_RUN' });
         navigate('/train');
     };
+
+    // Determine which instruments should be disabled based on current mode
+    const disabledInstruments = (state.currentMode === 'chord' || state.currentMode === 'progression') ? ['bass'] : [];
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 relative overflow-hidden flex flex-col">
@@ -104,6 +111,7 @@ export const Home: React.FC = () => {
                         <InstrumentSelector
                             currentInstrument={state.currentInstrument}
                             onSelectInstrument={handleInstrumentChange}
+                            disabledInstruments={disabledInstruments}
                         />
                     </div>
 

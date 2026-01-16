@@ -114,6 +114,14 @@
         ]
     },
     {
+        "id": "power5",
+        "name": "Power Chord (5)",
+        "intervals": [
+            0,
+            7
+        ]
+    },
+    {
         "id": "add9",
         "name": "Add 9",
         "intervals": [

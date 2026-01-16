@@ -40,8 +40,8 @@ export function getIntervalResources(): ResourceItem[] {
  * Determine chord difficulty based on chord type
  */
 function getChordDifficulty(chordId: string): Difficulty {
-    // Easy: Basic triads
-    const easyChords = ['maj', 'min', 'dim', 'aug'];
+    // Easy: Basic triads and power chords
+    const easyChords = ['maj', 'min', 'dim', 'aug', 'power5'];
     
     // Medium: 7th chords and suspensions
     const mediumChords = [

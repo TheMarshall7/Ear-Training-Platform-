@@ -50,3 +50,23 @@ export const getInstrumentSampleId = (instrumentId: string = 'piano'): string =>
 export const getAvailableInstruments = () => {
     return instruments;
 };
+
+/**
+ * Load the metronome click sound
+ */
+export const loadClickSound = async () => {
+    const clickId = 'click';
+    
+    // Check if already loaded
+    if (audioEngine.hasSample(clickId)) {
+        return;
+    }
+
+    try {
+        await audioEngine.loadSample('/samples/click.wav', clickId);
+        console.log('Successfully loaded click sound');
+    } catch (error) {
+        console.error('Failed to load click sound:', error);
+        throw error;
+    }
+};

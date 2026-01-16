@@ -47,6 +47,23 @@ export interface NumberSystemQuestion {
 }
 
 /**
+ * Common functional progressions that sound natural and practical.
+ * These are weighted more heavily (80%) to reinforce real-world patterns.
+ */
+const COMMON_FUNCTIONAL_PROGRESSIONS = [
+    [1, 4, 5, 1],      // I-IV-V-I (most common)
+    [1, 5, 6, 4],      // I-V-vi-IV (pop progression)
+    [2, 5, 1],         // ii-V-I (jazz standard)
+    [1, 6, 4, 5],      // I-vi-IV-V (50s progression)
+    [1, 4, 1, 5],      // I-IV-I-V
+    [1, 5, 1],         // I-V-I (simple)
+    [4, 5, 1],         // IV-V-I (plagal resolution)
+    [6, 4, 1, 5],      // vi-IV-I-V (relative minor start)
+    [1, 6, 2, 5, 1],   // I-vi-ii-V-I (circle progression)
+    [2, 5, 6, 1]       // ii-V-vi-I (deceptive resolution)
+];
+
+/**
  * Generate a random number system identification question.
  * 
  * The question includes:
@@ -63,9 +80,20 @@ export const generateNumberSystemQuestion = (difficulty: Difficulty): NumberSyst
     const difficultyConfig = numberSystemConfig.difficulties[difficulty];
     const allowedDegrees = difficultyConfig?.allowedDegrees || [1, 2, 3, 4, 5, 6, 7];
 
-    // Randomly select a progression to establish the key
-    const progression = progressions[Math.floor(Math.random() * progressions.length)];
-    const progressionDegrees = progression.degrees;
+    // 80% chance to use a common functional progression, 20% chance for exploratory
+    const useCommon = Math.random() < 0.8;
+    let progressionDegrees: number[];
+    
+    if (useCommon) {
+        // Select from common functional progressions
+        progressionDegrees = COMMON_FUNCTIONAL_PROGRESSIONS[
+            Math.floor(Math.random() * COMMON_FUNCTIONAL_PROGRESSIONS.length)
+        ];
+    } else {
+        // Select from full progression library for variety
+        const progression = progressions[Math.floor(Math.random() * progressions.length)];
+        progressionDegrees = progression.degrees;
+    }
 
     // Convert progression degrees to MIDI chord arrays
     // Each degree becomes a triad in root position

@@ -147,12 +147,16 @@ export class AudioEngine {
         tempoMs: number = 900,
         rootSampleId: string = 'piano_C4',
         rootMidi: number = 60,
-        gainOverrides?: number[][]
+        gainOverrides?: number[][],
+        sustainFactor: number = 1.0  // 0.0-1.0, reduces note duration for tighter response
     ) {
         await this.ensureUnlocked();
         if (!this.context) return;
 
         const tempoSeconds = tempoMs / 1000;
+        // TODO: Consider sourcing dry samples with less reverb for even tighter response
+        const noteDuration = sustainFactor < 1.0 ? tempoSeconds * sustainFactor : undefined;
+        
         chords.forEach((chord, chordIndex) => {
             const chordDelay = 0.05 + (chordIndex * tempoSeconds);
             const gainPerNote = Math.min(1.0, 1.0 / chord.length);
@@ -160,7 +164,7 @@ export class AudioEngine {
             chord.forEach((midiNote, noteIndex) => {
                 const noteDelay = chordDelay + (noteIndex * 0.05);
                 const gain = chordGains?.[noteIndex] ?? gainPerNote;
-                this.playNote(rootSampleId, midiNote, rootMidi, noteDelay, gain);
+                this.playNote(rootSampleId, midiNote, rootMidi, noteDelay, gain, noteDuration);
             });
         });
     }

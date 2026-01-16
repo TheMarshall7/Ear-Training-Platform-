@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/GameContext';
 import { generateTempoQuestion, checkTempoAnswer, type TempoQuestion } from '../../logic/trainers/tempoTrainer';
 import { audioEngine } from '../../audio/audioEngine';
-import { loadInstrument, getInstrumentSampleId } from '../../audio/sampleLoader';
+import { loadInstrument, getInstrumentSampleId, loadClickSound } from '../../audio/sampleLoader';
 import { ModeHeader } from '../ModeHeader';
 import { RoundControls } from '../RoundControls';
 import { ProgressMeter } from '../ProgressMeter';
@@ -81,7 +81,7 @@ export const TempoMode: React.FC<TempoModeProps> = ({
             
             // Force recreate audio context on user interaction
             await audioEngine.init();
-            await loadInstrument(state.currentInstrument);
+            await loadClickSound();
             await new Promise(resolve => setTimeout(resolve, 100));
             
             // Double-check question is still valid
@@ -90,14 +90,14 @@ export const TempoMode: React.FC<TempoModeProps> = ({
                 return;
             }
             
-            // Play metronome clicks
-            // Use a higher note for click (e.g., C6 = MIDI 84)
-            const clickNote = 84;
-            const sampleId = getInstrumentSampleId(state.currentInstrument);
+            // Play metronome clicks using the click sound
+            // Use middle C (60) as the base note for the click sample
+            const clickNote = 60;
+            const clickSampleId = 'click';
             
             for (let i = 0; i < question.beatsToPlay; i++) {
                 const delay = (i * question.beatInterval) / 1000; // Convert to seconds
-                audioEngine.playNote(sampleId, clickNote, 60, delay, 0.8);
+                audioEngine.playNote(clickSampleId, clickNote, 60, delay, 1.0);
             }
             
             // Calculate total duration
@@ -134,7 +134,7 @@ export const TempoMode: React.FC<TempoModeProps> = ({
                 
                 try {
                     await audioEngine.init();
-                    await loadInstrument(state.currentInstrument);
+                    await loadClickSound();
                     await new Promise(resolve => setTimeout(resolve, 300));
                     
                     if (question && !isPlaying) {
@@ -290,13 +290,43 @@ export const TempoMode: React.FC<TempoModeProps> = ({
                             What is the tempo?
                         </h3>
                         
-                        {/* Current BPM Display */}
+                        {/* Current BPM Display with Arrow Controls */}
                         <div className="text-center mb-6">
-                            <div className="text-6xl font-bold text-neutral-900 mb-2">
-                                {userBPM}
-                            </div>
-                            <div className="text-sm text-neutral-500 uppercase tracking-wide">
-                                BPM
+                            <div className="flex items-center justify-center gap-4">
+                                <button
+                                    onClick={() => {
+                                        const step = difficulty === 'easy' ? 10 : difficulty === 'medium' ? 5 : 1;
+                                        setUserBPM(Math.max(question.minBPM, userBPM - step));
+                                    }}
+                                    disabled={checking || userBPM <= question.minBPM}
+                                    className="p-3 rounded-full bg-white/80 hover:bg-white border-2 border-neutral-200 hover:border-orange-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 hover:scale-110 active:scale-95"
+                                    title="Decrease BPM"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-neutral-700">
+                                        <path d="m15 18-6-6 6-6"></path>
+                                    </svg>
+                                </button>
+                                <div>
+                                    <div className="text-6xl font-bold text-neutral-900 mb-2">
+                                        {userBPM}
+                                    </div>
+                                    <div className="text-sm text-neutral-500 uppercase tracking-wide">
+                                        BPM
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        const step = difficulty === 'easy' ? 10 : difficulty === 'medium' ? 5 : 1;
+                                        setUserBPM(Math.min(question.maxBPM, userBPM + step));
+                                    }}
+                                    disabled={checking || userBPM >= question.maxBPM}
+                                    className="p-3 rounded-full bg-white/80 hover:bg-white border-2 border-neutral-200 hover:border-orange-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 hover:scale-110 active:scale-95"
+                                    title="Increase BPM"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-neutral-700">
+                                        <path d="m9 18 6-6-6-6"></path>
+                                    </svg>
+                                </button>
                             </div>
                         </div>
 

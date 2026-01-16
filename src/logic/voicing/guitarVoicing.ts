@@ -248,6 +248,16 @@ export const voiceGuitarChord = (
 
     const baseRoot = rootMidi ?? Math.min(...cleanNotes);
     const intervals = getChordIntervals(cleanNotes, baseRoot);
+    
+    // Special handling for power chords (root + fifth only)
+    if (intervals.length === 2 && intervals.includes(0) && intervals.includes(7)) {
+        // Power chord: root, fifth, root octave (typical guitar power chord voicing)
+        const minMidi = getGuitarMinMidi(baseRoot);
+        let root = baseRoot;
+        while (root < minMidi) root += 12;
+        return uniqueSorted([root, root + 7, root + 12]);
+    }
+    
     const requiredIntervals = context === 'resource'
         ? intervals.filter(interval => [2, 5, 9, 10, 11].includes(normalizeInterval(interval)))
         : [];
@@ -350,4 +360,141 @@ export const voiceBassChord = (
 
     const filtered = voiced.filter(note => note >= minMidi);
     return uniqueSorted(filtered);
+};
+
+/**
+ * Generate a randomized guitar voicing by trying multiple root strings and selecting randomly
+ * from the best candidates. This adds variety to make chords sound more natural.
+ */
+export const getRandomGuitarVoicing = (
+    midiNotes: number[],
+    rootMidi?: number,
+    context: GuitarVoicingContext = 'trainer'
+): number[] => {
+    const cleanNotes = midiNotes.filter(note => Number.isFinite(note));
+    if (cleanNotes.length === 0) return [];
+
+    const baseRoot = rootMidi ?? Math.min(...cleanNotes);
+    const intervals = getChordIntervals(cleanNotes, baseRoot);
+    const requiredIntervals = context === 'resource'
+        ? intervals.filter(interval => [2, 5, 9, 10, 11].includes(normalizeInterval(interval)))
+        : [];
+
+    const rootPitchClass = normalizeInterval(baseRoot);
+    const minMidi = getGuitarMinMidi(baseRoot);
+    const rootStrings = context === 'resource' ? [1, 2] : [0, 1, 2]; // A, D (resource), otherwise E/A/D
+
+    // Collect all valid shapes from all root strings
+    const allShapes: Array<{ midiNotes: number[]; rootMidi: number; score: number }> = [];
+    
+    rootStrings.forEach(rootStringIndex => {
+        const shape = buildShapeForRootString(
+            rootStringIndex,
+            rootPitchClass,
+            intervals,
+            minMidi,
+            context,
+            requiredIntervals
+        );
+        if (shape) {
+            allShapes.push(shape);
+        }
+    });
+
+    if (allShapes.length === 0) {
+        // Fallback to deterministic voicing
+        return voiceGuitarChord(midiNotes, rootMidi, context);
+    }
+
+    // Sort shapes by score and take top 3 candidates (or all if fewer)
+    allShapes.sort((a, b) => b.score - a.score);
+    const topCandidates = allShapes.slice(0, Math.min(3, allShapes.length));
+
+    // Randomly select one of the top candidates
+    const selected = topCandidates[Math.floor(Math.random() * topCandidates.length)];
+
+    // Apply resource context octave adjustments if needed
+    if (context === 'resource') {
+        const targetMin = 55; // G3
+        const targetMax = 70; // A4
+        let voiced = [...selected.midiNotes];
+        while (Math.min(...voiced) < targetMin) {
+            voiced = voiced.map(note => note + 12);
+        }
+        while (Math.max(...voiced) > targetMax) {
+            voiced = voiced.map(note => note - 12);
+        }
+        return uniqueSorted(voiced);
+    }
+
+    return selected.midiNotes;
+};
+
+/**
+ * Generate a randomized bass voicing using different strategies to add variety.
+ * Strategies include different register spreads and note selection patterns.
+ */
+export const getRandomBassVoicing = (
+    midiNotes: number[],
+    rootMidi?: number,
+    context: 'trainer' | 'resource' = 'trainer'
+): number[] => {
+    const cleanNotes = midiNotes.filter(note => Number.isFinite(note));
+    if (cleanNotes.length === 0) return [];
+
+    const baseRoot = rootMidi ?? Math.min(...cleanNotes);
+    const minMidi = context === 'resource' ? 52 : getBassMinMidi(baseRoot);
+    const maxMidi = context === 'resource' ? 64 : 52;
+    const bassRoot = transposeRootIntoBassRange(baseRoot, minMidi, maxMidi);
+
+    const intervals = getChordIntervals(cleanNotes, baseRoot);
+    const thirdInterval = intervals.includes(3) ? 3 : intervals.includes(4) ? 4 : null;
+    const fifthInterval = intervals.find(interval => [7, 6, 8].includes(interval)) ?? null;
+    const seventhInterval = intervals.find(interval => [10, 11, 9].includes(interval)) ?? null;
+    const extensionInterval = intervals.find(interval => [2, 14, 5, 17].includes(interval)) ?? null;
+
+    const strategies: Array<() => number[]> = [];
+
+    // Strategy 1: Standard guide-tone (default voicing)
+    strategies.push(() => {
+        const voiced: number[] = [bassRoot];
+        const upperRegister = context === 'resource' ? 24 : 12;
+        if (thirdInterval != null) voiced.push(bassRoot + thirdInterval + upperRegister);
+        if (seventhInterval != null) {
+            voiced.push(bassRoot + seventhInterval + upperRegister);
+        } else if (fifthInterval != null) {
+            voiced.push(bassRoot + fifthInterval + upperRegister);
+        }
+        if (extensionInterval != null) {
+            voiced.push(bassRoot + extensionInterval + upperRegister);
+        } else if (thirdInterval == null && fifthInterval != null) {
+            voiced.push(bassRoot + fifthInterval + upperRegister);
+        }
+        return voiced.filter(note => note >= minMidi);
+    });
+
+    // Strategy 2: Closer voicing (mid-register)
+    if (context === 'resource') {
+        strategies.push(() => {
+            const voiced: number[] = [bassRoot];
+            const midRegister = 19; // Slightly closer
+            if (thirdInterval != null) voiced.push(bassRoot + thirdInterval + midRegister);
+            if (fifthInterval != null) voiced.push(bassRoot + fifthInterval + midRegister);
+            if (seventhInterval != null) voiced.push(bassRoot + seventhInterval + midRegister);
+            return voiced.filter(note => note >= minMidi);
+        });
+    }
+
+    // Strategy 3: Root + octave + extensions (open sound)
+    strategies.push(() => {
+        const voiced: number[] = [bassRoot, bassRoot + 12];
+        const upperRegister = context === 'resource' ? 24 : 12;
+        if (seventhInterval != null) voiced.push(bassRoot + seventhInterval + upperRegister);
+        if (thirdInterval != null) voiced.push(bassRoot + thirdInterval + upperRegister);
+        return voiced.filter(note => note >= minMidi);
+    });
+
+    // Randomly select a strategy
+    const selectedStrategy = strategies[Math.floor(Math.random() * strategies.length)];
+    return uniqueSorted(selectedStrategy());
 };

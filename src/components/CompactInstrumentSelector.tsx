@@ -6,6 +6,7 @@ import { PianoIcon } from './icons/InstrumentIcons';
 interface CompactInstrumentSelectorProps {
     currentInstrument: string;
     onSelectInstrument: (instrumentId: string) => void;
+    disabledInstruments?: string[];
 }
 
 const getInstrumentIcon = (id: string) => {
@@ -24,7 +25,8 @@ const getInstrumentIcon = (id: string) => {
 
 export const CompactInstrumentSelector: React.FC<CompactInstrumentSelectorProps> = ({
     currentInstrument,
-    onSelectInstrument
+    onSelectInstrument,
+    disabledInstruments = []
 }) => {
     return (
         <div className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-sm rounded-full px-3 py-2 border border-white/40 shadow-sm hover:shadow-md transition-all duration-300">
@@ -35,23 +37,27 @@ export const CompactInstrumentSelector: React.FC<CompactInstrumentSelectorProps>
                 {instruments.map(instrument => {
                     const Icon = getInstrumentIcon(instrument.id);
                     const isSelected = currentInstrument === instrument.id;
+                    const isDisabled = disabledInstruments.includes(instrument.id);
                     
                     return (
                         <button
                             key={instrument.id}
-                            onClick={() => onSelectInstrument(instrument.id)}
+                            onClick={() => !isDisabled && onSelectInstrument(instrument.id)}
+                            disabled={isDisabled}
                             className={`group relative rounded-full p-2 transition-all duration-300 ${
-                                isSelected
-                                    ? 'bg-orange-500 text-white shadow-md shadow-orange-500/30'
-                                    : 'bg-transparent text-neutral-400 hover:bg-white/80 hover:text-orange-600 hover:scale-110'
+                                isDisabled
+                                    ? 'bg-transparent text-neutral-300 opacity-50 cursor-not-allowed'
+                                    : isSelected
+                                        ? 'bg-orange-500 text-white shadow-md shadow-orange-500/30'
+                                        : 'bg-transparent text-neutral-400 hover:bg-white/80 hover:text-orange-600 hover:scale-110'
                             }`}
-                            title={instrument.name}
+                            title={isDisabled ? 'Not recommended for chords' : instrument.name}
                         >
                             <Icon 
                                 className="w-4 h-4 transition-transform duration-300" 
                                 strokeWidth={2.5} 
                             />
-                            {isSelected && (
+                            {isSelected && !isDisabled && (
                                 <div className="absolute inset-0 bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             )}
                         </button>

@@ -3,7 +3,7 @@ import type { ResourceItem, IntervalDirection, ScaleDirection } from '../../type
 import { audioEngine } from '../../audio/audioEngine';
 import { loadInstrument, getInstrumentSampleId } from '../../audio/sampleLoader';
 import { noteNameToMidi } from '../../config/harmonyRules';
-import { voiceBassChord, voiceGuitarChord } from '../../logic/voicing/guitarVoicing';
+import { getRandomBassVoicing, getRandomGuitarVoicing } from '../../logic/voicing/guitarVoicing';
 import { useGame } from '../../context/GameContext';
 
 const getGuitarChordGains = (voiced: number[], baseRoot: number) => {
@@ -387,9 +387,9 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                         })
                         .filter((note): note is number => note !== null);
                     const baseRoot = midiNotes.length ? Math.min(...midiNotes) : 60;
-                    const voiced = voiceGuitarChord(midiNotes, baseRoot, 'resource').map(note => note + 12);
+                    const voiced = getRandomGuitarVoicing(midiNotes, baseRoot, 'resource').map(note => note + 12);
                     const gains = [getGuitarChordGains(voiced, baseRoot)];
-                    audioEngine.playChordSequence([voiced], 900, sampleId, 60, gains);
+                    audioEngine.playChordSequence([voiced], 900, sampleId, 60, gains, 0.7);
                 } else if (state.currentInstrument === 'bass') {
                     const midiNotes = playSpec.notes
                         .map(note => {
@@ -400,9 +400,9 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                             return noteNameToMidi(noteName, parseInt(octaveStr, 10));
                         })
                         .filter((note): note is number => note !== null);
-                    const voiced = voiceBassChord(midiNotes, undefined, 'resource');
+                    const voiced = getRandomBassVoicing(midiNotes, undefined, 'resource');
                     const gains = [getBassChordGains(voiced)];
-                    audioEngine.playChordSequence([voiced], 900, sampleId, 60, gains);
+                    audioEngine.playChordSequence([voiced], 900, sampleId, 60, gains, 0.7);
                 } else {
                     if (pianoTranspose !== 0) {
                         const midiNotes = playSpec.notes
@@ -414,7 +414,7 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                                 return noteNameToMidi(noteName, parseInt(octaveStr, 10)) + pianoTranspose;
                             })
                             .filter((note): note is number => note !== null);
-                        audioEngine.playChordSequence([midiNotes], 900, sampleId, 60);
+                        audioEngine.playChordSequence([midiNotes], 900, sampleId, 60, undefined, 0.7);
                     } else {
                         audioEngine.playChord(playSpec.notes, sampleId, 60);
                     }
@@ -435,9 +435,9 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                         .filter((note): note is number => note !== null);
                 });
                 const voicedChords = state.currentInstrument === 'guitar'
-                    ? midiChords.map(chord => voiceGuitarChord(chord, chord[0], 'resource').map(note => note + 12))
+                    ? midiChords.map(chord => getRandomGuitarVoicing(chord, chord[0], 'resource').map(note => note + 12))
                     : state.currentInstrument === 'bass'
-                        ? midiChords.map(chord => voiceBassChord(chord, chord[0], 'resource'))
+                        ? midiChords.map(chord => getRandomBassVoicing(chord, chord[0], 'resource'))
                         : midiChords;
                 const chordGains = state.currentInstrument === 'guitar'
                     ? voicedChords.map((chord, index) => {
@@ -448,7 +448,7 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
                         ? voicedChords.map(chord => getBassChordGains(chord))
                     : undefined;
                 const sampleId = getInstrumentSampleId(state.currentInstrument);
-                audioEngine.playChordSequence(voicedChords, playSpec.tempoMs, sampleId, 60, chordGains);
+                audioEngine.playChordSequence(voicedChords, playSpec.tempoMs, sampleId, 60, chordGains, 0.8);
                 const duration = playSpec.chords.length * playSpec.tempoMs;
                 setTimeout(() => setIsPlaying(false), duration + 200);
             } else {
@@ -479,8 +479,11 @@ export const ResourcePlayerRow: React.FC<ResourcePlayerRowProps> = ({
             <div className="flex items-center justify-between mb-2">
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-1">
-                        <h3 className="font-semibold text-neutral-900 truncate">
-                            {resource.title}
+                        <h3 className="font-semibold text-neutral-900 truncate" title={resource.category === 'scales' ? resource.title : undefined}>
+                            {resource.category === 'scales' 
+                                ? resource.title.replace(/^[A-G][#b]?\s+/, '') // Remove key name, keep only scale type
+                                : resource.title
+                            }
                         </h3>
                         {resource.difficulty && (
                             <span className={`px-2 py-0.5 rounded text-xs font-medium flex-shrink-0 ${difficultyColor[resource.difficulty]}`}>
