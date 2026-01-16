@@ -33,7 +33,7 @@ export const ModeSelect: React.FC<ModeSelectProps> = ({
                             melody: 'Melody',
                             tempo: 'Tempo Trainer'
                         };
-                        
+
                         return (
                             <button
                                 key={mode}
@@ -78,8 +78,8 @@ export const ModeSelect: React.FC<ModeSelectProps> = ({
                 </div>
             </div>
 
-            <button 
-                onClick={onStart} 
+            <button
+                onClick={onStart}
                 className="btn-primary group w-full text-base lg:text-lg mt-2 relative z-10 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300"
             >
                 <span className="flex items-center justify-center gap-2 relative group-hover:gap-3 transition-all duration-300">

@@ -146,7 +146,7 @@ export const Train: React.FC = () => {
                 const q = question as ChordQuestion; const chordNotes = state.currentInstrument === 'guitar'
                     ? getRandomGuitarVoicing(q.notes, q.rootMidi)
                     : state.currentInstrument === 'bass'
-                        ? getRandomBassVoicing(q.notes, q.rootMidi)
+                        ? getRandomBassVoicing(q.notes, q.rootMidi, 'resource') // Use resource context for higher register
                         : q.notes;
                 // Reduce gain per note to prevent clipping when multiple notes play together
                 const gainPerNote = Math.min(1.0, 1.0 / chordNotes.length);

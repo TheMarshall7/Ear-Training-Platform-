@@ -196,7 +196,7 @@ export const ProgressionRound: React.FC<ProgressionRoundProps> = ({
                     return getRandomGuitarVoicing(spec.midiNotes, spec.midiNotes[0]);
                 }
                 if (state.currentInstrument === 'bass') {
-                    return getRandomBassVoicing(spec.midiNotes, spec.midiNotes[0]);
+                    return getRandomBassVoicing(spec.midiNotes, spec.midiNotes[0], 'resource'); // Use resource context for higher register
                 }
                 return spec.midiNotes;
             });
