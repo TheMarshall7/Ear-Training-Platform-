@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGame } from '../../context/GameContext';
 import { generateTempoQuestion, checkTempoAnswer, type TempoQuestion } from '../../logic/trainers/tempoTrainer';
 import { audioEngine } from '../../audio/audioEngine';
-import { loadInstrument, getInstrumentSampleId, loadClickSound } from '../../audio/sampleLoader';
+import { loadClickSound } from '../../audio/sampleLoader';
 import { ModeHeader } from '../ModeHeader';
 import { RoundControls } from '../RoundControls';
 import { ProgressMeter } from '../ProgressMeter';
@@ -47,20 +47,21 @@ export const TempoMode: React.FC<TempoModeProps> = ({
 
     useEffect(() => {
         // Only load question if difficulty actually changed or first init
-        if (!hasInitializedRef.current || lastDifficultyRef.current !== difficulty) {            hasInitializedRef.current = true;
+        if (!hasInitializedRef.current || lastDifficultyRef.current !== difficulty) {
+            hasInitializedRef.current = true;
             lastDifficultyRef.current = difficulty;
-            
+
             const newQuestion = generateTempoQuestion(difficulty);
             setQuestion(newQuestion);
             setUserBPM(Math.floor((newQuestion.minBPM + newQuestion.maxBPM) / 2));
             hasAutoPlayedRef.current = false;
-        } else {        }
+        } else { }
     }, [difficulty]);
 
     const playMetronome = useCallback(async () => {
         // CRITICAL: Unlock audio SYNCHRONOUSLY FIRST
         audioEngine.ensureUnlockedSync();
-        
+
         if (!question || isPlaying) return;
         setIsPlaying(true);
 
@@ -69,36 +70,36 @@ export const TempoMode: React.FC<TempoModeProps> = ({
                 setIsPlaying(false);
                 return;
             }
-            
+
             // Force recreate audio context on user interaction
             await audioEngine.init();
             await loadClickSound();
             await new Promise(resolve => setTimeout(resolve, 100));
-            
+
             // Double-check question is still valid
             if (!question) {
                 setIsPlaying(false);
                 return;
             }
-            
+
             // Play metronome clicks using the click sound
             // Use middle C (60) as the base note for the click sample
             const clickNote = 60;
             const clickSampleId = 'click';
-            
+
             for (let i = 0; i < question.beatsToPlay; i++) {
                 const delay = (i * question.beatInterval) / 1000; // Convert to seconds
                 audioEngine.playNote(clickSampleId, clickNote, 60, delay, 1.0);
             }
-            
+
             // Calculate total duration
             const totalDuration = question.beatsToPlay * question.beatInterval + 200;
-            
+
             // Clear any existing timeout
             if (playTimeoutRef.current) {
                 clearTimeout(playTimeoutRef.current);
             }
-            
+
             playTimeoutRef.current = setTimeout(() => {
                 setIsPlaying(false);
                 playTimeoutRef.current = null;
@@ -114,7 +115,7 @@ export const TempoMode: React.FC<TempoModeProps> = ({
         if (!question) {
             return;
         }
-        
+
         if (!hasAutoPlayedRef.current && !checking && !isPlaying) {
             hasAutoPlayedRef.current = true;
             const timer = setTimeout(async () => {
@@ -122,12 +123,12 @@ export const TempoMode: React.FC<TempoModeProps> = ({
                     hasAutoPlayedRef.current = false;
                     return;
                 }
-                
+
                 try {
                     await audioEngine.init();
                     await loadClickSound();
                     await new Promise(resolve => setTimeout(resolve, 300));
-                    
+
                     if (question && !isPlaying) {
                         playMetronome();
                     } else {
@@ -156,7 +157,7 @@ export const TempoMode: React.FC<TempoModeProps> = ({
         setChecking(true);
 
         const answerResult = checkTempoAnswer(question.targetBPM, userBPM);
-        
+
         setResult({
             correct: answerResult.isCorrect,
             accuracy: answerResult.accuracy,
@@ -166,33 +167,33 @@ export const TempoMode: React.FC<TempoModeProps> = ({
         if (answerResult.isCorrect) {
             setShowParticles(true);
             setTimeout(() => setShowParticles(false), 2000);
-            
+
             const newStreak = streak + 1;
             const newRunProgress = runProgress + 1;
             const isPerfectRun = newRunProgress === 10;
-            
+
             // Update stats
             let stats = loadStats();
             stats = recordAnswer(stats, true, 'tempo', isPerfectRun);
             stats = updateBestStreak(stats, newStreak);
             saveStats(stats);
-            
+
             // Update daily challenges
             let updatedChallenges = dailyChallenges;
             const challengeUpdate = updateChallengeProgress(updatedChallenges, 'questions', 1);
             updatedChallenges = challengeUpdate.challenges;
             setDailyChallenges(updatedChallenges);
-            
+
             const multiplier = streak >= 20 ? 4 : streak >= 10 ? 3 : streak >= 5 ? 2 : 1;
             const finalPoints = answerResult.points * multiplier;
-            
+
             onCorrect(finalPoints);
         } else {
             // Update stats
             let stats = loadStats();
             stats = recordAnswer(stats, false, 'tempo');
             saveStats(stats);
-            
+
             onWrong();
         }
     };
@@ -205,7 +206,7 @@ export const TempoMode: React.FC<TempoModeProps> = ({
             playTimeoutRef.current = null;
         }
         setIsPlaying(false);
-        
+
         setChecking(false);
         setResult(null);
         hasAutoPlayedRef.current = false;
@@ -230,12 +231,12 @@ export const TempoMode: React.FC<TempoModeProps> = ({
 
             <div className="relative z-10 flex flex-col items-center pt-6 lg:pt-8 pb-32 flex-1">
                 <div className="w-full max-w-4xl px-4 flex justify-between items-center mb-4 relative z-50 pl-20 lg:pl-24">
-                    <button 
+                    <button
                         onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             navigate('/');
-                        }} 
+                        }}
                         className="group flex items-center gap-2 text-neutral-400 hover:text-neutral-600 font-medium text-sm relative z-50 cursor-pointer transition-all duration-300 hover:gap-3"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-x-1 transition-transform duration-300">
@@ -247,9 +248,9 @@ export const TempoMode: React.FC<TempoModeProps> = ({
                     <div className="w-16"></div>
                 </div>
 
-                <ProgressMeter 
-                    current={runProgress + 1} 
-                    total={10} 
+                <ProgressMeter
+                    current={runProgress + 1}
+                    total={10}
                     streak={streak}
                     level={state.level}
                     xp={state.xp}
@@ -280,7 +281,7 @@ export const TempoMode: React.FC<TempoModeProps> = ({
                         <h3 className="text-center text-lg font-semibold text-neutral-700 mb-6">
                             What is the tempo?
                         </h3>
-                        
+
                         {/* Current BPM Display with Arrow Controls */}
                         <div className="text-center mb-6">
                             <div className="flex items-center justify-center gap-4">
@@ -377,19 +378,17 @@ export const TempoMode: React.FC<TempoModeProps> = ({
 
                 {checking && result && (
                     <div className="fixed bottom-0 left-0 right-0 p-6 flex flex-col items-center animate-slide-up pb-8">
-                        <div className={`w-full max-w-md mx-auto rounded-2xl p-8 backdrop-blur-lg shadow-2xl border transition-all duration-300 ${
-                            result.correct
+                        <div className={`w-full max-w-md mx-auto rounded-2xl p-8 backdrop-blur-lg shadow-2xl border transition-all duration-300 ${result.correct
                                 ? 'bg-gradient-to-br from-orange-50/90 to-amber-100/80 border-orange-200/50'
                                 : 'bg-white/90 border-neutral-200/50'
-                        }`}>
+                            }`}>
                             <div className="text-center">
                                 {result.correct ? (
                                     <>
-                                        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
-                                            result.accuracy === 'perfect'
+                                        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${result.accuracy === 'perfect'
                                                 ? 'bg-gradient-to-br from-orange-400 to-orange-600'
                                                 : 'bg-gradient-to-br from-orange-300 to-orange-500'
-                                        } shadow-lg`}>
+                                            } shadow-lg`}>
                                             <span className="text-3xl">{result.accuracy === 'perfect' ? '🎯' : '✓'}</span>
                                         </div>
                                         <h3 className="text-3xl font-bold text-neutral-900 mb-4">
