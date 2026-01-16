@@ -65,7 +65,7 @@ const loadStats = (): Partial<GameState> => {
   const totalQuestions = parseInt(localStorage.getItem('ear_trainer_total_questions') || '0');
   const totalCorrect = parseInt(localStorage.getItem('ear_trainer_total_correct') || '0');
   const bestStreak = parseInt(localStorage.getItem('ear_trainer_best_streak') || '0');
-  
+
   return {
     xp,
     level: getLevelFromXP(xp),
@@ -94,6 +94,7 @@ const initialState: GameState = {
   bestStreak: 0,
   currentInstrument: localStorage.getItem('ear_trainer_instrument') || 'bell',
   isDiatonicMode: localStorage.getItem('ear_trainer_diatonic_mode') === 'true',
+  isPremium: localStorage.getItem('ear_trainer_premium') === 'true',
   ...loadStats()
 };
 
@@ -111,16 +112,16 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     // Change the active training mode and reset run progress
     case 'SET_MODE':
       return { ...state, currentMode: action.payload, streak: 0, runProgress: 0 };
-    
+
     // Change difficulty level and reset run progress
     case 'SET_DIFFICULTY':
       return { ...state, difficulty: action.payload, streak: 0, runProgress: 0 };
-    
+
     // Change instrument and persist to localStorage
     case 'SET_INSTRUMENT':
       localStorage.setItem('ear_trainer_instrument', action.payload);
       return { ...state, currentInstrument: action.payload };
-    
+
     // Handle correct answer: update streak, score, XP, and stats
     case 'CORRECT_ANSWER': {
       const newStreak = state.streak + 1;
@@ -130,15 +131,15 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       const newTotalQuestions = state.totalQuestions + 1;
       const newTotalCorrect = state.totalCorrect + 1;
       const newBestStreak = Math.max(state.bestStreak, newStreak);
-      
+
       // Persist updated stats to localStorage
       localStorage.setItem('ear_trainer_xp', newXP.toString());
       localStorage.setItem('ear_trainer_total_questions', newTotalQuestions.toString());
       localStorage.setItem('ear_trainer_total_correct', newTotalCorrect.toString());
       localStorage.setItem('ear_trainer_best_streak', newBestStreak.toString());
-      
-      return { 
-        ...state, 
+
+      return {
+        ...state,
         streak: newStreak,
         score: state.score + action.payload,
         runProgress: state.runProgress + 1,
@@ -149,47 +150,53 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         bestStreak: newBestStreak
       };
     }
-    
+
     // Handle wrong answer: reset streak but track the attempt
     case 'WRONG_ANSWER': {
       const newTotalQuestions = state.totalQuestions + 1;
       localStorage.setItem('ear_trainer_total_questions', newTotalQuestions.toString());
-      return { 
-        ...state, 
+      return {
+        ...state,
         streak: 0,
         totalQuestions: newTotalQuestions
       };
     }
-    
+
     // Increment session count and check if paywall should be shown
     case 'INCREMENT_SESSION':
       const newCount = state.sessionCount + 1;
       localStorage.setItem('ear_trainer_sessions', newCount.toString());
-      return { 
-        ...state, 
+      return {
+        ...state,
         sessionCount: newCount,
-        isLocked: newCount >= MAX_FREE_SESSIONS 
+        isLocked: newCount >= MAX_FREE_SESSIONS
       };
-    
+
     // Unlock the app (e.g., after payment)
     case 'UNLOCK_FEATURE':
       return { ...state, isLocked: false };
-    
+
     // Reset current run progress (streak, score, progress)
     case 'RESET_RUN':
       return { ...state, runProgress: 0, streak: 0, score: 0 };
-    
+
     // Reload stats from localStorage
     case 'LOAD_STATS':
       return { ...state, ...loadStats() };
-    
+
     // Toggle diatonic mode (stays in same key until wrong answer)
     case 'TOGGLE_DIATONIC_MODE': {
       const newDiatonicMode = !state.isDiatonicMode;
       localStorage.setItem('ear_trainer_diatonic_mode', newDiatonicMode.toString());
       return { ...state, isDiatonicMode: newDiatonicMode };
     }
-    
+
+    // Set premium status (after payment or unlock)
+    case 'SET_PREMIUM': {
+      localStorage.setItem('ear_trainer_premium', action.payload.toString());
+      return { ...state, isPremium: action.payload };
+    }
+
     default:
       return state;
   }

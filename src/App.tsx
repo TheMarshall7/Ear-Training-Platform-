@@ -20,6 +20,8 @@ import { Resources } from './pages/Resources';
 import { PlatinumGift } from './pages/PlatinumGift';
 import { audioEngine } from './audio/audioEngine';
 import { attachGlobalAudioUnlock, setupVisibilityResumeHandler } from './audio/unlockAudio';
+import { PaymentSuccess } from './pages/PaymentSuccess';
+import { PaymentCancel } from './pages/PaymentCancel';
 import { DebugConsole } from './components/DebugConsole';
 
 function App() {
@@ -27,7 +29,7 @@ function App() {
     const setupAudio = async () => {
       try {
         const ctx = await audioEngine.init();
-        
+
         // Setup global one-time hard-unlock on FIRST interaction
         attachGlobalAudioUnlock({
           audioContext: ctx,
@@ -55,6 +57,8 @@ function App() {
           <Route path="/train" element={<Train />} />
           <Route path="/locked" element={<Locked />} />
           <Route path="/success" element={<Success />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/payment-cancel" element={<PaymentCancel />} />
           <Route path="/stats" element={<Stats />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/resources/:category" element={<Resources />} />

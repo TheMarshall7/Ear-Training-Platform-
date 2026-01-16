@@ -10,7 +10,7 @@
  * Available game modes in the ear training platform.
  * Each mode represents a different type of musical ear training exercise.
  */
-export type GameMode = 
+export type GameMode =
   | 'interval'        // Identify intervals between two notes
   | 'chord'           // Identify chord types
   | 'progression'     // Identify chord progressions
@@ -34,52 +34,55 @@ export type Difficulty = 'easy' | 'medium' | 'hard';
 export interface GameState {
   /** Current active training mode */
   currentMode: GameMode;
-  
+
   /** Current difficulty level */
   difficulty: Difficulty;
-  
+
   /** Current streak of correct answers in this session */
   streak: number;
-  
+
   /** Total score accumulated in current run */
   score: number;
-  
+
   /** Progress through current run (number of questions answered) */
   runProgress: number;
-  
+
   /** Total number of sessions completed */
   sessionCount: number;
-  
+
   /** Whether the app is locked (free tier limit reached) */
   isLocked: boolean;
-  
+
   /** Total experience points earned */
   xp: number;
-  
+
   /** Current level (calculated from XP) */
   level: number;
-  
+
   /** Total questions answered across all sessions */
   totalQuestions: number;
-  
+
   /** Total correct answers across all sessions */
   totalCorrect: number;
-  
+
   /** Best streak achieved across all sessions */
   bestStreak: number;
-  
+
   /** Current selected instrument for audio playback */
   currentInstrument: string;
-  
+
   /** Whether diatonic mode is enabled (stays in same key until wrong answer) */
   isDiatonicMode: boolean;
+
+  /** Whether user has premium access (all modes unlocked) */
+  isPremium: boolean;
 }
 
 /**
  * Actions that can be dispatched to update game state.
  * Used by the game reducer to handle state changes.
  */
-export type GameAction = 
+export type GameAction =
   | { type: 'SET_MODE'; payload: GameMode }
   | { type: 'SET_DIFFICULTY'; payload: Difficulty }
   | { type: 'SET_INSTRUMENT'; payload: string }
@@ -90,4 +93,5 @@ export type GameAction =
   | { type: 'RESET_RUN' }
   | { type: 'ADD_XP'; payload: number }
   | { type: 'LOAD_STATS' }
-  | { type: 'TOGGLE_DIATONIC_MODE' };
+  | { type: 'TOGGLE_DIATONIC_MODE' }
+  | { type: 'SET_PREMIUM'; payload: boolean };

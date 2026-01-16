@@ -108,6 +108,7 @@ export const Home: React.FC = () => {
                         <ModeSelect
                             currentMode={state.currentMode}
                             currentDifficulty={state.difficulty}
+                            isPremium={state.isPremium}
                             onSelectMode={(mode) => dispatch({ type: 'SET_MODE', payload: mode })}
                             onSelectDifficulty={(diff) => dispatch({ type: 'SET_DIFFICULTY', payload: diff })}
                             onStart={handleStart}
